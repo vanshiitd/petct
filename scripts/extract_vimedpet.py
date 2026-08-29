@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Batch-extract the ViMedPET multi-part zip archives.
 
-Replaces: preprocessing/ViMedPETproc.ipynb
-
 ViMedPET ships as split archives (.zip + .z01, .z02, ...). Only the .zip is
 passed to 7-Zip; it pulls in the companion parts automatically. Python's
 zipfile cannot read split archives, which is why this shells out to 7z.

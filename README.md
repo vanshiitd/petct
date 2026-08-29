@@ -8,11 +8,8 @@ strategy with a weighted global mean squared error (MSE) loss, combined with
 zero (mean) imputation to avoid blocky artifacts. The pre-trained models support
 fine-tuning for downstream tasks such as automated tumor segmentation.
 
-> **Note on structure:** the original Jupyter notebooks were converted into the
-> `petct/` package and `scripts/` entrypoints below. See
-> [`CONVERSION_NOTES.md`](CONVERSION_NOTES.md) for the notebook → command mapping,
-> the bugs fixed during conversion, and what was deliberately left unchanged.
-> The notebooks remain in git history at commit `1e9d31b`.
+See [`DESIGN_NOTES.md`](DESIGN_NOTES.md) for design decisions, memory
+behaviour, and known limitations.
 
 ## Repository Structure
 

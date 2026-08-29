@@ -1,8 +1,7 @@
 """Device selection and mixed-precision helpers.
 
-The notebooks hardcoded `os.environ["CUDA_VISIBLE_DEVICES"] = "2"` (and 0, and 1,
-inconsistently across files) and unconditionally used CUDA autocast. That breaks
-on any machine without CUDA. Here device choice is explicit and AMP follows it.
+Device choice is explicit and AMP follows it, so the same code runs on CUDA,
+Apple MPS, or CPU without edits.
 """
 from __future__ import annotations
 

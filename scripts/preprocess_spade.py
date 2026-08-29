@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Preprocess the SPADE dataset into (2, Z, Y, X) .npy volumes for pretraining.
 
-Replaces: preprocessing/spadeproc.ipynb (cell 0)
-
 SPADE arrives as pre-extracted pet.npy / ct.npy pairs in PatientID/ScanID/
 folders, with a known fixed acquisition spacing, so there is no DICOM/NIfTI
 metadata to read -- the source spacing is supplied as a flag.

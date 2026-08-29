@@ -1,8 +1,8 @@
 """Central configuration: architectures, paths, and training defaults.
 
-Everything that used to be hardcoded in 24 separate notebooks lives here once.
-Paths can be overridden with environment variables so the same code runs on a
-laptop, a lab workstation, and an HPC node without edits.
+Every tunable lives here once. Paths can be overridden with environment
+variables so the same code runs on a laptop, a lab workstation, and an HPC
+node without edits.
 """
 from __future__ import annotations
 
@@ -52,8 +52,7 @@ PATHS = Paths()
 class ArchSpec:
     """One backbone configuration.
 
-    `family` selects the builder; everything else is the per-variant delta that
-    used to be the *only* difference between whole duplicated notebooks.
+    `family` selects the builder; everything else is the per-variant delta.
     """
 
     name: str
@@ -82,8 +81,8 @@ ARCHS: dict[str, ArchSpec] = {
         name="large", family="swin", feature_size=96, depths=(2, 2, 18, 2),
         lr=1e-4, pretrain_ckpt="swin_mae_best_v2.pth", weight_prefix="encoder_decoder.",
     ),
-    # nnU-Net v2 backbone. Higher LR than the transformers, per the original
-    # notebook's comment ("CNNs can be slightly more aggressive").
+    # nnU-Net v2 backbone. Higher LR than the transformers: CNNs tolerate a
+    # more aggressive rate here.
     # The final classification head is deliberately NOT transferred: the
     # pretraining head reconstructs 2 image channels, the segmentation head
     # predicts 2 classes -- same shape, completely different meaning.
@@ -144,9 +143,9 @@ PRETRAIN_ANOMALIES = (
 class SplitPreset:
     """Controls how patients are partitioned into train/test.
 
-    `full` reproduces the notebooks' original scheme. `sample` is for small
-    local datasets (e.g. the 20-patient smoke-test set) where holding out 200
-    patients is impossible.
+    `full` is the published scheme: 200 held-out patients, a 700-scan training
+    pool. `sample` is for small local datasets (e.g. a 20-patient smoke-test
+    set) where holding out 200 patients is impossible.
     """
 
     name: str

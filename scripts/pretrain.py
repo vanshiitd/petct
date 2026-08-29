@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Stage 1: MAE pretraining on unlabelled PET/CT volumes.
 
-Replaces: swinv2{small,base,large}/MAEv2.ipynb and nnunetv2/nnunetv2MAE.ipynb
-
 Examples:
     python scripts/pretrain.py --arch base
     python scripts/pretrain.py --arch nnunet --epochs 200 --batch-size 16

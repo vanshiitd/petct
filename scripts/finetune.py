@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Stage 2: supervised fine-tuning for tumour segmentation.
 
-Replaces all 18 of the {10,30,100}%training[-mae].ipynb notebooks across the
-four backbone folders. Those differed only in train_fraction, use_foundation,
-and the backbone's feature_size/depths -- all now flags.
+Backbone, label fraction and initialisation are all flags, so the full
+label-efficiency grid is one command repeated with different arguments.
 
 Examples:
     # foundation-initialised, 100% of labels, base backbone

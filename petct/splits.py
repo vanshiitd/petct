@@ -11,8 +11,7 @@ from pathlib import Path
 
 from . import config
 
-# Seeds from the original notebooks; kept so a given dataset partitions the
-# same way it did before.
+# Fixed seeds so a given dataset always partitions the same way.
 SPLIT_SEED = 42
 SUBSET_SEED = 1024
 
@@ -20,9 +19,9 @@ SUBSET_SEED = 1024
 def build_subject_index(base_path: Path) -> dict[str, list[dict]]:
     """Map subject_id -> list of scans, each a dict of the three file paths.
 
-    Results are sorted. The notebooks iterated `rglob` directly, whose order is
-    filesystem-dependent, so their "seeded" split was in fact NOT reproducible
-    across machines. Sorting makes it genuinely deterministic.
+    Results are sorted. `rglob` alone returns filesystem-dependent order, which
+    would make the seeded split below non-reproducible across machines; sorting
+    is what makes the seeds actually deterministic.
     """
     base_path = Path(base_path)
     if not base_path.exists():

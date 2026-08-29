@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 """Report the volume-dimension range of each preprocessed dataset.
 
-Replaces: preprocessing/spadeproc.ipynb cells 1 and 2, which were two
-near-identical copies of this scanner -- the second differing only in that it
-filtered out known-bad volumes. That is now the --exclude-anomalies flag.
-
 Useful as a sanity check after preprocessing: a dataset whose minimum Z is
 suspiciously small usually means a truncated or corrupt volume slipped through.
 

@@ -21,8 +21,8 @@ def build_swin_unetr(arch: ArchSpec, out_channels: int) -> nn.Module:
 
     `img_size` was a required constructor argument in older MONAI and was
     REMOVED in newer versions (>=1.5), which infer spatial size at runtime.
-    The notebooks passed it unconditionally, so they crash on current MONAI.
-    We inspect the signature instead of pinning a version.
+    Passing it unconditionally raises a TypeError on current MONAI, so we
+    inspect the signature rather than pinning a version.
     """
     from monai.networks.nets import SwinUNETR
 
@@ -238,11 +238,11 @@ def build_segmentation_model(
 ) -> nn.Module:
     """Build the fine-tuning model, optionally initialised from pretraining.
 
-    IMPORTANT: this returns a fully-initialised model. The optimizer must be
-    created from its parameters AFTER this call. The original notebooks built a
-    model, bound the optimizer to it, and only then conditionally rebuilt the
-    model -- leaving the optimizer updating an orphaned copy. See
-    CONVERSION_NOTES.md ("phantom optimizer").
+    IMPORTANT: this returns a fully-initialised model, and the optimizer must
+    be created from its parameters AFTER this call. Building a model, binding
+    an optimizer to it, and only then replacing the model leaves the optimizer
+    updating an orphaned copy -- the network then silently never learns. See
+    DESIGN_NOTES.md.
     """
     model = build_backbone(arch, out_channels=config.NUM_CLASSES)
     if use_foundation:

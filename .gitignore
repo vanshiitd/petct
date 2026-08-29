@@ -24,7 +24,6 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
-.ipynb_checkpoints/
 
 # OS
 .DS_Store

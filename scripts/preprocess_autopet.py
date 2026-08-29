@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Preprocess the AutoPET dataset into (2, Z, Y, X) .npy volumes for pretraining.
 
-Replaces: preprocessing/autopetproc.ipynb
-
 Pipeline per scan: resample to a common spacing -> crop to the body ->
 z-score each modality -> stack PET and CT as two channels.
 

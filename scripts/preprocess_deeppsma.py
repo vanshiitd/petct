@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Preprocess the DeepPSMA dataset into (2, Z, Y, X) .npy volumes for pretraining.
 
-Replaces: preprocessing/DeepPSMA copy.ipynb
-
 Unlike the AutoPET/SPADE scripts (which resample with scipy.ndimage.zoom), this
 one resamples through SimpleITK onto an explicit reference grid. That respects
 the images' origin and direction cosines, so PET and CT stay physically aligned
