@@ -1,113 +1,167 @@
 # MAE training for PET-CT
 
-This repository contains the implementation and pre-trained weights for our 3D multimodal MAE pre-trained models for PET-CT medical image analysis.
+Implementation and pre-trained weights for 3D multimodal MAE pre-trained models
+for PET-CT medical image analysis.
 
-Our framework uses an optimized independent masking masked autoencoder (MAE) pre-training strategy with a weighted global mean squared error (MSE) loss, combined with mean imputation to reduce blocky artifacts. The pre-trained models support robust fine-tuning for downstream tasks such as automated tumor segmentation.
+The framework uses an independent-masking masked autoencoder (MAE) pre-training
+strategy with a weighted global mean squared error (MSE) loss, combined with
+zero (mean) imputation to avoid blocky artifacts. The pre-trained models support
+fine-tuning for downstream tasks such as automated tumor segmentation.
+
+> **Note on structure:** the original Jupyter notebooks were converted into the
+> `petct/` package and `scripts/` entrypoints below. See
+> [`CONVERSION_NOTES.md`](CONVERSION_NOTES.md) for the notebook → command mapping,
+> the bugs fixed during conversion, and what was deliberately left unchanged.
+> The notebooks remain in git history at commit `1e9d31b`.
 
 ## Repository Structure
 
-The repository is organized as follows:
+```
+petct/                  # the implementation, imported by the scripts
+  config.py             #   architectures, paths, hyperparameters
+  splits.py             #   dataset indexing and patient-level train/test split
+  data.py               #   MONAI dataloaders
+  transforms.py         #   AutoPET preprocessing transform
+  volume_ops.py         #   resample / crop / normalize (numpy only)
+  models.py             #   backbones, MAE wrapper, weight transfer
+  pretrain.py           #   stage 1 training loop
+  finetune.py           #   stage 2 training loop + evaluation
+  devices.py            #   device selection, AMP, memory helpers
 
-- `preprocessing/`  
-  Scripts for data extraction, CT-based bounding box cropping, spatial resampling, and normalization.
+scripts/                # command-line entrypoints
+  preprocess_autopet.py
+  preprocess_deeppsma.py
+  preprocess_spade.py
+  extract_vimedpet.py
+  scan_dimensions.py
+  pretrain.py
+  finetune.py
 
-- `swinv2base/`  
-  Pre-training and fine-tuning scripts based on the **SwinUNETRv2-Base** architecture.
+downstreamsplit/        # reference split CSVs
+sample_data/            # small local dataset (if present)
+weights/                # pre-trained checkpoints (downloaded separately)
+runs/                   # fine-tuning outputs
+```
 
-- `swinv2small/`  
-  Pre-training and fine-tuning scripts based on the **SwinUNETRv2-Small** architecture.
-  
-- `swinv2large/`  
-  Pre-training and fine-tuning scripts based on the **SwinUNETRv2-Large** architecture.
-  
-- `nnunetv2/`  
-  Implementations based on the official `PlainConvUNet` from the **nnU-Net v2** backbone library.
+## Supported architectures
+
+Selected with `--arch`:
+
+| `--arch` | Architecture | Parameters | Pre-trained checkpoint |
+| --- | --- | ---: | --- |
+| `small` | SwinUNETRv2-Small `(2,2,2,2)-24` | 18.3M | `swin_small_mae_best.pth` |
+| `base` | SwinUNETRv2-Base `(2,2,6,2)-48` | 74.6M | `swin_mae_best_v2.pth` |
+| `large` | SwinUNETRv2-Large `(2,2,18,2)-96` | 319.2M | `swin_large_mae_best.pth` |
+| `nnunet` | nnU-Net v2 `PlainConvUNet` (3d_fullres) | ~31.2M | `nnunet_v2_mim_best.pth` |
 
 ## Pre-Trained Foundation Models
 
-Due to GitHub file size limitations, the pre-trained model checkpoints are hosted externally. Please download the required weights from the link below and place them in your working directory, for example `./weights/`.
+Checkpoints are hosted externally due to GitHub file size limits. Download and
+place them in `./weights/`.
 
-**Download link:**  
+**Download link:**
 [Pre-Trained Weights (Dropbox)](https://www.dropbox.com/scl/fo/2qojv3vn3nxu6smisot8y/ALAYC8EiLp26TbTTy5DGI08?rlkey=x0620mbaggdq5zi5z2au3fvp4&st=c1uscnzh&dl=0)
 
-| Model Architecture | Parameter Count | File Prefix |
-| --- | ---: | --- |
-| **SwinUNETRv2-Base** `(2,2,6,2)-48` | ~74.6M | `swin_mae_best_v2.pth` |
-| **SwinUNETRv2-Small** `(2,2,2,2)-24` | ~18.3M | `swin_small_mae_best.pth` |
-| **SwinUNETRv2-Large** `(2,2,18,2)-96` | ~319.2M | `swin_large_mae_best.pth` |
-| **nnUNetV2-3d_fullres** | ~31.2M | `nnunet_v2_mim_best.pth` |
-
 ## Installation
-
-The codebase is implemented in Python and primarily depends on PyTorch and MONAI.
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/liu-xiaofeng/Foundation-Model-for-PET-CT.git
-cd Foundation-Model-for-PET-CT
-```
-
-### 2. Create a virtual environment
 
 ```bash
 conda create -n petct_fm python=3.10
 conda activate petct_fm
-```
 
-### 3. Install dependencies
-
-```bash
 # Core deep learning and medical imaging libraries
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-pip install monai SimpleITK scipy numpy tqdm
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install monai einops SimpleITK scipy numpy tqdm nibabel
 
-# Required for nnU-Net v2 backbone integration
+# Only needed for --arch nnunet
 pip install dynamic-network-architectures
 ```
 
+## Configuration
+
+Paths default to the layout above and can be overridden by environment variable
+or per-command flag:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `PETCT_AUTOPET_ROOT` | `./sample_data` | labelled AutoPET data |
+| `PETCT_PRETRAIN_ROOT` | `./PETCTfoundation` | unlabelled `.npy` corpus |
+| `PETCT_WEIGHTS_DIR` | `./weights` | pre-trained checkpoints |
+| `PETCT_OUTPUT_DIR` | `./runs` | fine-tuning outputs |
+
 ## Usage Guide
 
-### 1. Data Preprocessing
+Every command supports `--help`.
 
-The preprocessing pipeline is designed to handle varying voxel spacings and baseline shifts across datasets such as AutoPET, DeepPSMA, SPADE, and ViMedPET. The scripts dynamically crop empty background regions using CT thresholding (`CT > -500`), standardize voxel spacing, and independently normalize PET and CT using z-score normalization.
+### 1. Data preprocessing
 
-```bash
-# Example: AutoPET preprocessing
-python preprocessing/process_autopet.py
-```
-
-> **Note**  
-> Please update the `source_base` and `target_base` paths inside the preprocessing scripts to match your local dataset directories.
-
-### 2. Pre-Training (Masked Autoencoder)
-
-To train a foundation model from scratch using the independent masking strategy, use the provided MAE notebooks or scripts. The network masks 50% of the PET and CT inputs independently and reconstructs the original volumes.
+Handles varying voxel spacings and baseline shifts across AutoPET, DeepPSMA,
+SPADE and ViMedPET. Crops background using CT thresholding (`CT > -500`),
+standardizes voxel spacing, and independently z-score normalizes PET and CT.
 
 ```bash
-# Example: run SwinUNETR MAE pre-training
-jupyter nbconvert --to script MAEv2.ipynb
-python MAEv2.py
+python scripts/preprocess_autopet.py  --source /data/AutoPET2025_FDG --target /data/PETCTfoundation/AutoPET
+python scripts/preprocess_deeppsma.py --source /data/DeepPSMA        --target /data/PETCTfoundation/DeepPSMA
+python scripts/preprocess_spade.py    --source /data/spade           --target /data/PETCTfoundation/Spade
+python scripts/extract_vimedpet.py    --source /data/ViMedPET        --target /data/unzipViMedPET
+
+# sanity-check the resulting volume dimensions
+python scripts/scan_dimensions.py --root /data/PETCTfoundation --exclude-anomalies
 ```
 
-### 3. Downstream Fine-Tuning (Segmentation)
+### 2. Pre-training (masked autoencoder)
 
-To fine-tune the pre-trained foundation models for downstream segmentation, run the corresponding training scripts. The code supports checkpoint resumption and cosine annealing learning rate scheduling.
+Masks 50% of the PET and CT inputs independently and reconstructs the original
+volumes.
 
-```python
-# Example inside a fine-tuning script (e.g., 100%training.ipynb)
-train_and_evaluate(
-    train_fraction=1.0,
-    use_foundation=True,  # Set to False to train from scratch
-    total_epochs=100
-)
+```bash
+python scripts/pretrain.py --arch base --data-root /data/PETCTfoundation
 ```
 
-Make sure that `foundation_ckpt_path` in the script points to the downloaded `.pth` checkpoint file.
+### 3. Downstream fine-tuning (segmentation)
+
+Supports checkpoint resumption and cosine annealing. `--init foundation` loads
+the pre-trained encoder; `--init scratch` is the random-initialization control.
+
+```bash
+# foundation-initialized, all labels
+python scripts/finetune.py --arch base --fraction 1.0 --init foundation
+
+# the scratch comparison arm at 10% labels
+python scripts/finetune.py --arch base --fraction 0.1 --init scratch
+
+# quick local smoke test on a small dataset
+python scripts/finetune.py --arch base --fraction 1.0 --init foundation \
+    --split sample --epochs 2 --batch-size 1 --val-interval 1
+```
+
+The full label-efficiency experiment is six runs:
+
+```bash
+for f in 0.1 0.3 1.0; do
+  for init in foundation scratch; do
+    python scripts/finetune.py --arch base --fraction $f --init $init
+  done
+done
+```
+
+### Useful flags
+
+| Flag | Purpose |
+| --- | --- |
+| `--device` | `auto` (default) \| `cpu` \| `cuda` \| `cuda:N` \| `mps` |
+| `--split` | `full` (200-patient test set) \| `sample` (small datasets) |
+| `--batch-size` | lower if training runs out of memory |
+| `--sw-batch-size` | lower if *evaluation* runs out of memory |
+| `--seed` | seed Python/NumPy/torch for reproducible runs |
+
+## Utilities
+
+```bash
+python view_scan.py PETCT_1bb48bfb40        # render PET / CT / tumour mask
+python download_all_patients.py ./AutoPET   # fetch the full TCIA collection
+```
 
 ## Citation
-
-If you find this repository or the pre-trained foundation models useful in your research, please consider citing our work.
 
 ```bibtex
 % Citation details will be added upon publication
@@ -115,6 +169,5 @@ If you find this repository or the pre-trained foundation models useful in your 
 
 ## Contact
 
-For questions regarding the code, data preprocessing, or model weights, please open an issue in this repository.
-"""
-
+For questions regarding the code, data preprocessing, or model weights, please
+open an issue in this repository.

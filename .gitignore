@@ -1,0 +1,30 @@
+# Datasets and model weights are far too large for git (and some single files
+# exceed GitHub's 100MB hard limit). Fetch data with scripts/ or
+# download_all_patients.py; download checkpoints from the Dropbox link in README.
+sample_data/
+PETCTfoundation/
+AutoPET_Full/
+weights/
+runs/
+*.pth
+*.npy
+*.nii
+*.nii.gz
+*.dcm
+*.zip
+
+# Generated figures / logs
+*.png
+*.jpg
+*.pdf
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
