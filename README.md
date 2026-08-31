@@ -26,6 +26,7 @@ petct/                  # the implementation, imported by the scripts
   devices.py            #   device selection, AMP, memory helpers
 
 scripts/                # command-line entrypoints
+  dicom_to_nifti.py     #   raw TCIA DICOM -> the NIfTI layout below
   preprocess_autopet.py
   preprocess_deeppsma.py
   preprocess_spade.py
@@ -34,7 +35,6 @@ scripts/                # command-line entrypoints
   pretrain.py
   finetune.py
 
-downstreamsplit/        # reference split CSVs
 sample_data/            # small local dataset (if present)
 weights/                # pre-trained checkpoints (downloaded separately)
 runs/                   # fine-tuning outputs
@@ -67,7 +67,7 @@ conda activate petct_fm
 
 # Core deep learning and medical imaging libraries
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-pip install monai einops SimpleITK scipy numpy tqdm nibabel
+pip install -r requirements.txt
 
 # Only needed for --arch nnunet
 pip install dynamic-network-architectures
@@ -88,6 +88,22 @@ or per-command flag:
 ## Usage Guide
 
 Every command supports `--help`.
+
+### 0. Convert the downloaded data
+
+TCIA ships raw DICOM; the training pipeline expects NIfTI. This step bridges
+that gap and auto-detects what it is given (DICOM directories, per-patient zip
+archives, or already-converted NIfTI):
+
+```bash
+python scripts/dicom_to_nifti.py --source /data/AutoPET_raw --target /data/autopet_nifti
+
+# try a few patients first to check it works on your layout
+python scripts/dicom_to_nifti.py --source /data/AutoPET_raw --target /data/autopet_nifti --limit 5
+```
+
+It produces, per patient: `PET.nii.gz`, `CT_resample.nii.gz`, `tumorSeg.nii.gz`.
+Safe to interrupt and rerun — converted patients are skipped.
 
 ### 1. Data preprocessing
 
@@ -154,9 +170,11 @@ done
 ## Utilities
 
 ```bash
-python view_scan.py PETCT_1bb48bfb40        # render PET / CT / tumour mask
-python download_all_patients.py ./AutoPET   # fetch the full TCIA collection
+python view_scan.py PETCT_1bb48bfb40   # render PET / CT / tumour mask for one patient
 ```
+
+`tcia_api.py` provides a small client for TCIA's REST API if you need to script
+further downloads.
 
 ## Citation
 
