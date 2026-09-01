@@ -1,20 +1,46 @@
-# Core: needed for training and evaluation
-torch>=2.0
-monai>=1.3
-einops                 # required by MONAI's SwinUNETR attention blocks
-numpy
-scipy                  # resampling and connected-component analysis
-SimpleITK              # NIfTI / DICOM I/O
-nibabel                # MONAI's NIfTI backend
-tqdm
+# ============================================================================
+# Dependencies for the PET-CT segmentation pipeline.
+#
+#   pip install -r requirements.txt
+#
+# IMPORTANT: install PyTorch FIRST, matched to your machine's CUDA version --
+# a plain `pip install torch` may pull a CPU-only build and training will then
+# silently run on CPU. Check your driver with `nvidia-smi`, then e.g.:
+#
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121   # CUDA 12.1
+#   pip install torch --index-url https://download.pytorch.org/whl/cu118   # CUDA 11.8
+#
+# Verify afterwards:
+#   python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+#
+# This list is verified: a clean virtualenv with exactly these packages runs
+# every script in scripts/ and trains end-to-end.
+# ============================================================================
 
-# Only needed for --arch nnunet
+# --- deep learning ---------------------------------------------------------
+torch>=2.0             # training; install CUDA build first (see note above)
+monai>=1.3             # medical-imaging models, losses, metrics, transforms
+einops                 # tensor reshaping used inside MONAI's SwinUNETR attention
+
+# --- numerics ---------------------------------------------------------------
+numpy
+scipy                  # resampling (ndimage.zoom) and connected-component analysis
+
+# --- medical image I/O ------------------------------------------------------
+SimpleITK              # reads DICOM and NIfTI; used by the converter and preprocessing
+nibabel                # NIfTI backend MONAI loads through
+
+# --- misc -------------------------------------------------------------------
+tqdm                   # progress bars during training
+
+# ============================================================================
+# OPTIONAL -- uncomment only if you need the feature.
+# ============================================================================
+
+# Required for `--arch nnunet`. Note this provides the nnU-Net *network* only.
+# For a real self-configuring nnU-Net baseline, install `nnunetv2` instead and
+# use its own CLI -- see DESIGN_NOTES.md section 6.
 # dynamic-network-architectures
 
-# Only needed for the visualisation utility (view_scan.py)
+# Required for view_scan.py, which renders PET / CT / mask overlays as PNGs.
 # matplotlib
-
-# Install PyTorch matched to your CUDA version first, e.g.:
-#   pip install torch --index-url https://download.pytorch.org/whl/cu121
-# then:
-#   pip install -r requirements.txt

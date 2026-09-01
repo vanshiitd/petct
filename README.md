@@ -61,17 +61,59 @@ place them in `./weights/`.
 
 ## Installation
 
+### 1. Check what GPU you have
+
 ```bash
-conda create -n petct_fm python=3.10
-conda activate petct_fm
-
-# Core deep learning and medical imaging libraries
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-pip install -r requirements.txt
-
-# Only needed for --arch nnunet
-pip install dynamic-network-architectures
+nvidia-smi          # note the CUDA version in the top-right
 ```
+
+### 2. Create an environment
+
+```bash
+conda create -n petct python=3.10 -y
+conda activate petct
+```
+
+(`python -m venv .venv && source .venv/bin/activate` works equally well.)
+
+### 3. Install PyTorch matched to your CUDA version
+
+Do this **before** the other requirements — a plain `pip install torch` can pull
+a CPU-only build, and training will then silently run on CPU.
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu121   # CUDA 12.1
+# or
+pip install torch --index-url https://download.pytorch.org/whl/cu118   # CUDA 11.8
+```
+
+Verify before continuing:
+
+```bash
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+```
+
+`True` on the second value means the GPU is visible. If it prints `False`, fix
+that now rather than after starting a training run.
+
+### 4. Install the rest
+
+```bash
+pip install -r requirements.txt
+```
+
+That covers everything needed to convert data, train and evaluate. Two optional
+extras are listed (commented out) at the bottom of `requirements.txt`:
+`matplotlib` for `view_scan.py`, and `dynamic-network-architectures` for
+`--arch nnunet`.
+
+### 5. Confirm it works
+
+```bash
+python scripts/finetune.py --help
+```
+
+If that prints usage rather than a traceback, the install is good.
 
 ## Configuration
 
