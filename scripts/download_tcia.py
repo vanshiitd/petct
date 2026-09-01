@@ -19,6 +19,13 @@ Examples:
     python scripts/download_tcia.py /data/AutoPET_raw --limit 20      # trial run
     python scripts/download_tcia.py /data/AutoPET_raw --retries 5
 
+Behind a proxy (e.g. a campus network), either export HTTP_PROXY / HTTPS_PROXY,
+which this script picks up automatically, or pass it explicitly:
+    python scripts/download_tcia.py /data/AutoPET_raw --proxy proxy.example.ac.in:3128
+
+To test connectivity before starting a multi-hour download:
+    python scripts/download_tcia.py --check
+
 Afterwards, convert to the layout the training pipeline expects:
     python scripts/dicom_to_nifti.py --source /data/AutoPET_raw --target /data/autopet_nifti
 """
@@ -40,6 +47,60 @@ socket.setdefaulttimeout(300)
 API = "https://services.cancerimagingarchive.net/nbia-api/services/v1"
 COLLECTION = "FDG-PET-CT-Lesions"
 MODALITIES = ("CT", "PT", "SEG")
+
+_EXPLICIT_PROXY: str | None = None
+
+
+def install_proxy(proxy: str | None) -> None:
+    """Route every request through `proxy`.
+
+    urlretrieve() shares urlopen()'s global opener, so installing here covers
+    the bulk archive downloads as well as the small JSON calls. With no --proxy
+    the default opener is left alone, and it reads HTTP_PROXY / HTTPS_PROXY
+    from the environment by itself.
+    """
+    global _EXPLICIT_PROXY
+    if not proxy:
+        return
+    if "://" not in proxy:
+        proxy = "http://" + proxy  # a bare host:port is the common way to write it
+    handler = urllib.request.ProxyHandler({"http": proxy, "https": proxy})
+    urllib.request.install_opener(urllib.request.build_opener(handler))
+    _EXPLICIT_PROXY = proxy
+
+
+def network_hint(e: BaseException) -> str:
+    """Turn a connection failure into the specific thing to go and fix."""
+    if _EXPLICIT_PROXY:
+        active = f"{_EXPLICIT_PROXY} (from --proxy)"
+    else:
+        env = urllib.request.getproxies()
+        active = (", ".join(f"{k}={v}" for k, v in env.items()) + " (from environment)"
+                  if env else "none")
+    text = str(e)
+
+    if isinstance(e, urllib.error.HTTPError) and e.code == 407:
+        why = ("The proxy requires authentication (HTTP 407). Include your "
+               "credentials: --proxy http://USER:PASS@host:3128 "
+               "(percent-encode any @ : / in the password).")
+    elif isinstance(e, (TimeoutError, socket.timeout)) or "timed out" in text:
+        why = ("The connection timed out -- typically no route to the internet "
+               "without a proxy. Pass --proxy host:port, or export HTTPS_PROXY.")
+    elif "Name or service not known" in text or "nodename nor servname" in text \
+            or "getaddrinfo" in text:
+        why = ("DNS could not resolve the host. If you set a proxy, check the "
+               "proxy's own hostname is spelled correctly and is reachable.")
+    elif "refused" in text:
+        why = ("The connection was refused. The proxy address or port is "
+               "probably wrong, or the proxy is not listening.")
+    elif "CERTIFICATE_VERIFY_FAILED" in text:
+        why = ("TLS verification failed. A proxy that intercepts HTTPS needs "
+               "its CA certificate installed; ask your network admin for it. "
+               "Do not disable certificate checking to work around this.")
+    else:
+        why = "Check that this machine can reach the public internet."
+
+    return f"{why}\n  Proxy currently in effect: {active}"
 
 
 def api_get_json(path: str, **params):
@@ -85,9 +146,25 @@ def main() -> None:
     p.add_argument("--limit", type=int, default=None,
                    help="download at most N patients (useful for a trial run)")
     p.add_argument("--retries", type=int, default=3, help="retries per series")
+    p.add_argument("--proxy", default=None, metavar="HOST:PORT",
+                   help="proxy to route all traffic through, e.g. proxy61.iitd.ac.in:3128 "
+                        "or http://USER:PASS@host:3128. Overrides HTTP_PROXY/HTTPS_PROXY.")
+    p.add_argument("--check", action="store_true",
+                   help="test the connection to TCIA and exit, without downloading")
     p.add_argument("--sleep", type=float, default=0.0,
                    help="seconds to pause between patients, to be polite to the API")
     args = p.parse_args()
+    install_proxy(args.proxy)
+
+    if args.check:
+        print(f"Contacting {API} …")
+        try:
+            n = len(api_get_json("getPatient", Collection=args.collection))
+        except Exception as e:
+            raise SystemExit(f"FAILED: {e}\n\n{network_hint(e)}")
+        print(f"OK — reached TCIA and listed {n} patients in {args.collection}.")
+        print("The connection works; rerun without --check to start downloading.")
+        return
 
     out_dir: Path = args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -102,11 +179,8 @@ def main() -> None:
     log(f"Fetching patient list for {args.collection}…")
     try:
         patients = api_get_json("getPatient", Collection=args.collection)
-    except urllib.error.URLError as e:
-        raise SystemExit(
-            f"Could not reach TCIA: {e}\n"
-            f"If you are behind a proxy, set HTTPS_PROXY / HTTP_PROXY and retry."
-        )
+    except Exception as e:
+        raise SystemExit(f"Could not reach TCIA: {e}\n\n{network_hint(e)}")
 
     ids = [p["PatientId"] for p in patients]
     if args.limit:

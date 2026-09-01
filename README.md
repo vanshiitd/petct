@@ -140,7 +140,17 @@ python scripts/download_tcia.py /data/AutoPET_raw              # the full ~419 G
 ```
 
 Standard library only, and resumable — rerun the same command to continue after
-an interruption. Behind a proxy, set `HTTPS_PROXY` / `HTTP_PROXY` first.
+an interruption.
+
+Behind a campus/corporate proxy, pass it explicitly and test first:
+
+```bash
+python scripts/download_tcia.py --check --proxy proxy61.iitd.ac.in:3128
+```
+
+`--check` contacts the API and exits, so a misconfigured proxy fails in seconds
+rather than part-way into a multi-hour download. `HTTP_PROXY` / `HTTPS_PROXY`
+environment variables are honoured too, if you prefer to set them once.
 
 ### 0b. Convert the downloaded data
 
