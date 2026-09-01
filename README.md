@@ -26,6 +26,7 @@ petct/                  # the implementation, imported by the scripts
   devices.py            #   device selection, AMP, memory helpers
 
 scripts/                # command-line entrypoints
+  download_tcia.py      #   fetch the AutoPET collection from TCIA (raw DICOM)
   dicom_to_nifti.py     #   raw TCIA DICOM -> the NIfTI layout below
   preprocess_autopet.py
   preprocess_deeppsma.py
@@ -131,7 +132,17 @@ or per-command flag:
 
 Every command supports `--help`.
 
-### 0. Convert the downloaded data
+### 0a. Download the data (skip if you already have it)
+
+```bash
+python scripts/download_tcia.py /data/AutoPET_raw --limit 20   # trial run
+python scripts/download_tcia.py /data/AutoPET_raw              # the full ~419 GB
+```
+
+Standard library only, and resumable — rerun the same command to continue after
+an interruption. Behind a proxy, set `HTTPS_PROXY` / `HTTP_PROXY` first.
+
+### 0b. Convert the downloaded data
 
 TCIA ships raw DICOM; the training pipeline expects NIfTI. This step bridges
 that gap and auto-detects what it is given (DICOM directories, per-patient zip
