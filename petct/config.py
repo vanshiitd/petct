@@ -71,7 +71,7 @@ class ArchSpec:
 ARCHS: dict[str, ArchSpec] = {
     "small": ArchSpec(
         name="small", family="swin", feature_size=24, depths=(2, 2, 2, 2),
-        lr=1e-4, pretrain_ckpt="swin_mae_best_v2.pth", weight_prefix="encoder_decoder.",
+        lr=1e-4, pretrain_ckpt="swin_small_mae_best.pth", weight_prefix="encoder_decoder.",
     ),
     "base": ArchSpec(
         name="base", family="swin", feature_size=48, depths=(2, 2, 6, 2),
@@ -79,7 +79,7 @@ ARCHS: dict[str, ArchSpec] = {
     ),
     "large": ArchSpec(
         name="large", family="swin", feature_size=96, depths=(2, 2, 18, 2),
-        lr=1e-4, pretrain_ckpt="swin_mae_best_v2.pth", weight_prefix="encoder_decoder.",
+        lr=1e-4, pretrain_ckpt="swin_large_mae_best.pth", weight_prefix="encoder_decoder.",
     ),
     # nnU-Net v2 backbone. Higher LR than the transformers: CNNs tolerate a
     # more aggressive rate here.
