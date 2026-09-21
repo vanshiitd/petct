@@ -1,6 +1,6 @@
 # Datasets and model weights are far too large for git (and some single files
-# exceed GitHub's 100MB hard limit). Fetch data with scripts/ or
-# download_all_patients.py; download checkpoints from the Dropbox link in README.
+# exceed GitHub's 100MB hard limit). Fetch data with scripts/download_tcia.py;
+# download checkpoints from the Dropbox link in README.
 sample_data/
 PETCTfoundation/
 AutoPET_Full/

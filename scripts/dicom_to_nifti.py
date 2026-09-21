@@ -18,7 +18,9 @@ Series are identified by the DICOM Modality tag, not by folder name, so it does
 not care how the download tool arranged things. CT is resampled onto the PET
 grid so the two are voxel-aligned, and the segmentation is binarised.
 
-Safe to interrupt and rerun: patients already converted are skipped.
+Zip archives are unpacked one patient at a time and deleted straight after,
+so scratch use stays at ~2 GB however large the collection is (use --tmp-dir to
+choose the drive). Safe to interrupt and rerun: converted patients are skipped.
 
 Examples:
     python scripts/dicom_to_nifti.py --source /data/AutoPET_raw --target /data/autopet_nifti
@@ -168,6 +170,96 @@ def convert_patient(patient_id: str, series: list[dict], out_dir: Path) -> str:
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
+def convert_zip_layout(zips: list[Path], args) -> dict[str, int]:
+    """Convert per-patient zip archives, unpacking ONE patient at a time.
+
+    Unpacking the whole collection first would need the full uncompressed
+    DICOM size (~400 GB for AutoPET) free in the temp directory at once.
+    Unpacking per patient and deleting straight after keeps peak scratch use
+    to a single patient (~1-2 GB).
+    """
+    by_folder: dict[str, list[Path]] = defaultdict(list)
+    for z in zips:
+        parts = z.relative_to(args.source).parts
+        by_folder[parts[0] if len(parts) > 1 else z.stem].append(z)
+
+    folders = sorted(by_folder)
+    if args.limit:
+        folders = folders[:args.limit]
+        print(f"--limit {args.limit}: converting the first {len(folders)} patients only\n")
+
+    counts: dict[str, int] = defaultdict(int)
+    for i, folder in enumerate(folders, 1):
+        if (args.target / folder / "tumorSeg.nii.gz").exists() and not args.overwrite:
+            counts["already"] += 1
+            continue
+
+        print(f"[{i}/{len(folders)}] {folder}")
+        work = Path(tempfile.mkdtemp(prefix="petct_unzip_", dir=args.tmp_dir))
+        try:
+            # keep the patient folder name as the top-level directory, so the
+            # PatientID fallback in group_by_patient still resolves to it
+            for z in by_folder[folder]:
+                dest = work / folder / z.stem
+                dest.mkdir(parents=True, exist_ok=True)
+                with zipfile.ZipFile(z) as zf:
+                    zf.extractall(dest)
+
+            groups = group_by_patient(find_series(work), work)
+            if not groups:
+                print(f"  [skip] {folder}: no readable DICOM in its archives")
+                counts["skipped"] += 1
+                continue
+            for pid, series in groups.items():
+                counts[convert_patient(pid, series, args.target / pid)] += 1
+        except Exception as e:
+            print(f"  [error] {folder}: {e}")
+            counts["error"] += 1
+        finally:
+            if args.keep_extracted:
+                print(f"  extracted DICOM left in {work}")
+            else:
+                shutil.rmtree(work, ignore_errors=True)
+    return counts
+
+
+def convert_dicom_dirs(root: Path, args) -> dict[str, int]:
+    """Convert a tree of already-unpacked DICOM directories."""
+    print(f"Scanning {root} for DICOM series…")
+    series = find_series(root)
+    if not series:
+        raise SystemExit(
+            f"No readable DICOM found under {root}.\n"
+            f"If the data is already NIfTI, pass its directory straight to --data-root."
+        )
+
+    groups = group_by_patient(series, root)
+    by_mod: dict[str, int] = defaultdict(int)
+    for s in series:
+        by_mod[s["modality"]] += 1
+    print(f"Found {len(series)} series across {len(groups)} patients "
+          f"({', '.join(f'{m}:{n}' for m, n in sorted(by_mod.items()))})\n")
+
+    patients = sorted(groups)
+    if args.limit:
+        patients = patients[:args.limit]
+        print(f"--limit {args.limit}: converting the first {len(patients)} patients only\n")
+
+    counts: dict[str, int] = defaultdict(int)
+    for i, pid in enumerate(patients, 1):
+        out_dir = args.target / pid
+        if (out_dir / "tumorSeg.nii.gz").exists() and not args.overwrite:
+            counts["already"] += 1
+            continue
+        print(f"[{i}/{len(patients)}] {pid}")
+        try:
+            counts[convert_patient(pid, groups[pid], out_dir)] += 1
+        except Exception as e:
+            print(f"  [error] {pid}: {e}")
+            counts["error"] += 1
+    return counts
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -175,12 +267,17 @@ def main() -> None:
     p.add_argument("--target", type=Path, required=True, help="output root for the NIfTI layout")
     p.add_argument("--limit", type=int, default=None, help="convert at most N patients (for a trial run)")
     p.add_argument("--overwrite", action="store_true", help="reconvert patients already present")
+    p.add_argument("--tmp-dir", type=Path, default=None,
+                   help="where to unpack zip archives (default: the system temp dir). "
+                        "Needs ~2 GB free per patient; point it at a large drive if C: is small.")
     p.add_argument("--keep-extracted", action="store_true",
-                   help="keep the temporary directory used when unpacking .zip archives")
+                   help="do not delete the unpacked DICOM after each patient (debugging; uses a lot of disk)")
     args = p.parse_args()
 
     if not args.source.exists():
         raise SystemExit(f"Source directory does not exist: {args.source}")
+    if args.tmp_dir:
+        args.tmp_dir.mkdir(parents=True, exist_ok=True)
 
     # already-converted?
     existing_nii = list(args.source.rglob("PET.nii.gz"))
@@ -188,69 +285,22 @@ def main() -> None:
         print(f"Found {len(existing_nii)} PET.nii.gz already under {args.source}.")
         print("This data appears to be converted already — point --data-root at it directly:")
         print(f"  python scripts/finetune.py --arch base --data-root {args.source} ...")
-        if not list(args.source.rglob("*.dcm")):
+        if not list(args.source.rglob("*.dcm")) and not list(args.source.rglob("*.zip")):
             return
 
-    # unpack any zips into a scratch tree first
     zips = sorted(args.source.rglob("*.zip"))
-    work_root = args.source
-    tmpdir = None
     if zips:
-        tmpdir = Path(tempfile.mkdtemp(prefix="petct_unzip_"))
-        print(f"Found {len(zips)} zip archives — extracting to {tmpdir}")
-        for z in zips:
-            try:
-                dest = tmpdir / z.relative_to(args.source).with_suffix("")
-                dest.mkdir(parents=True, exist_ok=True)
-                with zipfile.ZipFile(z) as zf:
-                    zf.extractall(dest)
-            except Exception as e:
-                print(f"  [warn] could not extract {z.name}: {e}")
-        work_root = tmpdir
+        print(f"Found {len(zips)} zip archives — unpacking one patient at a time.\n")
+        counts = convert_zip_layout(zips, args)
+    else:
+        counts = convert_dicom_dirs(args.source, args)
 
-    try:
-        print(f"Scanning {work_root} for DICOM series…")
-        series = find_series(work_root)
-        if not series:
-            raise SystemExit(
-                f"No readable DICOM found under {work_root}.\n"
-                f"If the data is already NIfTI, pass its directory straight to --data-root."
-            )
-
-        groups = group_by_patient(series, work_root)
-        by_mod = defaultdict(int)
-        for s in series:
-            by_mod[s["modality"]] += 1
-        print(f"Found {len(series)} series across {len(groups)} patients "
-              f"({', '.join(f'{m}:{n}' for m, n in sorted(by_mod.items()))})\n")
-
-        patients = sorted(groups)
-        if args.limit:
-            patients = patients[:args.limit]
-            print(f"--limit {args.limit}: converting the first {len(patients)} patients only\n")
-
-        counts = defaultdict(int)
-        for i, pid in enumerate(patients, 1):
-            out_dir = args.target / pid
-            if (out_dir / "tumorSeg.nii.gz").exists() and not args.overwrite:
-                counts["already"] += 1
-                continue
-            print(f"[{i}/{len(patients)}] {pid}")
-            try:
-                counts[convert_patient(pid, groups[pid], out_dir)] += 1
-            except Exception as e:
-                print(f"  [error] {pid}: {e}")
-                counts["error"] += 1
-
-        print(f"\nDone. converted={counts['ok']} already-present={counts['already']} "
-              f"skipped={counts['skipped']} errors={counts['error']}")
-        print(f"\nNext:\n  python scripts/finetune.py --arch base --data-root {args.target} "
-              f"--fraction 1.0 --init scratch")
-    finally:
-        if tmpdir and not args.keep_extracted:
-            shutil.rmtree(tmpdir, ignore_errors=True)
-        elif tmpdir:
-            print(f"\nExtracted DICOM left in {tmpdir}")
+    print(f"\nDone. converted={counts['ok']} already-present={counts['already']} "
+          f"skipped={counts['skipped']} errors={counts['error']}")
+    if counts["error"] or counts["skipped"]:
+        print("Rerun the same command to retry; finished patients are skipped.")
+    print(f"\nNext:\n  python scripts/finetune.py --arch small --data-root {args.target} "
+          f"--fraction 1.0 --init foundation")
 
 
 if __name__ == "__main__":

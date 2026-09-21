@@ -166,7 +166,10 @@ python scripts/dicom_to_nifti.py --source /data/AutoPET_raw --target /data/autop
 ```
 
 It produces, per patient: `PET.nii.gz`, `CT_resample.nii.gz`, `tumorSeg.nii.gz`.
-Safe to interrupt and rerun — converted patients are skipped.
+Zip archives are unpacked one patient at a time and deleted straight after, so
+scratch use stays around 2 GB however large the collection is; `--tmp-dir D:\tmp`
+chooses the drive (the default is the system temp folder). Safe to interrupt and
+rerun — converted patients are skipped.
 
 ### 1. Data preprocessing
 
