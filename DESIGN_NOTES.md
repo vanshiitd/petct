@@ -132,6 +132,19 @@ normalisation and that reasoning no longer holds.
 
 ---
 
+## 8b. Excluding known-bad patients
+
+`config.SEGMENTATION_ANOMALIES` (a tuple of patient-folder substrings) is
+filtered out in `splits.py:build_subject_index`, mirroring how
+`PRETRAIN_ANOMALIES` already works for the pretraining corpus. Empty by
+default -- populate it once specific corrupt AutoPET patients are identified
+(e.g. blank-CT scans), and it applies to every fine-tuning run automatically.
+
+Before adding a patient here, check whether the corruption is actually in
+`dicom_to_nifti.py`'s conversion (wrong series picked, bad resample) rather
+than the source DICOM -- a converter bug is fixable and should be fixed
+instead of excluding otherwise-good data.
+
 ## 8. Environment variables
 
 | Variable | Default | Meaning |

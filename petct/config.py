@@ -127,6 +127,12 @@ FINETUNE_EPOCHS = 100
 VAL_INTERVAL = 20
 SLIDING_WINDOW_OVERLAP = 0.5
 
+# AutoPET patients known to have corrupt/degraded input (e.g. a blank CT
+# channel), skipped when indexing the segmentation dataset. Match is by
+# substring of the patient folder name. Empty until specific patients are
+# identified -- see DESIGN_NOTES.md section 9.
+SEGMENTATION_ANOMALIES: tuple[str, ...] = ()
+
 # Volumes known to be corrupt in the pretraining corpus; skipped when indexing.
 PRETRAIN_ANOMALIES = (
     "LDca4f40/LDca5687", "LDca56d5/LDca5e13", "LDca4eed/LDca54ed",

@@ -31,6 +31,7 @@ def build_subject_index(base_path: Path) -> dict[str, list[dict]]:
         )
 
     subject_dict: dict[str, list[dict]] = {}
+    excluded = 0
     for pet_path in sorted(base_path.rglob("PET.nii.gz")):
         scan_dir = pet_path.parent
         ct_path = scan_dir / "CT_resample.nii.gz"
@@ -38,6 +39,9 @@ def build_subject_index(base_path: Path) -> dict[str, list[dict]]:
         if not (ct_path.exists() and seg_path.exists()):
             continue
         subject_id = pet_path.relative_to(base_path).parts[0]
+        if any(bad in subject_id for bad in config.SEGMENTATION_ANOMALIES):
+            excluded += 1
+            continue
         subject_dict.setdefault(subject_id, []).append(
             {
                 "pet_path": str(pet_path),
@@ -45,6 +49,9 @@ def build_subject_index(base_path: Path) -> dict[str, list[dict]]:
                 "seg_path": str(seg_path),
             }
         )
+
+    if excluded:
+        print(f"Excluding {excluded} scan(s) listed in config.SEGMENTATION_ANOMALIES.")
 
     if not subject_dict:
         raise SystemExit(
