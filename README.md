@@ -237,6 +237,10 @@ done
 
 ```bash
 python view_scan.py PETCT_1bb48bfb40   # render PET / CT / tumour mask for one patient
+
+# predicted vs ground-truth overlays for test patients (best / median / worst of 12)
+python scripts/predict_overlays.py --arch small --checkpoint runs/best_seg_small_100pct_mae.pth \
+    --data-root /data/autopet_nifti
 ```
 
 `tcia_api.py` provides a small client for TCIA's REST API if you need to script
