@@ -8,6 +8,16 @@ TCIA ships raw DICOM. Every other entry point in this repo expects, per scan:
     <out>/<PatientID>/CT_resample.nii.gz
     <out>/<PatientID>/tumorSeg.nii.gz
 
+A patient scanned more than once gets one directory per study,
+`<out>/<PatientID>/<YYYYMMDD>_<uid8>/…`, which `build_subject_index` already
+understands (it takes the patient ID from the first path component and globs
+for PET.nii.gz at any depth).
+
+CT, PT and SEG must come from the SAME study: a mask resampled from another
+visit is silently wrong, and a CT from another visit can land outside the PET's
+field of view and convert to a uniformly -1000 HU volume. Such a case is
+reported and skipped, never written.
+
 This script bridges that gap. It auto-detects what it is given:
 
   * directories of .dcm files  (e.g. an NBIA Data Retriever download)
@@ -43,6 +53,8 @@ import SimpleITK as sitk
 TAG_PATIENT_ID = "0010|0020"
 TAG_MODALITY = "0008|0060"
 TAG_SERIES_UID = "0020|000e"
+TAG_STUDY_UID = "0020|000d"
+TAG_STUDY_DATE = "0008|0020"
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +77,10 @@ def read_series_header(dicom_dir: Path) -> dict | None:
                              if r.HasMetaDataKey(TAG_MODALITY) else None),
                 "series_uid": (r.GetMetaData(TAG_SERIES_UID).strip()
                                if r.HasMetaDataKey(TAG_SERIES_UID) else None),
+                "study_uid": (r.GetMetaData(TAG_STUDY_UID).strip()
+                              if r.HasMetaDataKey(TAG_STUDY_UID) else None),
+                "study_date": (r.GetMetaData(TAG_STUDY_DATE).strip()
+                               if r.HasMetaDataKey(TAG_STUDY_DATE) else ""),
                 "n_files": sum(1 for x in dicom_dir.iterdir() if x.is_file()),
                 "path": dicom_dir,
             }
@@ -122,8 +138,23 @@ def load_segmentation(seg_dir: Path) -> sitk.Image:
     raise RuntimeError(f"could not read a segmentation from {seg_dir}: {last_err}")
 
 
+def split_by_study(series: list[dict]) -> dict[str, list[dict]]:
+    """Group a patient's series by StudyInstanceUID (one entry per visit)."""
+    studies: dict[str, list[dict]] = defaultdict(list)
+    for s in series:
+        studies[s.get("study_uid") or "unknown"].append(s)
+    return dict(studies)
+
+
+def study_label(series: list[dict]) -> str:
+    """'<YYYYMMDD>_<uid8>' -- matches the downloader's directory naming."""
+    uid = next((s.get("study_uid") for s in series if s.get("study_uid")), "")
+    date = next((s.get("study_date") for s in series if s.get("study_date")), "")
+    return f"{date or 'nodate'}_{uid[-8:] if uid else 'nouid'}"
+
+
 def convert_patient(patient_id: str, series: list[dict], out_dir: Path) -> str:
-    """Write PET / CT_resample / tumorSeg for one patient. Returns a status word."""
+    """Write PET / CT_resample / tumorSeg for one scan. Returns a status word."""
     cts = [s for s in series if s["modality"] == "CT"]
     pts = [s for s in series if s["modality"] in ("PT", "PET")]
     segs = [s for s in series if s["modality"] == "SEG"]
@@ -132,6 +163,19 @@ def convert_patient(patient_id: str, series: list[dict], out_dir: Path) -> str:
     if missing:
         print(f"  [skip] {patient_id}: missing {', '.join(missing)}")
         return "skipped"
+
+    # Refuse to build a scan out of different visits. Resampling a mask from
+    # one study onto another study's PET grid produces a plausible-looking but
+    # silently wrong training case -- and a CT from the wrong visit can land
+    # entirely outside the PET's field of view, giving a uniformly -1000 HU
+    # volume. Report it and move on rather than writing something wrong.
+    study_uids = {s.get("study_uid") for s in (cts[:1] + pts[:1] + segs[:1])}
+    if len(study_uids) > 1:
+        dates = {m: next((s.get("study_date") for s in v), "?")
+                 for m, v in (("CT", cts), ("PT", pts), ("SEG", segs))}
+        print(f"  [MISMATCH] {patient_id}: CT/PT/SEG come from different studies "
+              f"(CT {dates['CT']}, PT {dates['PT']}, SEG {dates['SEG']}) -- refusing")
+        return "mismatch"
 
     # several CT series can exist (e.g. different reconstructions); take the
     # one with the most slices, which is the full-resolution acquisition
@@ -178,10 +222,13 @@ def convert_zip_layout(zips: list[Path], args) -> dict[str, int]:
     Unpacking per patient and deleting straight after keeps peak scratch use
     to a single patient (~1-2 GB).
     """
+    # Key by the archive's directory, so a multi-study patient's
+    # <PatientID>/<study>/ folders are each converted as their own scan while a
+    # single-study patient's <PatientID>/ folder still works.
     by_folder: dict[str, list[Path]] = defaultdict(list)
     for z in zips:
         parts = z.relative_to(args.source).parts
-        by_folder[parts[0] if len(parts) > 1 else z.stem].append(z)
+        by_folder["/".join(parts[:-1]) if len(parts) > 1 else z.stem].append(z)
 
     folders = sorted(by_folder)
     if args.limit:
@@ -210,8 +257,11 @@ def convert_zip_layout(zips: list[Path], args) -> dict[str, int]:
                 print(f"  [skip] {folder}: no readable DICOM in its archives")
                 counts["skipped"] += 1
                 continue
+            # one archive folder is one scan: <PatientID>/ for a single-study
+            # patient, <PatientID>/<study>/ for a multi-study one. Mirror that
+            # path into the output tree.
             for pid, series in groups.items():
-                counts[convert_patient(pid, series, args.target / pid)] += 1
+                counts[convert_patient(folder, series, args.target / folder)] += 1
         except Exception as e:
             print(f"  [error] {folder}: {e}")
             counts["error"] += 1
@@ -247,16 +297,23 @@ def convert_dicom_dirs(root: Path, args) -> dict[str, int]:
 
     counts: dict[str, int] = defaultdict(int)
     for i, pid in enumerate(patients, 1):
-        out_dir = args.target / pid
-        if (out_dir / "tumorSeg.nii.gz").exists() and not args.overwrite:
-            counts["already"] += 1
-            continue
-        print(f"[{i}/{len(patients)}] {pid}")
-        try:
-            counts[convert_patient(pid, groups[pid], out_dir)] += 1
-        except Exception as e:
-            print(f"  [error] {pid}: {e}")
-            counts["error"] += 1
+        # An unpacked DICOM tree can hold several visits for one patient; each
+        # becomes its own scan rather than being merged into one (which would
+        # pair images and mask from different dates).
+        studies = split_by_study(groups[pid])
+        multi = len(studies) > 1
+        print(f"[{i}/{len(patients)}] {pid}" + (f" ({len(studies)} studies)" if multi else ""))
+        for series in studies.values():
+            out_dir = args.target / pid / study_label(series) if multi else args.target / pid
+            label = f"{pid}/{study_label(series)}" if multi else pid
+            if (out_dir / "tumorSeg.nii.gz").exists() and not args.overwrite:
+                counts["already"] += 1
+                continue
+            try:
+                counts[convert_patient(label, series, out_dir)] += 1
+            except Exception as e:
+                print(f"  [error] {label}: {e}")
+                counts["error"] += 1
     return counts
 
 
@@ -296,7 +353,13 @@ def main() -> None:
         counts = convert_dicom_dirs(args.source, args)
 
     print(f"\nDone. converted={counts['ok']} already-present={counts['already']} "
-          f"skipped={counts['skipped']} errors={counts['error']}")
+          f"skipped={counts['skipped']} mismatched={counts['mismatch']} "
+          f"errors={counts['error']}")
+    if counts["mismatch"]:
+        print(f"{counts['mismatch']} scan(s) refused because CT/PT/SEG came from different "
+              f"studies. Re-download those patients with the current downloader, which "
+              f"pairs within a study:\n"
+              f"  python scripts/download_tcia.py <raw_dir> --patients <ids>")
     if counts["error"] or counts["skipped"]:
         print("Rerun the same command to retry; finished patients are skipped.")
     print(f"\nNext:\n  python scripts/finetune.py --arch small --data-root {args.target} "
