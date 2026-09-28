@@ -147,6 +147,11 @@ def summarise(rows: list[dict]) -> None:
     dices = [r["dice"] for r in pos if r["dice"] == r["dice"]]
     hd = [r["hd95_mm"] for r in rows if r["hd95_mm"] == r["hd95_mm"]]
     fp_on_neg = [r for r in neg if r["pred_positive"]]
+    # A tumour-positive case the model predicts nothing on has no HD95 (the
+    # distance to an empty set is undefined), so it silently leaves the HD95
+    # mean -- exactly the cases a model does worst on. Report how many there
+    # are and what fraction of the positives the mean actually covers.
+    missed = [r for r in pos if not r["pred_positive"]]
 
     def mean(xs):
         return float(np.mean(xs)) if xs else float("nan")
@@ -159,9 +164,15 @@ def summarise(rows: list[dict]) -> None:
     print(f"{'Dice (tumour-positive cases)':38s} {mean(dices):>10.4f}")
     print(f"{'  median':38s} {float(np.median(dices)) if dices else float('nan'):>10.4f}")
     print(f"{'  cases scored':38s} {len(dices):>10d}")
+    print(f"{'  complete misses (empty prediction)':38s} {len(missed):>10d}"
+          f"  ({len(missed)/max(1,len(pos)):.1%} of positives, Dice 0)")
     print(f"{'HD95 mm (both masks non-empty)':38s} {mean(hd):>10.4f}")
     print(f"{'  median':38s} {float(np.median(hd)) if hd else float('nan'):>10.4f}")
-    print(f"{'  cases scored':38s} {len(hd):>10d}")
+    print(f"{'  cases scored':38s} {len(hd):>10d}"
+          f"  of {len(pos)} positives ({len(hd)/max(1,len(pos)):.1%} covered)")
+    if missed:
+        print(f"{'  NOT covered by the HD95 mean':38s} {len(missed):>10d}"
+              f"  (undefined on an empty prediction)")
     print("-" * 62)
     print(f"{'tumour-free cases with any FP':38s} {len(fp_on_neg):>10d}"
           f"  ({len(fp_on_neg)/max(1,len(neg)):.1%})")
