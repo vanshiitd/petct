@@ -77,11 +77,27 @@ def peek_archive(zip_path: Path, tmp_root: Path) -> dict[str, str] | None:
         shutil.rmtree(work, ignore_errors=True)
 
 
-def audit_patient(patient_dir: Path, tmp_root: Path) -> dict:
-    row: dict[str, str | bool] = {"patient": patient_dir.name}
+def find_scan_dirs(patient_dir: Path) -> list[Path]:
+    """Directories holding one scan's archives.
+
+    Two layouts exist: a single-study patient keeps its archives directly in the
+    patient folder, while a multi-study patient has one sub-directory per study.
+    """
+    if any((patient_dir / f"{m}.zip").exists() for m in MODALITIES):
+        return [patient_dir]
+    return sorted(d for d in patient_dir.iterdir()
+                  if d.is_dir() and any((d / f"{m}.zip").exists() for m in MODALITIES))
+
+
+def audit_patient(patient_dir: Path, tmp_root: Path, scan_dir: Path | None = None) -> dict:
+    scan_dir = scan_dir or patient_dir
+    row: dict[str, str | bool] = {
+        "patient": patient_dir.name,
+        "scan": "" if scan_dir == patient_dir else scan_dir.name,
+    }
     uids: list[str] = []
     for mod in MODALITIES:
-        tags = peek_archive(patient_dir / f"{mod}.zip", tmp_root)
+        tags = peek_archive(scan_dir / f"{mod}.zip", tmp_root)
         if tags is None:
             row[f"{mod}_study_uid"] = ""
             row[f"{mod}_study_date"] = ""
@@ -124,13 +140,19 @@ def main() -> None:
 
     rows = []
     for i, patient_dir in enumerate(patients, 1):
-        row = audit_patient(patient_dir, tmp_root)
-        rows.append(row)
-        flag = "MISMATCH" if row["mismatch"] else ("incomplete" if row["missing"] else "ok")
-        if flag != "ok" or i % 100 == 0:
-            print(f"[{i}/{len(patients)}] {row['patient']}: {flag}")
+        scan_dirs = find_scan_dirs(patient_dir)
+        if not scan_dirs:
+            print(f"[{i}/{len(patients)}] {patient_dir.name}: no archives found")
+            continue
+        for scan_dir in scan_dirs:
+            row = audit_patient(patient_dir, tmp_root, scan_dir)
+            rows.append(row)
+            flag = "MISMATCH" if row["mismatch"] else ("incomplete" if row["missing"] else "ok")
+            if flag != "ok" or i % 100 == 0:
+                name = row["patient"] + (f"/{row['scan']}" if row["scan"] else "")
+                print(f"[{i}/{len(patients)}] {name}: {flag}")
 
-    fields = ["patient", "CT_study_uid", "CT_study_date", "PT_study_uid", "PT_study_date",
+    fields = ["patient", "scan", "CT_study_uid", "CT_study_date", "PT_study_uid", "PT_study_date",
               "SEG_study_uid", "SEG_study_date", "n_modalities", "missing",
               "n_distinct_studies", "mismatch"]
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -140,10 +162,14 @@ def main() -> None:
         for row in rows:
             w.writerow({k: row.get(k, "") for k in fields})
 
-    mismatched = [r["patient"] for r in rows if r["mismatch"]]
-    incomplete = [r["patient"] for r in rows if r["missing"]]
+    def label(r: dict) -> str:
+        return r["patient"] + (f"/{r['scan']}" if r["scan"] else "")
+
+    mismatched = [label(r) for r in rows if r["mismatch"]]
+    incomplete = [label(r) for r in rows if r["missing"]]
     print(f"\n=== Summary ===")
-    print(f"patients audited : {len(rows)}")
+    print(f"patients audited : {len({r['patient'] for r in rows})}")
+    print(f"scans audited    : {len(rows)}")
     print(f"complete (3 mods): {sum(1 for r in rows if r['n_modalities'] == 3)}")
     print(f"incomplete       : {len(incomplete)} {incomplete if incomplete else ''}")
     print(f"MISMATCHED       : {len(mismatched)}")

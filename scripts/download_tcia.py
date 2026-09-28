@@ -5,6 +5,19 @@ Fetches CT + PET + segmentation for every patient as raw DICOM zip archives.
 The full collection is roughly 419 GB across ~900 patients and takes many
 hours; it is designed to be interrupted and resumed.
 
+CT, PT and SEG are paired **within a single study**. 81 of the 900 patients were
+scanned more than once, and choosing each modality's series independently across
+all of a patient's studies silently pairs a PET from one visit with a CT and a
+lesion mask from another. (Every SEG series has ImageCount 1, so "take the
+largest" is a tie for the mask on every multi-study patient, decided by nothing
+more than API response order.) Each complete study is downloaded as its own scan
+instead, which both fixes the pairing and turns repeat visits into extra data.
+
+Layout:
+
+    <out>/<PatientID>/CT.zip                         single-study patient
+    <out>/<PatientID>/<YYYYMMDD>_<uid8>/CT.zip       multi-study patient, one dir per study
+
 Standard library only -- no pip installs, and no shell-script execution
 policy to fight on Windows. Runs identically on Windows, macOS, Linux and an
 HPC login node.
@@ -110,6 +123,51 @@ def api_get_json(path: str, **params):
         return json.loads(r.read())
 
 
+def normalise_study_date(raw: str) -> str:
+    """TCIA returns e.g. '2007-06-15 00:00:00.0'; we want '20070615'."""
+    digits = "".join(ch for ch in (raw or "")[:10] if ch.isdigit())
+    return digits if len(digits) == 8 else "nodate"
+
+
+def study_folder_name(study_uid: str, study_date: str) -> str:
+    """Directory name for one study: date plus a short unique UID fragment.
+
+    The *last* 8 characters of the UID, not the first: DICOM UIDs share a long
+    organisational root ('1.3.6.1.4.1.14519…'), so any leading slice is
+    identical for every study in the collection and would collide.
+    """
+    return f"{normalise_study_date(study_date)}_{study_uid[-8:]}"
+
+
+def group_by_study(series: list[dict]) -> dict[str, list[dict]]:
+    grouped: dict[str, list[dict]] = defaultdict(list)
+    for s in series:
+        grouped[s["StudyInstanceUID"]].append(s)
+    return dict(grouped)
+
+
+def load_patient_filter(spec: str | None) -> set[str] | None:
+    """--patients accepts a comma-separated list or a file with one ID per line."""
+    if not spec:
+        return None
+    path = Path(spec)
+    if path.exists():
+        ids = [ln.strip() for ln in path.read_text().splitlines()]
+    else:
+        ids = spec.split(",")
+    return {i.strip() for i in ids if i.strip() and not i.strip().startswith("#")}
+
+
+def legacy_layout_complete(patient_dir: Path) -> bool:
+    """True if this patient is already downloaded in the old flat layout.
+
+    That layout is only trustworthy for single-study patients, where there is
+    nothing to mix up; the caller checks the study count before believing it.
+    """
+    return ((patient_dir / ".done").exists()
+            and all((patient_dir / f"{m}.zip").exists() for m in MODALITIES))
+
+
 def download_series(uid: str, dest: Path, retries: int, log) -> bool:
     """Fetch one series to `dest`, verifying the archive before keeping it."""
     url = f"{API}/getImage?SeriesInstanceUID={uid}"
@@ -145,6 +203,9 @@ def main() -> None:
     p.add_argument("--collection", default=COLLECTION, help="TCIA collection name")
     p.add_argument("--limit", type=int, default=None,
                    help="download at most N patients (useful for a trial run)")
+    p.add_argument("--patients", default=None, metavar="IDS|FILE",
+                   help="restrict to these patients: a comma-separated list of IDs, "
+                        "or a path to a file with one ID per line")
     p.add_argument("--retries", type=int, default=3, help="retries per series")
     p.add_argument("--proxy", default=None, metavar="HOST:PORT",
                    help="proxy to route all traffic through, e.g. proxy61.iitd.ac.in:3128 "
@@ -183,6 +244,14 @@ def main() -> None:
         raise SystemExit(f"Could not reach TCIA: {e}\n\n{network_hint(e)}")
 
     ids = [p["PatientId"] for p in patients]
+    wanted = load_patient_filter(args.patients)
+    if wanted is not None:
+        known = set(ids)
+        unknown = sorted(wanted - known)
+        if unknown:
+            log(f"WARNING: {len(unknown)} requested ID(s) are not in this collection: {unknown}")
+        ids = [i for i in ids if i in wanted]
+        log(f"--patients: {len(ids)} of {len(known)} patients selected")
     if args.limit:
         ids = ids[:args.limit]
         log(f"--limit {args.limit}: downloading the first {len(ids)} patients only")
@@ -192,11 +261,6 @@ def main() -> None:
     counts = defaultdict(int)
     for i, patient_id in enumerate(ids, 1):
         patient_dir = out_dir / patient_id
-        done_marker = patient_dir / ".done"
-
-        if done_marker.exists():
-            counts["already"] += 1
-            continue
 
         log(f"[{i}/{total}] {patient_id}")
         try:
@@ -206,41 +270,76 @@ def main() -> None:
             counts["error"] += 1
             continue
 
-        patient_dir.mkdir(parents=True, exist_ok=True)
-        by_mod = {m: [s for s in series if s["Modality"] == m] for m in MODALITIES}
-        all_ok = True
+        by_study = group_by_study(series)
+        complete = {uid: rows for uid, rows in by_study.items()
+                    if {s.get("Modality") for s in rows} >= set(MODALITIES)}
+        for uid in by_study.keys() - complete.keys():
+            missing = set(MODALITIES) - {s.get("Modality") for s in by_study[uid]}
+            log(f"  skip study {uid[-8:]}: missing {', '.join(sorted(missing))}")
+            counts["study_incomplete"] += 1
 
-        for mod in MODALITIES:
-            candidates = by_mod[mod]
-            if not candidates:
-                log(f"  skip: no {mod} series")
-                all_ok = False
-                continue
-
-            # multiple CT reconstructions can exist; take the most slices
-            chosen = max(candidates, key=lambda s: int(s.get("ImageCount", 0)))
-            dest = patient_dir / f"{mod}.zip"
-            if dest.exists():
-                continue
-
-            size_mb = chosen.get("FileSize", 0) / 1e6
-            log(f"  {mod}: {size_mb:.0f} MB")
-            if not download_series(chosen["SeriesInstanceUID"], dest, args.retries, log):
-                all_ok = False
-
-        if all_ok:
-            done_marker.touch()
-            counts["ok"] += 1
-        else:
+        if not complete:
+            log("  no complete study for this patient")
             counts["partial"] += 1
+            continue
+
+        # A single-study patient cannot have mixed studies, so an existing
+        # download in the old flat layout is fine and is left alone.
+        if len(complete) == 1 and legacy_layout_complete(patient_dir):
+            counts["already"] += 1
+            continue
+
+        multi = len(complete) > 1
+        patient_ok = True
+        for uid, rows in sorted(complete.items(),
+                                key=lambda kv: normalise_study_date(
+                                    next((r.get("StudyDate") for r in kv[1] if r.get("StudyDate")), ""))):
+            study_date = next((r.get("StudyDate") for r in rows if r.get("StudyDate")), "")
+            # one directory per study only when there is more than one; a
+            # single-study patient keeps the flat layout the rest of the
+            # pipeline already understands
+            study_dir = patient_dir / study_folder_name(uid, study_date) if multi else patient_dir
+            if (study_dir / ".done").exists():
+                counts["study_already"] += 1
+                continue
+
+            study_dir.mkdir(parents=True, exist_ok=True)
+            label = f"{normalise_study_date(study_date)}" + (f"/{uid[-8:]}" if multi else "")
+            all_ok = True
+
+            for mod in MODALITIES:
+                candidates = [s for s in rows if s.get("Modality") == mod]
+                # several reconstructions of one modality can exist *within* a
+                # study; the most slices is the full-resolution acquisition, and
+                # the choice is safe now that it cannot cross a study boundary
+                chosen = max(candidates, key=lambda s: int(s.get("ImageCount", 0)))
+                dest = study_dir / f"{mod}.zip"
+                if dest.exists():
+                    continue
+
+                size_mb = float(chosen.get("FileSize", 0)) / 1e6
+                log(f"  {label} {mod}: {size_mb:.0f} MB")
+                if not download_series(chosen["SeriesInstanceUID"], dest, args.retries, log):
+                    all_ok = False
+
+            if all_ok:
+                (study_dir / ".done").touch()
+                counts["study_ok"] += 1
+            else:
+                counts["study_failed"] += 1
+                patient_ok = False
+
+        counts["ok" if patient_ok else "partial"] += 1
 
         if args.sleep:
             time.sleep(args.sleep)
 
-    log(f"DONE. complete={counts['ok']} already={counts['already']} "
-        f"partial={counts['partial']} errors={counts['error']}")
-    if counts["partial"] or counts["error"]:
-        log("Rerun the same command to retry the incomplete patients.")
+    log(f"DONE. patients complete={counts['ok']} already={counts['already']} "
+        f"partial={counts['partial']} errors={counts['error']} | "
+        f"studies ok={counts['study_ok']} already={counts['study_already']} "
+        f"failed={counts['study_failed']} incomplete-in-tcia={counts['study_incomplete']}")
+    if counts["partial"] or counts["error"] or counts["study_failed"]:
+        log("Rerun the same command to retry; finished studies are skipped.")
     log(f"\nNext: python scripts/dicom_to_nifti.py --source {out_dir} --target <nifti_dir>")
 
 
