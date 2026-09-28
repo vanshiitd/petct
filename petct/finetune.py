@@ -91,8 +91,15 @@ def run_finetuning(
     val_interval: int = config.VAL_INTERVAL,
     split_name: str = "full",
     num_workers: int = 4,
+    split_file: Path | None = None,
 ) -> Path:
-    """Fine-tune a backbone for tumour segmentation. Returns best-checkpoint path."""
+    """Fine-tune a backbone for tumour segmentation. Returns best-checkpoint path.
+
+    With `split_file`, the best checkpoint is chosen on a held-out **validation**
+    set and the test set is scored once at the end. Selecting the checkpoint on
+    test -- as this did before -- reports the best of N draws on the same data
+    the number is quoted from, which flatters the result.
+    """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -103,14 +110,21 @@ def run_finetuning(
     best_path = output_dir / f"best_seg_{tag}.pth"
 
     print(f"Device: {devices.describe(device)}")
-    train_loader, test_loader = get_segmentation_dataloaders(
+    train_loader, val_loader, test_loader = get_segmentation_dataloaders(
         data_root=data_root,
         train_fraction=train_fraction,
         batch_size=batch_size,
         split_name=split_name,
         num_workers=num_workers,
         pin_memory=(device.type == "cuda"),
+        split_file=split_file,
     )
+    # Select on val when there is one; fall back to the old behaviour otherwise.
+    select_loader = val_loader if val_loader is not None else test_loader
+    select_on = "val" if val_loader is not None else "test"
+    if val_loader is None:
+        print("NOTE: no --split-file, so the best checkpoint is selected on the TEST set "
+              "(legacy behaviour). Pass --split-file for an honest held-out number.")
 
     # Build the model ONCE, fully initialised, before creating the optimizer.
     model = build_segmentation_model(arch, device, use_foundation, foundation_ckpt)
@@ -181,14 +195,22 @@ def run_finetuning(
 
         if (epoch + 1) % val_interval == 0 or (epoch + 1) == epochs:
             dice, hd95 = evaluate(
-                model, test_loader, device, sw_batch_size=sw_batch_size,
-                desc=f"Epoch {epoch + 1}/{epochs} [test]",
+                model, select_loader, device, sw_batch_size=sw_batch_size,
+                desc=f"Epoch {epoch + 1}/{epochs} [{select_on}]",
             )
-            print(f"Validation -- Dice: {dice:.4f} | HD95: {hd95:.4f}")
+            print(f"{select_on.capitalize()} -- Dice: {dice:.4f} | HD95: {hd95:.4f}")
             if dice > best_metric:
                 best_metric = dice
                 torch.save(model.state_dict(), best_path)
                 print(f"New best model saved: {best_path.name} (Dice {best_metric:.4f})")
 
-    print(f"Fine-tuning complete. Best Dice: {best_metric:.4f} -> {best_path}")
+    print(f"Fine-tuning complete. Best {select_on} Dice: {best_metric:.4f} -> {best_path}")
+
+    # Score the held-out test set once, with the selected checkpoint, so the
+    # reported number was never used to make a decision.
+    if val_loader is not None:
+        model.load_state_dict(torch.load(best_path, map_location=device, weights_only=False))
+        dice, hd95 = evaluate(model, test_loader, device, sw_batch_size=sw_batch_size,
+                              desc="final [test]")
+        print(f"HELD-OUT TEST (best-on-val checkpoint) -- Dice: {dice:.4f} | HD95: {hd95:.4f}")
     return best_path

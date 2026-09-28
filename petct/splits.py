@@ -6,6 +6,7 @@ stack means the split can be inspected on any machine.
 """
 from __future__ import annotations
 
+import json
 import random
 from pathlib import Path
 
@@ -118,3 +119,46 @@ def split_subjects(
     train_files = [scan for s in final_train for scan in subject_dict[s]]
     test_files = [scan for s in test_subjects for scan in subject_dict[s]]
     return train_files, test_files
+
+
+def load_frozen_split(
+    subject_dict: dict[str, list[dict]],
+    split_file: Path,
+    train_fraction: float = 1.0,
+) -> tuple[list[dict], list[dict], list[dict]]:
+    """Read the frozen patient-level split written by scripts/make_split.py.
+
+    Returns (train_files, val_files, test_files). The partition itself is fixed
+    on disk, so unlike `split_subjects` nothing here depends on a seed or on the
+    order the filesystem returns; every model sees exactly the same patients.
+
+    `train_fraction` still subsets the *training* patients for label-efficiency
+    experiments, seeded so that a given fraction is reproducible and nested (a
+    smaller fraction is a subset of a larger one). Val and test never change.
+    """
+    split_file = Path(split_file)
+    if not split_file.exists():
+        raise SystemExit(f"Split file not found: {split_file}")
+    payload = json.loads(split_file.read_text())
+
+    def files_for(names: list[str], what: str) -> list[dict]:
+        missing = [n for n in names if n not in subject_dict]
+        if missing:
+            raise SystemExit(
+                f"{len(missing)} {what} patient(s) from {split_file.name} are absent from the "
+                f"dataset, e.g. {missing[:5]}. The split and the data root disagree."
+            )
+        return [scan for n in names for scan in subject_dict[n]]
+
+    train_patients = list(payload["splits"]["train"]["patients"])
+    val_files = files_for(payload["splits"]["val"]["patients"], "val")
+    test_files = files_for(payload["splits"]["test"]["patients"], "test")
+
+    if train_fraction < 1.0:
+        rng = random.Random(SUBSET_SEED)
+        rng.shuffle(train_patients)
+        target = max(1, int(round(len(train_patients) * train_fraction)))
+        train_patients = train_patients[:target]
+    train_files = files_for(sorted(train_patients), "train")
+
+    return train_files, val_files, test_files

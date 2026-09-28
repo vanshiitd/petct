@@ -13,12 +13,15 @@ from monai.transforms import (
 )
 
 from . import config
-from .splits import build_subject_index, split_subjects  # re-exported for convenience
+from .splits import (  # re-exported for convenience
+    build_subject_index, load_frozen_split, split_subjects,
+)
 from .transforms import AutoPETPreprocessd
 
 __all__ = [
     "build_subject_index",
     "split_subjects",
+    "load_frozen_split",
     "get_segmentation_dataloaders",
     "get_pretraining_dataloader",
 ]
@@ -34,23 +37,50 @@ def get_segmentation_dataloaders(
     split_name: str = "full",
     num_workers: int = 4,
     pin_memory: bool = True,
+    split_file: Path | None = None,
 ):
-    """Build the train/test dataloaders for fine-tuning."""
-    split = config.get_split(split_name)
+    """Build the dataloaders for fine-tuning.
+
+    Returns (train_loader, val_loader, test_loader). With `split_file` the
+    partition comes from the frozen split on disk and `val_loader` is a real,
+    separate set for checkpoint selection; without it the legacy seeded split is
+    used and `val_loader` is None, leaving the caller to select on test as
+    before.
+    """
     subject_dict = build_subject_index(data_root)
     n_scans = sum(len(v) for v in subject_dict.values())
     print(f"Parsed {len(subject_dict)} patients / {n_scans} scans from {data_root}")
 
-    train_files, test_files = split_subjects(subject_dict, train_fraction, split)
-    print(
-        f"=== split='{split_name}'  train_fraction={train_fraction:.0%} ===\n"
-        f"Train: {len(train_files)} scans | Test: {len(test_files)} scans"
-    )
+    val_files: list[dict] = []
+    if split_file is not None:
+        train_files, val_files, test_files = load_frozen_split(
+            subject_dict, split_file, train_fraction)
+        print(
+            f"=== frozen split '{Path(split_file).name}'  "
+            f"train_fraction={train_fraction:.0%} ===\n"
+            f"Train: {len(train_files)} scans | Val: {len(val_files)} scans | "
+            f"Test: {len(test_files)} scans"
+        )
+    else:
+        split = config.get_split(split_name)
+        train_files, test_files = split_subjects(subject_dict, train_fraction, split)
+        print(
+            f"=== split='{split_name}'  train_fraction={train_fraction:.0%} ===\n"
+            f"Train: {len(train_files)} scans | Test: {len(test_files)} scans"
+        )
     if not train_files:
         raise SystemExit("Training split is empty -- check --train-fraction and --split.")
 
     train_tf = Compose([
         AutoPETPreprocessd(keys=["image", "label"]),
+        # A few patients' body-cropped volumes are smaller than ROI_SIZE in at
+        # least one dimension (limited-coverage acquisitions). RandSpatialCropd
+        # with random_size=False needs the input to be at least the crop size,
+        # so pad first; zero is the dataset mean after z-scoring, and the
+        # padding is dropped again by the crop whenever the volume was already
+        # large enough.
+        SpatialPadd(keys=["image", "label"], spatial_size=config.ROI_SIZE,
+                    mode="constant", constant_values=0),
         RandSpatialCropd(keys=["image", "label"], roi_size=config.ROI_SIZE, random_size=False),
         ToTensord(keys=["image", "label"]),
     ])
@@ -64,13 +94,15 @@ def get_segmentation_dataloaders(
         batch_size=batch_size, shuffle=True,
         num_workers=num_workers, pin_memory=pin_memory,
     )
-    # Test always at batch_size 1: volumes are full-size and vary in shape,
-    # so they cannot be collated into a batch.
-    test_loader = DataLoader(
-        Dataset(data=test_files, transform=test_tf),
-        batch_size=1, shuffle=False, num_workers=num_workers,
-    )
-    return train_loader, test_loader
+    # Evaluation always at batch_size 1: volumes are full-size and vary in
+    # shape, so they cannot be collated into a batch.
+    def eval_loader(files: list[dict]):
+        return DataLoader(
+            Dataset(data=files, transform=test_tf),
+            batch_size=1, shuffle=False, num_workers=num_workers,
+        )
+
+    return train_loader, (eval_loader(val_files) if val_files else None), eval_loader(test_files)
 
 
 # ---------------------------------------------------------------------------

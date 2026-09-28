@@ -40,6 +40,10 @@ def main() -> None:
     p.add_argument("--data-root", type=Path, default=config.PATHS.autopet_root,
                    help="root of the labelled AutoPET data")
     p.add_argument("--output-dir", type=Path, default=config.PATHS.output_dir)
+    p.add_argument("--split-file", type=Path, default=None,
+                   help="frozen split JSON from scripts/make_split.py, e.g. "
+                        "splits/autopet_v1.json. Selects the best checkpoint on its "
+                        "val set and scores test once at the end; overrides --split.")
     p.add_argument("--split", choices=sorted(SPLITS), default="full",
                    help="'full' = 200-patient test set; 'sample' = small local datasets")
     p.add_argument("--device", default="auto", help="auto | cpu | cuda | cuda:N | mps")
@@ -74,6 +78,7 @@ def main() -> None:
         val_interval=args.val_interval,
         split_name=args.split,
         num_workers=args.num_workers,
+        split_file=args.split_file,
     )
 
 
