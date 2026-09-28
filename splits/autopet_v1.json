@@ -1,0 +1,3767 @@
+{
+ "name": "autopet_v1",
+ "seed": 2026,
+ "data_root": "D:\\data\\autopet_nifti",
+ "unit": "patient",
+ "rules": {
+  "test": "200 patients, single-study only, stratified on tumour presence",
+  "val": "10% of the remaining patients, stratified the same way",
+  "train": "every remaining patient"
+ },
+ "totals": {
+  "n_patients": 900,
+  "n_scans": 1014,
+  "n_multi_scan_patients": 81,
+  "n_tumour_positive_patients": 489,
+  "tumour_positive_patient_fraction": 0.5433
+ },
+ "splits": {
+  "train": {
+   "n_patients": 630,
+   "n_scans": 738,
+   "n_tumour_positive_patients": 341,
+   "n_tumour_positive_scans": 353,
+   "tumour_positive_patient_fraction": 0.5413,
+   "patients": [
+    "PETCT_0011f3deaf",
+    "PETCT_0117d7f11f",
+    "PETCT_01682f60c3",
+    "PETCT_0168f65af8",
+    "PETCT_0225325b91",
+    "PETCT_02ba7e20f5",
+    "PETCT_0410759456",
+    "PETCT_04606080a0",
+    "PETCT_04a4e1c874",
+    "PETCT_04ab5c61c9",
+    "PETCT_05808cf24e",
+    "PETCT_05bed31780",
+    "PETCT_05d8640f52",
+    "PETCT_06a46414eb",
+    "PETCT_06d55e8295",
+    "PETCT_06e7c24059",
+    "PETCT_07b7e9abfc",
+    "PETCT_07fec0d985",
+    "PETCT_080922db5a",
+    "PETCT_08198c4f0c",
+    "PETCT_08212d7f6c",
+    "PETCT_08cdb15e0b",
+    "PETCT_098c4b7b87",
+    "PETCT_09ee00bdc6",
+    "PETCT_0b57b247b6",
+    "PETCT_0b98dbe00d",
+    "PETCT_0c13e4df10",
+    "PETCT_0cda25453b",
+    "PETCT_0dbf2c2731",
+    "PETCT_0e2034240b",
+    "PETCT_0ea07b421b",
+    "PETCT_0f44cec2e6",
+    "PETCT_0f4ee9e078",
+    "PETCT_0fa313309d",
+    "PETCT_108c1763d4",
+    "PETCT_119165872d",
+    "PETCT_11e258cc1f",
+    "PETCT_12025abab5",
+    "PETCT_1253499c80",
+    "PETCT_1285b86bea",
+    "PETCT_1291700093",
+    "PETCT_13b40a817b",
+    "PETCT_13d0984c93",
+    "PETCT_13f476b02b",
+    "PETCT_147a9fcff3",
+    "PETCT_14929994cf",
+    "PETCT_1553bd8c8f",
+    "PETCT_15a205ffcc",
+    "PETCT_15cfa01130",
+    "PETCT_15f4b7254f",
+    "PETCT_16cdbc8689",
+    "PETCT_173b804eda",
+    "PETCT_176bdc5388",
+    "PETCT_1781ba966c",
+    "PETCT_17b46d7275",
+    "PETCT_182bdeba22",
+    "PETCT_185bac7954",
+    "PETCT_18e8b02af3",
+    "PETCT_1928952a0f",
+    "PETCT_193dea6ac7",
+    "PETCT_1956667fce",
+    "PETCT_19838cb8e5",
+    "PETCT_19b68a666b",
+    "PETCT_1a1712f7d0",
+    "PETCT_1a90052cb2",
+    "PETCT_1ac497ed9d",
+    "PETCT_1b1bdfc35b",
+    "PETCT_1cb2d26a19",
+    "PETCT_1e43e3d692",
+    "PETCT_1f2a4f4280",
+    "PETCT_1f65acff65",
+    "PETCT_1f6b6b0548",
+    "PETCT_1fa22c576e",
+    "PETCT_1fc35d02da",
+    "PETCT_1fe6e48293",
+    "PETCT_20995a0fe1",
+    "PETCT_20f4a3aa02",
+    "PETCT_2122b88719",
+    "PETCT_2202a936e0",
+    "PETCT_223f70f0b0",
+    "PETCT_22d07bdc49",
+    "PETCT_234f8427c0",
+    "PETCT_2428b44e92",
+    "PETCT_245182006a",
+    "PETCT_249c02c01c",
+    "PETCT_249dd35d0c",
+    "PETCT_24cb79a92b",
+    "PETCT_25707f94a2",
+    "PETCT_265c26907a",
+    "PETCT_2716c9bfff",
+    "PETCT_2745fb1adb",
+    "PETCT_2791a0b3c2",
+    "PETCT_27ad42f8a9",
+    "PETCT_28a0a0a163",
+    "PETCT_29ab45ef17",
+    "PETCT_29b372cb99",
+    "PETCT_2a6f4f0753",
+    "PETCT_2a78eed085",
+    "PETCT_2b29531d8c",
+    "PETCT_2b60c8135a",
+    "PETCT_2b8064fbe2",
+    "PETCT_2ce074c2ea",
+    "PETCT_2d70838805",
+    "PETCT_2d9638360e",
+    "PETCT_2dac5ef654",
+    "PETCT_2dc17aaeaf",
+    "PETCT_2e44706eaf",
+    "PETCT_2e97a9e5c2",
+    "PETCT_2f2ee78c89",
+    "PETCT_2f587d00b1",
+    "PETCT_2f7200f771",
+    "PETCT_2f9aec0275",
+    "PETCT_30001118d0",
+    "PETCT_302613f9a5",
+    "PETCT_30287f520f",
+    "PETCT_30c4b7062b",
+    "PETCT_30e2b83b74",
+    "PETCT_31ddf5013a",
+    "PETCT_321bba14bc",
+    "PETCT_32219760da",
+    "PETCT_323cc5aff8",
+    "PETCT_32aa845af1",
+    "PETCT_335a00191d",
+    "PETCT_345b11778a",
+    "PETCT_3481507253",
+    "PETCT_34aa521b46",
+    "PETCT_350e91119a",
+    "PETCT_35c9c85a96",
+    "PETCT_35de69968e",
+    "PETCT_36bb0257fc",
+    "PETCT_36d8219e3f",
+    "PETCT_3708f576ec",
+    "PETCT_372746cc99",
+    "PETCT_37472e737f",
+    "PETCT_37952b7ffb",
+    "PETCT_380f71df1e",
+    "PETCT_38106fde84",
+    "PETCT_38733c001e",
+    "PETCT_389462c0ac",
+    "PETCT_389c968170",
+    "PETCT_38a374d01a",
+    "PETCT_39159c05c2",
+    "PETCT_39eca178a1",
+    "PETCT_3a4be713a1",
+    "PETCT_3b14690fce",
+    "PETCT_3b1c9155f5",
+    "PETCT_3b26172779",
+    "PETCT_3b2a4af482",
+    "PETCT_3b73c2480a",
+    "PETCT_3ba0277c0c",
+    "PETCT_3bce0eb7aa",
+    "PETCT_3c71e8f518",
+    "PETCT_3c94a00f90",
+    "PETCT_3cf68da275",
+    "PETCT_3d6f425a76",
+    "PETCT_3eac8f16d4",
+    "PETCT_3f3df20439",
+    "PETCT_3f5a9f616f",
+    "PETCT_4011ffe8ae",
+    "PETCT_402c061122",
+    "PETCT_4076ea9a15",
+    "PETCT_4095c12e2d",
+    "PETCT_40f0749cb7",
+    "PETCT_41472f5ce9",
+    "PETCT_41bd54f97a",
+    "PETCT_41f4d41517",
+    "PETCT_424e9b79c5",
+    "PETCT_4250de48c8",
+    "PETCT_42e9f16c09",
+    "PETCT_43323b7d42",
+    "PETCT_437d2c96fe",
+    "PETCT_43c9c71b31",
+    "PETCT_4404466919",
+    "PETCT_442a09f90e",
+    "PETCT_4481687483",
+    "PETCT_448225c237",
+    "PETCT_44b08f570e",
+    "PETCT_44b95650c3",
+    "PETCT_44bf7dc508",
+    "PETCT_44c04dcf65",
+    "PETCT_44cfacfd6e",
+    "PETCT_456d14846b",
+    "PETCT_456e6f9dc2",
+    "PETCT_474d7af918",
+    "PETCT_4776e75543",
+    "PETCT_4785066413",
+    "PETCT_47cd731006",
+    "PETCT_47f4460050",
+    "PETCT_48a34ccdf0",
+    "PETCT_48c70dc4a3",
+    "PETCT_48cb8662f7",
+    "PETCT_48d5467561",
+    "PETCT_49479d6e64",
+    "PETCT_49f3d297b0",
+    "PETCT_4a255db7bd",
+    "PETCT_4b688f46b0",
+    "PETCT_4be28f9cd7",
+    "PETCT_4c670a5445",
+    "PETCT_4c75fa4a5d",
+    "PETCT_4c9e7be363",
+    "PETCT_4cb875dc0b",
+    "PETCT_4d7b745a7b",
+    "PETCT_4dcf62f869",
+    "PETCT_4f7a8f41c0",
+    "PETCT_4fb1817df3",
+    "PETCT_5001354a69",
+    "PETCT_5060603ba4",
+    "PETCT_5109748328",
+    "PETCT_515c40c4a6",
+    "PETCT_5255c79083",
+    "PETCT_53a0610615",
+    "PETCT_53dad1785b",
+    "PETCT_5420205a5f",
+    "PETCT_544676de40",
+    "PETCT_548213edf7",
+    "PETCT_548bd05667",
+    "PETCT_54bed1d98f",
+    "PETCT_556b56485a",
+    "PETCT_55819a54c2",
+    "PETCT_55ae7986e1",
+    "PETCT_55ca11402a",
+    "PETCT_55d55902c6",
+    "PETCT_55e3e62722",
+    "PETCT_562294be56",
+    "PETCT_572fca6b44",
+    "PETCT_57c05962c1",
+    "PETCT_58f276897e",
+    "PETCT_591b3025ff",
+    "PETCT_5951afb86e",
+    "PETCT_595975bc57",
+    "PETCT_59e6d1de22",
+    "PETCT_5a274a0f26",
+    "PETCT_5ac322455f",
+    "PETCT_5b0aa4e971",
+    "PETCT_5bd311a5e9",
+    "PETCT_5c1baad5d8",
+    "PETCT_5c55b3087d",
+    "PETCT_5c57a98a43",
+    "PETCT_5cf118ac06",
+    "PETCT_5d10be5b89",
+    "PETCT_5d553bf6b4",
+    "PETCT_5d6bf1e75f",
+    "PETCT_5d994c3f44",
+    "PETCT_5de3ac617a",
+    "PETCT_5e2da717db",
+    "PETCT_5e339b2ecf",
+    "PETCT_5e81863014",
+    "PETCT_5e8b013935",
+    "PETCT_5f569fb737",
+    "PETCT_5fa9d9a820",
+    "PETCT_605369e88d",
+    "PETCT_607c1b38e3",
+    "PETCT_60baa6979c",
+    "PETCT_61663450f8",
+    "PETCT_6170317f2e",
+    "PETCT_61d5bc58fc",
+    "PETCT_62011ff15b",
+    "PETCT_62b114e09b",
+    "PETCT_62ced197ca",
+    "PETCT_631b419cef",
+    "PETCT_63464433c8",
+    "PETCT_642d6c78d6",
+    "PETCT_644d80e987",
+    "PETCT_64aff75516",
+    "PETCT_65346b03b8",
+    "PETCT_65a1330e90",
+    "PETCT_661ddc60e0",
+    "PETCT_674c49778c",
+    "PETCT_68a7ade33c",
+    "PETCT_68b75093c5",
+    "PETCT_68ef307665",
+    "PETCT_68f73c4518",
+    "PETCT_69606f6a25",
+    "PETCT_69aa8dbfd2",
+    "PETCT_69c90b6820",
+    "PETCT_69ee62b035",
+    "PETCT_6aea5c3a03",
+    "PETCT_6b177a3c28",
+    "PETCT_6b20c7eabb",
+    "PETCT_6c23f2686d",
+    "PETCT_6c660140ca",
+    "PETCT_6d62e15c29",
+    "PETCT_6d6a193655",
+    "PETCT_6dd36a2c19",
+    "PETCT_6e1dba94e8",
+    "PETCT_6e7c7f8087",
+    "PETCT_6f46454a8d",
+    "PETCT_7147385005",
+    "PETCT_71ae114917",
+    "PETCT_72d2d6de52",
+    "PETCT_72ee9ec897",
+    "PETCT_7323c415d0",
+    "PETCT_73597f33fe",
+    "PETCT_7365362464",
+    "PETCT_73fda3a382",
+    "PETCT_741f6130ed",
+    "PETCT_742a9413db",
+    "PETCT_74bbceaeeb",
+    "PETCT_75046e0c12",
+    "PETCT_75d5e740f0",
+    "PETCT_75e42ff05f",
+    "PETCT_760c77b289",
+    "PETCT_76ebd5c736",
+    "PETCT_770ee48d09",
+    "PETCT_777fa0ba88",
+    "PETCT_78b89bc739",
+    "PETCT_791ec15924",
+    "PETCT_7958ce0f7c",
+    "PETCT_7978e9fe62",
+    "PETCT_7a262070a9",
+    "PETCT_7a3a27371a",
+    "PETCT_7a77b26403",
+    "PETCT_7a8a062ed5",
+    "PETCT_7b477e7e0d",
+    "PETCT_7b9d625330",
+    "PETCT_7c1e6175e0",
+    "PETCT_7c96c4626d",
+    "PETCT_7ce196485f",
+    "PETCT_7cfaf65584",
+    "PETCT_7d01eb835d",
+    "PETCT_7d8aa1e94d",
+    "PETCT_7d97f7a102",
+    "PETCT_7e56b0b62c",
+    "PETCT_7ed037687a",
+    "PETCT_7ee7610b9e",
+    "PETCT_7ef5343426",
+    "PETCT_7faf36a152",
+    "PETCT_7fbb39290e",
+    "PETCT_802f19931c",
+    "PETCT_80f21e1ed0",
+    "PETCT_80f7760f65",
+    "PETCT_816732638d",
+    "PETCT_81debf13a1",
+    "PETCT_824c6a0014",
+    "PETCT_8311aeddb9",
+    "PETCT_83e4c5b578",
+    "PETCT_846c1af245",
+    "PETCT_84e7715ed9",
+    "PETCT_855c7fca12",
+    "PETCT_86153b2974",
+    "PETCT_86e54ea60a",
+    "PETCT_870181d7fd",
+    "PETCT_87afc291ec",
+    "PETCT_89065bc4ab",
+    "PETCT_89fb723947",
+    "PETCT_8a52353a72",
+    "PETCT_8aa48809ea",
+    "PETCT_8b14e6a819",
+    "PETCT_8b40e356dc",
+    "PETCT_8b714a64e7",
+    "PETCT_8b73608326",
+    "PETCT_8bf08c9a42",
+    "PETCT_8c5d99b459",
+    "PETCT_8de6953d23",
+    "PETCT_8e02f36295",
+    "PETCT_8e905366fe",
+    "PETCT_8eb3998417",
+    "PETCT_8ec13728df",
+    "PETCT_8fea5f0537",
+    "PETCT_90d668ed29",
+    "PETCT_90ea6a6aaf",
+    "PETCT_912a25778f",
+    "PETCT_91cfa804b0",
+    "PETCT_93132553f6",
+    "PETCT_93bea242d1",
+    "PETCT_94986389d4",
+    "PETCT_94cc0dac49",
+    "PETCT_956520090b",
+    "PETCT_95efdaba3c",
+    "PETCT_960c5f4262",
+    "PETCT_97320b0b58",
+    "PETCT_978c395243",
+    "PETCT_979f9c3dba",
+    "PETCT_9860ffe82d",
+    "PETCT_98cd91d44e",
+    "PETCT_9902caa7ec",
+    "PETCT_993d40ea7e",
+    "PETCT_997d4ef9a7",
+    "PETCT_99a7bfad23",
+    "PETCT_99e5728030",
+    "PETCT_9a2c6e618a",
+    "PETCT_9a418f3b3a",
+    "PETCT_9a66a81ad1",
+    "PETCT_9a83943958",
+    "PETCT_9aa97cf103",
+    "PETCT_9abb9583ec",
+    "PETCT_9ad7dffae6",
+    "PETCT_9b1bb2165a",
+    "PETCT_9b982e72cb",
+    "PETCT_9b9d67b3ff",
+    "PETCT_9c36b318e8",
+    "PETCT_9c8842d12e",
+    "PETCT_9d6e9223cc",
+    "PETCT_9d97ac5d4d",
+    "PETCT_9e864bb710",
+    "PETCT_9f206193d3",
+    "PETCT_9f6e8b1b43",
+    "PETCT_9f7c68f5ca",
+    "PETCT_9ffd8409b3",
+    "PETCT_a19c2a0c65",
+    "PETCT_a1bc00ad60",
+    "PETCT_a22ec7f62b",
+    "PETCT_a29cae0316",
+    "PETCT_a37b4bca43",
+    "PETCT_a37c4e231f",
+    "PETCT_a37da9e85d",
+    "PETCT_a3ce52b2a8",
+    "PETCT_a41d59682f",
+    "PETCT_a471649d35",
+    "PETCT_a4ccc397a9",
+    "PETCT_a4cd2b10de",
+    "PETCT_a4ff5d0d9d",
+    "PETCT_a57bd6b006",
+    "PETCT_a61d8768d0",
+    "PETCT_a7b323b3fd",
+    "PETCT_a87dda9193",
+    "PETCT_a8a5e96821",
+    "PETCT_a90955352e",
+    "PETCT_a933c9af60",
+    "PETCT_aa27cb9156",
+    "PETCT_ab1fa26e5e",
+    "PETCT_ac700ab4db",
+    "PETCT_ac75e49284",
+    "PETCT_ad7c6a4a58",
+    "PETCT_ad7cd4a9d2",
+    "PETCT_adc49adb3d",
+    "PETCT_ae3074834a",
+    "PETCT_ae4dcc5dd3",
+    "PETCT_ae6a37a9d6",
+    "PETCT_ae96f738c0",
+    "PETCT_aea7906fd2",
+    "PETCT_af119148fe",
+    "PETCT_af73b85f2c",
+    "PETCT_b04be2846e",
+    "PETCT_b0e002e974",
+    "PETCT_b1aa7ce13e",
+    "PETCT_b1de3d4248",
+    "PETCT_b2244b5591",
+    "PETCT_b258dfa7c2",
+    "PETCT_b2f82ed4b9",
+    "PETCT_b3d4773f85",
+    "PETCT_b3e923029c",
+    "PETCT_b41bc7c1e5",
+    "PETCT_b4247b8ecd",
+    "PETCT_b42adab18e",
+    "PETCT_b509ace2a2",
+    "PETCT_b510436d83",
+    "PETCT_b52920038c",
+    "PETCT_b57e1c1f5f",
+    "PETCT_b5923963ac",
+    "PETCT_b663adb148",
+    "PETCT_b66ba83594",
+    "PETCT_b6a1ee33ef",
+    "PETCT_b6fc20942c",
+    "PETCT_b7c1533a39",
+    "PETCT_ba717a1f22",
+    "PETCT_ba81e4b04b",
+    "PETCT_baacf43b4f",
+    "PETCT_bb45bfcffd",
+    "PETCT_bbb83facb4",
+    "PETCT_bc80d06f97",
+    "PETCT_bd7603e9df",
+    "PETCT_bd76c8d299",
+    "PETCT_bd7c02faa9",
+    "PETCT_bdd21f5590",
+    "PETCT_be3e55a32f",
+    "PETCT_bef465b4ad",
+    "PETCT_bf178a41b2",
+    "PETCT_bf7652bccc",
+    "PETCT_c08293f2b2",
+    "PETCT_c094a24c03",
+    "PETCT_c16c13211c",
+    "PETCT_c16d325d12",
+    "PETCT_c252d734a0",
+    "PETCT_c29aba73da",
+    "PETCT_c2a51a65c6",
+    "PETCT_c2b776974a",
+    "PETCT_c2ffda4725",
+    "PETCT_c32e1daf9b",
+    "PETCT_c38b168f1a",
+    "PETCT_c395306306",
+    "PETCT_c4a686881e",
+    "PETCT_c58477f3b4",
+    "PETCT_c596a50286",
+    "PETCT_c6730783de",
+    "PETCT_c787334539",
+    "PETCT_c799ccc2f6",
+    "PETCT_c7dc6f848c",
+    "PETCT_c7fd7e3e30",
+    "PETCT_c898e2abcb",
+    "PETCT_ca16242e89",
+    "PETCT_ca29501275",
+    "PETCT_ca5406d339",
+    "PETCT_ca89066e44",
+    "PETCT_ca9570a0eb",
+    "PETCT_cab58c1fee",
+    "PETCT_cb1f5e74ab",
+    "PETCT_cb83710e3d",
+    "PETCT_cc1698663a",
+    "PETCT_cc5c58c82d",
+    "PETCT_cc7cb73213",
+    "PETCT_ccb9c375b2",
+    "PETCT_ccd8f5ff71",
+    "PETCT_cd2ef932b5",
+    "PETCT_cd9bdca46b",
+    "PETCT_cdd237e9b3",
+    "PETCT_ce0ffef966",
+    "PETCT_cf20ad1656",
+    "PETCT_cf3725edf0",
+    "PETCT_d0086487f4",
+    "PETCT_d103e57f0e",
+    "PETCT_d1f456d229",
+    "PETCT_d206b891ee",
+    "PETCT_d31a5688a2",
+    "PETCT_d31c9ebd93",
+    "PETCT_d3208ff062",
+    "PETCT_d325897ff4",
+    "PETCT_d3d61785e6",
+    "PETCT_d3dac0d1cd",
+    "PETCT_d3f13dff4b",
+    "PETCT_d4112bc7ba",
+    "PETCT_d4a08e4bde",
+    "PETCT_d4b2ff9721",
+    "PETCT_d4d3d7dfc1",
+    "PETCT_d5103c8fbf",
+    "PETCT_d51bacdaba",
+    "PETCT_d539f5a88b",
+    "PETCT_d5e2aa7feb",
+    "PETCT_d626611daf",
+    "PETCT_d65cf203be",
+    "PETCT_d674a028b1",
+    "PETCT_d69c3fceba",
+    "PETCT_d69eabbb20",
+    "PETCT_d6a48a629d",
+    "PETCT_d6de1252d9",
+    "PETCT_d7ca3d4aaa",
+    "PETCT_d8d9e52cd5",
+    "PETCT_d951eeb735",
+    "PETCT_da4ce0da01",
+    "PETCT_dac5cd2a4d",
+    "PETCT_dadcd69ba9",
+    "PETCT_dae86b88e2",
+    "PETCT_db3bac356a",
+    "PETCT_dc3437c9b9",
+    "PETCT_dc6174cb5d",
+    "PETCT_dd6165ae36",
+    "PETCT_dd68a71e0a",
+    "PETCT_dd8f9f217c",
+    "PETCT_dd975744e7",
+    "PETCT_ddbb3c69f0",
+    "PETCT_ddca6cfba6",
+    "PETCT_ded50b1e68",
+    "PETCT_df2e16771a",
+    "PETCT_e00c98b415",
+    "PETCT_e03b96666f",
+    "PETCT_e09a20d8fc",
+    "PETCT_e0a7ccecad",
+    "PETCT_e0aa99fa04",
+    "PETCT_e0fdc6212a",
+    "PETCT_e1a5b05186",
+    "PETCT_e252be4334",
+    "PETCT_e2834e6f5c",
+    "PETCT_e2a729e21f",
+    "PETCT_e344879c2e",
+    "PETCT_e37d5b9bc2",
+    "PETCT_e44480b9b8",
+    "PETCT_e4749cda88",
+    "PETCT_e4e99dbb47",
+    "PETCT_e52eca67d7",
+    "PETCT_e5b1d6b4bd",
+    "PETCT_e5d50c5569",
+    "PETCT_e61c9da258",
+    "PETCT_e664932bbc",
+    "PETCT_e68c4577d8",
+    "PETCT_e6a91fef70",
+    "PETCT_e6b8b963b2",
+    "PETCT_e6f6c84ec5",
+    "PETCT_e77124b7f4",
+    "PETCT_e79291780d",
+    "PETCT_e8624bab41",
+    "PETCT_e90a287d09",
+    "PETCT_e9feb1135e",
+    "PETCT_ea0fd89f0f",
+    "PETCT_ea42c88cc7",
+    "PETCT_ea6c621616",
+    "PETCT_eafa147e24",
+    "PETCT_ebaa30ba2e",
+    "PETCT_ebb0045704",
+    "PETCT_ec581d49ef",
+    "PETCT_ec6b934720",
+    "PETCT_eca59074b9",
+    "PETCT_ed7abf4433",
+    "PETCT_ed9fa4eff1",
+    "PETCT_eda00de6b0",
+    "PETCT_ee97822c60",
+    "PETCT_eee2ede9ad",
+    "PETCT_eeeda112bb",
+    "PETCT_ef9d41b836",
+    "PETCT_efd619ecbf",
+    "PETCT_f01e83894d",
+    "PETCT_f082a3d319",
+    "PETCT_f0a1a38a3b",
+    "PETCT_f144b214af",
+    "PETCT_f1501b1f45",
+    "PETCT_f15b868db6",
+    "PETCT_f1ca0f7c4c",
+    "PETCT_f2f28337ba",
+    "PETCT_f37014ec85",
+    "PETCT_f47e31ceb5",
+    "PETCT_f4813007a0",
+    "PETCT_f5c2c09846",
+    "PETCT_f5cff2e59d",
+    "PETCT_f603eeceba",
+    "PETCT_f60ea3abc5",
+    "PETCT_f6295a93a6",
+    "PETCT_f650c87621",
+    "PETCT_f75d25523c",
+    "PETCT_f7a9267a69",
+    "PETCT_f8314eb3f7",
+    "PETCT_f8aac0e202",
+    "PETCT_fa45f610c4",
+    "PETCT_faf4a6dbaa",
+    "PETCT_fbd907a179",
+    "PETCT_fc0389a486",
+    "PETCT_fcdbe15200",
+    "PETCT_fde66dd53a",
+    "PETCT_fde79b6aa9",
+    "PETCT_fe705ea1cc",
+    "PETCT_ff1451316e",
+    "PETCT_ff39795341"
+   ],
+   "cases": {
+    "PETCT_0011f3deaf": [
+     "PETCT_0011f3deaf"
+    ],
+    "PETCT_0117d7f11f": [
+     "PETCT_0117d7f11f"
+    ],
+    "PETCT_01682f60c3": [
+     "PETCT_01682f60c3"
+    ],
+    "PETCT_0168f65af8": [
+     "PETCT_0168f65af8"
+    ],
+    "PETCT_0225325b91": [
+     "PETCT_0225325b91"
+    ],
+    "PETCT_02ba7e20f5": [
+     "PETCT_02ba7e20f5"
+    ],
+    "PETCT_0410759456": [
+     "PETCT_0410759456_20021107_05575415",
+     "PETCT_0410759456_20030822_42920805"
+    ],
+    "PETCT_04606080a0": [
+     "PETCT_04606080a0"
+    ],
+    "PETCT_04a4e1c874": [
+     "PETCT_04a4e1c874"
+    ],
+    "PETCT_04ab5c61c9": [
+     "PETCT_04ab5c61c9"
+    ],
+    "PETCT_05808cf24e": [
+     "PETCT_05808cf24e_19990729_00842289",
+     "PETCT_05808cf24e_20060318_50591344"
+    ],
+    "PETCT_05bed31780": [
+     "PETCT_05bed31780"
+    ],
+    "PETCT_05d8640f52": [
+     "PETCT_05d8640f52"
+    ],
+    "PETCT_06a46414eb": [
+     "PETCT_06a46414eb"
+    ],
+    "PETCT_06d55e8295": [
+     "PETCT_06d55e8295"
+    ],
+    "PETCT_06e7c24059": [
+     "PETCT_06e7c24059"
+    ],
+    "PETCT_07b7e9abfc": [
+     "PETCT_07b7e9abfc"
+    ],
+    "PETCT_07fec0d985": [
+     "PETCT_07fec0d985"
+    ],
+    "PETCT_080922db5a": [
+     "PETCT_080922db5a"
+    ],
+    "PETCT_08198c4f0c": [
+     "PETCT_08198c4f0c"
+    ],
+    "PETCT_08212d7f6c": [
+     "PETCT_08212d7f6c"
+    ],
+    "PETCT_08cdb15e0b": [
+     "PETCT_08cdb15e0b"
+    ],
+    "PETCT_098c4b7b87": [
+     "PETCT_098c4b7b87"
+    ],
+    "PETCT_09ee00bdc6": [
+     "PETCT_09ee00bdc6"
+    ],
+    "PETCT_0b57b247b6": [
+     "PETCT_0b57b247b6"
+    ],
+    "PETCT_0b98dbe00d": [
+     "PETCT_0b98dbe00d"
+    ],
+    "PETCT_0c13e4df10": [
+     "PETCT_0c13e4df10"
+    ],
+    "PETCT_0cda25453b": [
+     "PETCT_0cda25453b"
+    ],
+    "PETCT_0dbf2c2731": [
+     "PETCT_0dbf2c2731"
+    ],
+    "PETCT_0e2034240b": [
+     "PETCT_0e2034240b"
+    ],
+    "PETCT_0ea07b421b": [
+     "PETCT_0ea07b421b"
+    ],
+    "PETCT_0f44cec2e6": [
+     "PETCT_0f44cec2e6"
+    ],
+    "PETCT_0f4ee9e078": [
+     "PETCT_0f4ee9e078"
+    ],
+    "PETCT_0fa313309d": [
+     "PETCT_0fa313309d_20050423_09529055",
+     "PETCT_0fa313309d_20051003_57574496"
+    ],
+    "PETCT_108c1763d4": [
+     "PETCT_108c1763d4"
+    ],
+    "PETCT_119165872d": [
+     "PETCT_119165872d"
+    ],
+    "PETCT_11e258cc1f": [
+     "PETCT_11e258cc1f"
+    ],
+    "PETCT_12025abab5": [
+     "PETCT_12025abab5"
+    ],
+    "PETCT_1253499c80": [
+     "PETCT_1253499c80"
+    ],
+    "PETCT_1285b86bea": [
+     "PETCT_1285b86bea"
+    ],
+    "PETCT_1291700093": [
+     "PETCT_1291700093"
+    ],
+    "PETCT_13b40a817b": [
+     "PETCT_13b40a817b"
+    ],
+    "PETCT_13d0984c93": [
+     "PETCT_13d0984c93"
+    ],
+    "PETCT_13f476b02b": [
+     "PETCT_13f476b02b"
+    ],
+    "PETCT_147a9fcff3": [
+     "PETCT_147a9fcff3"
+    ],
+    "PETCT_14929994cf": [
+     "PETCT_14929994cf"
+    ],
+    "PETCT_1553bd8c8f": [
+     "PETCT_1553bd8c8f"
+    ],
+    "PETCT_15a205ffcc": [
+     "PETCT_15a205ffcc"
+    ],
+    "PETCT_15cfa01130": [
+     "PETCT_15cfa01130"
+    ],
+    "PETCT_15f4b7254f": [
+     "PETCT_15f4b7254f_20030718_22544296",
+     "PETCT_15f4b7254f_20031011_53299526"
+    ],
+    "PETCT_16cdbc8689": [
+     "PETCT_16cdbc8689"
+    ],
+    "PETCT_173b804eda": [
+     "PETCT_173b804eda"
+    ],
+    "PETCT_176bdc5388": [
+     "PETCT_176bdc5388"
+    ],
+    "PETCT_1781ba966c": [
+     "PETCT_1781ba966c"
+    ],
+    "PETCT_17b46d7275": [
+     "PETCT_17b46d7275"
+    ],
+    "PETCT_182bdeba22": [
+     "PETCT_182bdeba22"
+    ],
+    "PETCT_185bac7954": [
+     "PETCT_185bac7954"
+    ],
+    "PETCT_18e8b02af3": [
+     "PETCT_18e8b02af3"
+    ],
+    "PETCT_1928952a0f": [
+     "PETCT_1928952a0f"
+    ],
+    "PETCT_193dea6ac7": [
+     "PETCT_193dea6ac7"
+    ],
+    "PETCT_1956667fce": [
+     "PETCT_1956667fce_20050728_91869901",
+     "PETCT_1956667fce_20060210_73190464"
+    ],
+    "PETCT_19838cb8e5": [
+     "PETCT_19838cb8e5"
+    ],
+    "PETCT_19b68a666b": [
+     "PETCT_19b68a666b"
+    ],
+    "PETCT_1a1712f7d0": [
+     "PETCT_1a1712f7d0_20010705_45951804",
+     "PETCT_1a1712f7d0_20050214_28278148",
+     "PETCT_1a1712f7d0_20070216_63850630"
+    ],
+    "PETCT_1a90052cb2": [
+     "PETCT_1a90052cb2_20010622_80447169",
+     "PETCT_1a90052cb2_20030906_99580674"
+    ],
+    "PETCT_1ac497ed9d": [
+     "PETCT_1ac497ed9d"
+    ],
+    "PETCT_1b1bdfc35b": [
+     "PETCT_1b1bdfc35b"
+    ],
+    "PETCT_1cb2d26a19": [
+     "PETCT_1cb2d26a19"
+    ],
+    "PETCT_1e43e3d692": [
+     "PETCT_1e43e3d692"
+    ],
+    "PETCT_1f2a4f4280": [
+     "PETCT_1f2a4f4280_20021220_96744694",
+     "PETCT_1f2a4f4280_20050612_37246988"
+    ],
+    "PETCT_1f65acff65": [
+     "PETCT_1f65acff65"
+    ],
+    "PETCT_1f6b6b0548": [
+     "PETCT_1f6b6b0548"
+    ],
+    "PETCT_1fa22c576e": [
+     "PETCT_1fa22c576e"
+    ],
+    "PETCT_1fc35d02da": [
+     "PETCT_1fc35d02da"
+    ],
+    "PETCT_1fe6e48293": [
+     "PETCT_1fe6e48293"
+    ],
+    "PETCT_20995a0fe1": [
+     "PETCT_20995a0fe1"
+    ],
+    "PETCT_20f4a3aa02": [
+     "PETCT_20f4a3aa02"
+    ],
+    "PETCT_2122b88719": [
+     "PETCT_2122b88719"
+    ],
+    "PETCT_2202a936e0": [
+     "PETCT_2202a936e0"
+    ],
+    "PETCT_223f70f0b0": [
+     "PETCT_223f70f0b0"
+    ],
+    "PETCT_22d07bdc49": [
+     "PETCT_22d07bdc49"
+    ],
+    "PETCT_234f8427c0": [
+     "PETCT_234f8427c0_20041209_97425891",
+     "PETCT_234f8427c0_20051203_43049172"
+    ],
+    "PETCT_2428b44e92": [
+     "PETCT_2428b44e92"
+    ],
+    "PETCT_245182006a": [
+     "PETCT_245182006a"
+    ],
+    "PETCT_249c02c01c": [
+     "PETCT_249c02c01c_20030306_76565884",
+     "PETCT_249c02c01c_20030726_59383154"
+    ],
+    "PETCT_249dd35d0c": [
+     "PETCT_249dd35d0c"
+    ],
+    "PETCT_24cb79a92b": [
+     "PETCT_24cb79a92b"
+    ],
+    "PETCT_25707f94a2": [
+     "PETCT_25707f94a2"
+    ],
+    "PETCT_265c26907a": [
+     "PETCT_265c26907a"
+    ],
+    "PETCT_2716c9bfff": [
+     "PETCT_2716c9bfff_20021031_55360667",
+     "PETCT_2716c9bfff_20031004_12817239",
+     "PETCT_2716c9bfff_20041120_52302459"
+    ],
+    "PETCT_2745fb1adb": [
+     "PETCT_2745fb1adb"
+    ],
+    "PETCT_2791a0b3c2": [
+     "PETCT_2791a0b3c2"
+    ],
+    "PETCT_27ad42f8a9": [
+     "PETCT_27ad42f8a9"
+    ],
+    "PETCT_28a0a0a163": [
+     "PETCT_28a0a0a163"
+    ],
+    "PETCT_29ab45ef17": [
+     "PETCT_29ab45ef17"
+    ],
+    "PETCT_29b372cb99": [
+     "PETCT_29b372cb99"
+    ],
+    "PETCT_2a6f4f0753": [
+     "PETCT_2a6f4f0753"
+    ],
+    "PETCT_2a78eed085": [
+     "PETCT_2a78eed085"
+    ],
+    "PETCT_2b29531d8c": [
+     "PETCT_2b29531d8c"
+    ],
+    "PETCT_2b60c8135a": [
+     "PETCT_2b60c8135a"
+    ],
+    "PETCT_2b8064fbe2": [
+     "PETCT_2b8064fbe2"
+    ],
+    "PETCT_2ce074c2ea": [
+     "PETCT_2ce074c2ea"
+    ],
+    "PETCT_2d70838805": [
+     "PETCT_2d70838805"
+    ],
+    "PETCT_2d9638360e": [
+     "PETCT_2d9638360e"
+    ],
+    "PETCT_2dac5ef654": [
+     "PETCT_2dac5ef654"
+    ],
+    "PETCT_2dc17aaeaf": [
+     "PETCT_2dc17aaeaf"
+    ],
+    "PETCT_2e44706eaf": [
+     "PETCT_2e44706eaf"
+    ],
+    "PETCT_2e97a9e5c2": [
+     "PETCT_2e97a9e5c2"
+    ],
+    "PETCT_2f2ee78c89": [
+     "PETCT_2f2ee78c89"
+    ],
+    "PETCT_2f587d00b1": [
+     "PETCT_2f587d00b1"
+    ],
+    "PETCT_2f7200f771": [
+     "PETCT_2f7200f771"
+    ],
+    "PETCT_2f9aec0275": [
+     "PETCT_2f9aec0275_20030531_07755211",
+     "PETCT_2f9aec0275_20031017_94489491"
+    ],
+    "PETCT_30001118d0": [
+     "PETCT_30001118d0"
+    ],
+    "PETCT_302613f9a5": [
+     "PETCT_302613f9a5"
+    ],
+    "PETCT_30287f520f": [
+     "PETCT_30287f520f"
+    ],
+    "PETCT_30c4b7062b": [
+     "PETCT_30c4b7062b"
+    ],
+    "PETCT_30e2b83b74": [
+     "PETCT_30e2b83b74_20020901_27604419",
+     "PETCT_30e2b83b74_20030426_93985741",
+     "PETCT_30e2b83b74_20030721_07781120"
+    ],
+    "PETCT_31ddf5013a": [
+     "PETCT_31ddf5013a"
+    ],
+    "PETCT_321bba14bc": [
+     "PETCT_321bba14bc"
+    ],
+    "PETCT_32219760da": [
+     "PETCT_32219760da"
+    ],
+    "PETCT_323cc5aff8": [
+     "PETCT_323cc5aff8"
+    ],
+    "PETCT_32aa845af1": [
+     "PETCT_32aa845af1_20070126_31003437",
+     "PETCT_32aa845af1_20070615_32695846"
+    ],
+    "PETCT_335a00191d": [
+     "PETCT_335a00191d"
+    ],
+    "PETCT_345b11778a": [
+     "PETCT_345b11778a"
+    ],
+    "PETCT_3481507253": [
+     "PETCT_3481507253"
+    ],
+    "PETCT_34aa521b46": [
+     "PETCT_34aa521b46"
+    ],
+    "PETCT_350e91119a": [
+     "PETCT_350e91119a"
+    ],
+    "PETCT_35c9c85a96": [
+     "PETCT_35c9c85a96_20050408_52192929",
+     "PETCT_35c9c85a96_20050923_18590618"
+    ],
+    "PETCT_35de69968e": [
+     "PETCT_35de69968e"
+    ],
+    "PETCT_36bb0257fc": [
+     "PETCT_36bb0257fc"
+    ],
+    "PETCT_36d8219e3f": [
+     "PETCT_36d8219e3f"
+    ],
+    "PETCT_3708f576ec": [
+     "PETCT_3708f576ec"
+    ],
+    "PETCT_372746cc99": [
+     "PETCT_372746cc99"
+    ],
+    "PETCT_37472e737f": [
+     "PETCT_37472e737f"
+    ],
+    "PETCT_37952b7ffb": [
+     "PETCT_37952b7ffb"
+    ],
+    "PETCT_380f71df1e": [
+     "PETCT_380f71df1e"
+    ],
+    "PETCT_38106fde84": [
+     "PETCT_38106fde84"
+    ],
+    "PETCT_38733c001e": [
+     "PETCT_38733c001e"
+    ],
+    "PETCT_389462c0ac": [
+     "PETCT_389462c0ac_20030427_32397036",
+     "PETCT_389462c0ac_20050303_52296605",
+     "PETCT_389462c0ac_20050829_62143274"
+    ],
+    "PETCT_389c968170": [
+     "PETCT_389c968170_20050819_10357236",
+     "PETCT_389c968170_20060217_01304769"
+    ],
+    "PETCT_38a374d01a": [
+     "PETCT_38a374d01a"
+    ],
+    "PETCT_39159c05c2": [
+     "PETCT_39159c05c2"
+    ],
+    "PETCT_39eca178a1": [
+     "PETCT_39eca178a1"
+    ],
+    "PETCT_3a4be713a1": [
+     "PETCT_3a4be713a1"
+    ],
+    "PETCT_3b14690fce": [
+     "PETCT_3b14690fce"
+    ],
+    "PETCT_3b1c9155f5": [
+     "PETCT_3b1c9155f5"
+    ],
+    "PETCT_3b26172779": [
+     "PETCT_3b26172779"
+    ],
+    "PETCT_3b2a4af482": [
+     "PETCT_3b2a4af482"
+    ],
+    "PETCT_3b73c2480a": [
+     "PETCT_3b73c2480a"
+    ],
+    "PETCT_3ba0277c0c": [
+     "PETCT_3ba0277c0c"
+    ],
+    "PETCT_3bce0eb7aa": [
+     "PETCT_3bce0eb7aa"
+    ],
+    "PETCT_3c71e8f518": [
+     "PETCT_3c71e8f518"
+    ],
+    "PETCT_3c94a00f90": [
+     "PETCT_3c94a00f90"
+    ],
+    "PETCT_3cf68da275": [
+     "PETCT_3cf68da275"
+    ],
+    "PETCT_3d6f425a76": [
+     "PETCT_3d6f425a76_20020128_65167631",
+     "PETCT_3d6f425a76_20020722_57537622"
+    ],
+    "PETCT_3eac8f16d4": [
+     "PETCT_3eac8f16d4"
+    ],
+    "PETCT_3f3df20439": [
+     "PETCT_3f3df20439"
+    ],
+    "PETCT_3f5a9f616f": [
+     "PETCT_3f5a9f616f"
+    ],
+    "PETCT_4011ffe8ae": [
+     "PETCT_4011ffe8ae"
+    ],
+    "PETCT_402c061122": [
+     "PETCT_402c061122_20030222_33988656",
+     "PETCT_402c061122_20030825_80122953"
+    ],
+    "PETCT_4076ea9a15": [
+     "PETCT_4076ea9a15"
+    ],
+    "PETCT_4095c12e2d": [
+     "PETCT_4095c12e2d"
+    ],
+    "PETCT_40f0749cb7": [
+     "PETCT_40f0749cb7"
+    ],
+    "PETCT_41472f5ce9": [
+     "PETCT_41472f5ce9"
+    ],
+    "PETCT_41bd54f97a": [
+     "PETCT_41bd54f97a"
+    ],
+    "PETCT_41f4d41517": [
+     "PETCT_41f4d41517"
+    ],
+    "PETCT_424e9b79c5": [
+     "PETCT_424e9b79c5"
+    ],
+    "PETCT_4250de48c8": [
+     "PETCT_4250de48c8"
+    ],
+    "PETCT_42e9f16c09": [
+     "PETCT_42e9f16c09"
+    ],
+    "PETCT_43323b7d42": [
+     "PETCT_43323b7d42"
+    ],
+    "PETCT_437d2c96fe": [
+     "PETCT_437d2c96fe"
+    ],
+    "PETCT_43c9c71b31": [
+     "PETCT_43c9c71b31"
+    ],
+    "PETCT_4404466919": [
+     "PETCT_4404466919"
+    ],
+    "PETCT_442a09f90e": [
+     "PETCT_442a09f90e"
+    ],
+    "PETCT_4481687483": [
+     "PETCT_4481687483"
+    ],
+    "PETCT_448225c237": [
+     "PETCT_448225c237"
+    ],
+    "PETCT_44b08f570e": [
+     "PETCT_44b08f570e"
+    ],
+    "PETCT_44b95650c3": [
+     "PETCT_44b95650c3"
+    ],
+    "PETCT_44bf7dc508": [
+     "PETCT_44bf7dc508"
+    ],
+    "PETCT_44c04dcf65": [
+     "PETCT_44c04dcf65"
+    ],
+    "PETCT_44cfacfd6e": [
+     "PETCT_44cfacfd6e"
+    ],
+    "PETCT_456d14846b": [
+     "PETCT_456d14846b"
+    ],
+    "PETCT_456e6f9dc2": [
+     "PETCT_456e6f9dc2"
+    ],
+    "PETCT_474d7af918": [
+     "PETCT_474d7af918"
+    ],
+    "PETCT_4776e75543": [
+     "PETCT_4776e75543"
+    ],
+    "PETCT_4785066413": [
+     "PETCT_4785066413"
+    ],
+    "PETCT_47cd731006": [
+     "PETCT_47cd731006"
+    ],
+    "PETCT_47f4460050": [
+     "PETCT_47f4460050"
+    ],
+    "PETCT_48a34ccdf0": [
+     "PETCT_48a34ccdf0"
+    ],
+    "PETCT_48c70dc4a3": [
+     "PETCT_48c70dc4a3_20061020_62896001",
+     "PETCT_48c70dc4a3_20070413_54001170"
+    ],
+    "PETCT_48cb8662f7": [
+     "PETCT_48cb8662f7"
+    ],
+    "PETCT_48d5467561": [
+     "PETCT_48d5467561_20051028_47270383",
+     "PETCT_48d5467561_20060127_72013285"
+    ],
+    "PETCT_49479d6e64": [
+     "PETCT_49479d6e64"
+    ],
+    "PETCT_49f3d297b0": [
+     "PETCT_49f3d297b0"
+    ],
+    "PETCT_4a255db7bd": [
+     "PETCT_4a255db7bd"
+    ],
+    "PETCT_4b688f46b0": [
+     "PETCT_4b688f46b0"
+    ],
+    "PETCT_4be28f9cd7": [
+     "PETCT_4be28f9cd7"
+    ],
+    "PETCT_4c670a5445": [
+     "PETCT_4c670a5445"
+    ],
+    "PETCT_4c75fa4a5d": [
+     "PETCT_4c75fa4a5d"
+    ],
+    "PETCT_4c9e7be363": [
+     "PETCT_4c9e7be363"
+    ],
+    "PETCT_4cb875dc0b": [
+     "PETCT_4cb875dc0b"
+    ],
+    "PETCT_4d7b745a7b": [
+     "PETCT_4d7b745a7b"
+    ],
+    "PETCT_4dcf62f869": [
+     "PETCT_4dcf62f869"
+    ],
+    "PETCT_4f7a8f41c0": [
+     "PETCT_4f7a8f41c0"
+    ],
+    "PETCT_4fb1817df3": [
+     "PETCT_4fb1817df3"
+    ],
+    "PETCT_5001354a69": [
+     "PETCT_5001354a69"
+    ],
+    "PETCT_5060603ba4": [
+     "PETCT_5060603ba4"
+    ],
+    "PETCT_5109748328": [
+     "PETCT_5109748328"
+    ],
+    "PETCT_515c40c4a6": [
+     "PETCT_515c40c4a6"
+    ],
+    "PETCT_5255c79083": [
+     "PETCT_5255c79083"
+    ],
+    "PETCT_53a0610615": [
+     "PETCT_53a0610615"
+    ],
+    "PETCT_53dad1785b": [
+     "PETCT_53dad1785b"
+    ],
+    "PETCT_5420205a5f": [
+     "PETCT_5420205a5f"
+    ],
+    "PETCT_544676de40": [
+     "PETCT_544676de40_20050703_10795400",
+     "PETCT_544676de40_20051215_02644814",
+     "PETCT_544676de40_20070323_15157333"
+    ],
+    "PETCT_548213edf7": [
+     "PETCT_548213edf7"
+    ],
+    "PETCT_548bd05667": [
+     "PETCT_548bd05667"
+    ],
+    "PETCT_54bed1d98f": [
+     "PETCT_54bed1d98f"
+    ],
+    "PETCT_556b56485a": [
+     "PETCT_556b56485a"
+    ],
+    "PETCT_55819a54c2": [
+     "PETCT_55819a54c2"
+    ],
+    "PETCT_55ae7986e1": [
+     "PETCT_55ae7986e1"
+    ],
+    "PETCT_55ca11402a": [
+     "PETCT_55ca11402a"
+    ],
+    "PETCT_55d55902c6": [
+     "PETCT_55d55902c6"
+    ],
+    "PETCT_55e3e62722": [
+     "PETCT_55e3e62722"
+    ],
+    "PETCT_562294be56": [
+     "PETCT_562294be56_20021021_82066544",
+     "PETCT_562294be56_20030428_49292374",
+     "PETCT_562294be56_20031115_98729285"
+    ],
+    "PETCT_572fca6b44": [
+     "PETCT_572fca6b44"
+    ],
+    "PETCT_57c05962c1": [
+     "PETCT_57c05962c1"
+    ],
+    "PETCT_58f276897e": [
+     "PETCT_58f276897e"
+    ],
+    "PETCT_591b3025ff": [
+     "PETCT_591b3025ff"
+    ],
+    "PETCT_5951afb86e": [
+     "PETCT_5951afb86e"
+    ],
+    "PETCT_595975bc57": [
+     "PETCT_595975bc57"
+    ],
+    "PETCT_59e6d1de22": [
+     "PETCT_59e6d1de22"
+    ],
+    "PETCT_5a274a0f26": [
+     "PETCT_5a274a0f26"
+    ],
+    "PETCT_5ac322455f": [
+     "PETCT_5ac322455f"
+    ],
+    "PETCT_5b0aa4e971": [
+     "PETCT_5b0aa4e971"
+    ],
+    "PETCT_5bd311a5e9": [
+     "PETCT_5bd311a5e9"
+    ],
+    "PETCT_5c1baad5d8": [
+     "PETCT_5c1baad5d8"
+    ],
+    "PETCT_5c55b3087d": [
+     "PETCT_5c55b3087d"
+    ],
+    "PETCT_5c57a98a43": [
+     "PETCT_5c57a98a43"
+    ],
+    "PETCT_5cf118ac06": [
+     "PETCT_5cf118ac06"
+    ],
+    "PETCT_5d10be5b89": [
+     "PETCT_5d10be5b89"
+    ],
+    "PETCT_5d553bf6b4": [
+     "PETCT_5d553bf6b4"
+    ],
+    "PETCT_5d6bf1e75f": [
+     "PETCT_5d6bf1e75f"
+    ],
+    "PETCT_5d994c3f44": [
+     "PETCT_5d994c3f44"
+    ],
+    "PETCT_5de3ac617a": [
+     "PETCT_5de3ac617a"
+    ],
+    "PETCT_5e2da717db": [
+     "PETCT_5e2da717db"
+    ],
+    "PETCT_5e339b2ecf": [
+     "PETCT_5e339b2ecf_20030403_27697964",
+     "PETCT_5e339b2ecf_20051111_67839829",
+     "PETCT_5e339b2ecf_20060527_52341089"
+    ],
+    "PETCT_5e81863014": [
+     "PETCT_5e81863014"
+    ],
+    "PETCT_5e8b013935": [
+     "PETCT_5e8b013935"
+    ],
+    "PETCT_5f569fb737": [
+     "PETCT_5f569fb737"
+    ],
+    "PETCT_5fa9d9a820": [
+     "PETCT_5fa9d9a820_20020915_71975551",
+     "PETCT_5fa9d9a820_20030324_61475918",
+     "PETCT_5fa9d9a820_20030913_08536159",
+     "PETCT_5fa9d9a820_20040927_07486237"
+    ],
+    "PETCT_605369e88d": [
+     "PETCT_605369e88d"
+    ],
+    "PETCT_607c1b38e3": [
+     "PETCT_607c1b38e3_20061016_06803164",
+     "PETCT_607c1b38e3_20070414_09559817"
+    ],
+    "PETCT_60baa6979c": [
+     "PETCT_60baa6979c"
+    ],
+    "PETCT_61663450f8": [
+     "PETCT_61663450f8"
+    ],
+    "PETCT_6170317f2e": [
+     "PETCT_6170317f2e"
+    ],
+    "PETCT_61d5bc58fc": [
+     "PETCT_61d5bc58fc_20050618_65613784",
+     "PETCT_61d5bc58fc_20051215_19178550",
+     "PETCT_61d5bc58fc_20060623_99582410",
+     "PETCT_61d5bc58fc_20070615_50590966"
+    ],
+    "PETCT_62011ff15b": [
+     "PETCT_62011ff15b"
+    ],
+    "PETCT_62b114e09b": [
+     "PETCT_62b114e09b_20030327_23871302",
+     "PETCT_62b114e09b_20030609_58680184"
+    ],
+    "PETCT_62ced197ca": [
+     "PETCT_62ced197ca"
+    ],
+    "PETCT_631b419cef": [
+     "PETCT_631b419cef"
+    ],
+    "PETCT_63464433c8": [
+     "PETCT_63464433c8"
+    ],
+    "PETCT_642d6c78d6": [
+     "PETCT_642d6c78d6_20050502_78584654",
+     "PETCT_642d6c78d6_20050910_61647111"
+    ],
+    "PETCT_644d80e987": [
+     "PETCT_644d80e987"
+    ],
+    "PETCT_64aff75516": [
+     "PETCT_64aff75516_20051016_21966236",
+     "PETCT_64aff75516_20060120_47995123"
+    ],
+    "PETCT_65346b03b8": [
+     "PETCT_65346b03b8"
+    ],
+    "PETCT_65a1330e90": [
+     "PETCT_65a1330e90"
+    ],
+    "PETCT_661ddc60e0": [
+     "PETCT_661ddc60e0"
+    ],
+    "PETCT_674c49778c": [
+     "PETCT_674c49778c"
+    ],
+    "PETCT_68a7ade33c": [
+     "PETCT_68a7ade33c"
+    ],
+    "PETCT_68b75093c5": [
+     "PETCT_68b75093c5"
+    ],
+    "PETCT_68ef307665": [
+     "PETCT_68ef307665"
+    ],
+    "PETCT_68f73c4518": [
+     "PETCT_68f73c4518"
+    ],
+    "PETCT_69606f6a25": [
+     "PETCT_69606f6a25"
+    ],
+    "PETCT_69aa8dbfd2": [
+     "PETCT_69aa8dbfd2"
+    ],
+    "PETCT_69c90b6820": [
+     "PETCT_69c90b6820"
+    ],
+    "PETCT_69ee62b035": [
+     "PETCT_69ee62b035"
+    ],
+    "PETCT_6aea5c3a03": [
+     "PETCT_6aea5c3a03"
+    ],
+    "PETCT_6b177a3c28": [
+     "PETCT_6b177a3c28"
+    ],
+    "PETCT_6b20c7eabb": [
+     "PETCT_6b20c7eabb"
+    ],
+    "PETCT_6c23f2686d": [
+     "PETCT_6c23f2686d"
+    ],
+    "PETCT_6c660140ca": [
+     "PETCT_6c660140ca"
+    ],
+    "PETCT_6d62e15c29": [
+     "PETCT_6d62e15c29_20060824_29472408",
+     "PETCT_6d62e15c29_20070223_87549711"
+    ],
+    "PETCT_6d6a193655": [
+     "PETCT_6d6a193655"
+    ],
+    "PETCT_6dd36a2c19": [
+     "PETCT_6dd36a2c19"
+    ],
+    "PETCT_6e1dba94e8": [
+     "PETCT_6e1dba94e8"
+    ],
+    "PETCT_6e7c7f8087": [
+     "PETCT_6e7c7f8087"
+    ],
+    "PETCT_6f46454a8d": [
+     "PETCT_6f46454a8d_20020912_04014772",
+     "PETCT_6f46454a8d_20030907_58817255",
+     "PETCT_6f46454a8d_20050903_00710900"
+    ],
+    "PETCT_7147385005": [
+     "PETCT_7147385005"
+    ],
+    "PETCT_71ae114917": [
+     "PETCT_71ae114917"
+    ],
+    "PETCT_72d2d6de52": [
+     "PETCT_72d2d6de52"
+    ],
+    "PETCT_72ee9ec897": [
+     "PETCT_72ee9ec897"
+    ],
+    "PETCT_7323c415d0": [
+     "PETCT_7323c415d0"
+    ],
+    "PETCT_73597f33fe": [
+     "PETCT_73597f33fe_20070210_55377540",
+     "PETCT_73597f33fe_20070517_92762514"
+    ],
+    "PETCT_7365362464": [
+     "PETCT_7365362464"
+    ],
+    "PETCT_73fda3a382": [
+     "PETCT_73fda3a382"
+    ],
+    "PETCT_741f6130ed": [
+     "PETCT_741f6130ed"
+    ],
+    "PETCT_742a9413db": [
+     "PETCT_742a9413db"
+    ],
+    "PETCT_74bbceaeeb": [
+     "PETCT_74bbceaeeb"
+    ],
+    "PETCT_75046e0c12": [
+     "PETCT_75046e0c12"
+    ],
+    "PETCT_75d5e740f0": [
+     "PETCT_75d5e740f0"
+    ],
+    "PETCT_75e42ff05f": [
+     "PETCT_75e42ff05f"
+    ],
+    "PETCT_760c77b289": [
+     "PETCT_760c77b289"
+    ],
+    "PETCT_76ebd5c736": [
+     "PETCT_76ebd5c736"
+    ],
+    "PETCT_770ee48d09": [
+     "PETCT_770ee48d09"
+    ],
+    "PETCT_777fa0ba88": [
+     "PETCT_777fa0ba88_20021104_55403413",
+     "PETCT_777fa0ba88_20030407_75931863"
+    ],
+    "PETCT_78b89bc739": [
+     "PETCT_78b89bc739"
+    ],
+    "PETCT_791ec15924": [
+     "PETCT_791ec15924"
+    ],
+    "PETCT_7958ce0f7c": [
+     "PETCT_7958ce0f7c"
+    ],
+    "PETCT_7978e9fe62": [
+     "PETCT_7978e9fe62"
+    ],
+    "PETCT_7a262070a9": [
+     "PETCT_7a262070a9"
+    ],
+    "PETCT_7a3a27371a": [
+     "PETCT_7a3a27371a"
+    ],
+    "PETCT_7a77b26403": [
+     "PETCT_7a77b26403"
+    ],
+    "PETCT_7a8a062ed5": [
+     "PETCT_7a8a062ed5"
+    ],
+    "PETCT_7b477e7e0d": [
+     "PETCT_7b477e7e0d_20020726_47497314",
+     "PETCT_7b477e7e0d_20030619_31732373"
+    ],
+    "PETCT_7b9d625330": [
+     "PETCT_7b9d625330"
+    ],
+    "PETCT_7c1e6175e0": [
+     "PETCT_7c1e6175e0"
+    ],
+    "PETCT_7c96c4626d": [
+     "PETCT_7c96c4626d"
+    ],
+    "PETCT_7ce196485f": [
+     "PETCT_7ce196485f"
+    ],
+    "PETCT_7cfaf65584": [
+     "PETCT_7cfaf65584"
+    ],
+    "PETCT_7d01eb835d": [
+     "PETCT_7d01eb835d"
+    ],
+    "PETCT_7d8aa1e94d": [
+     "PETCT_7d8aa1e94d"
+    ],
+    "PETCT_7d97f7a102": [
+     "PETCT_7d97f7a102"
+    ],
+    "PETCT_7e56b0b62c": [
+     "PETCT_7e56b0b62c"
+    ],
+    "PETCT_7ed037687a": [
+     "PETCT_7ed037687a"
+    ],
+    "PETCT_7ee7610b9e": [
+     "PETCT_7ee7610b9e"
+    ],
+    "PETCT_7ef5343426": [
+     "PETCT_7ef5343426"
+    ],
+    "PETCT_7faf36a152": [
+     "PETCT_7faf36a152_20020614_03016783",
+     "PETCT_7faf36a152_20051127_44626480"
+    ],
+    "PETCT_7fbb39290e": [
+     "PETCT_7fbb39290e"
+    ],
+    "PETCT_802f19931c": [
+     "PETCT_802f19931c"
+    ],
+    "PETCT_80f21e1ed0": [
+     "PETCT_80f21e1ed0"
+    ],
+    "PETCT_80f7760f65": [
+     "PETCT_80f7760f65_20050502_14533448",
+     "PETCT_80f7760f65_20051114_78303423"
+    ],
+    "PETCT_816732638d": [
+     "PETCT_816732638d"
+    ],
+    "PETCT_81debf13a1": [
+     "PETCT_81debf13a1"
+    ],
+    "PETCT_824c6a0014": [
+     "PETCT_824c6a0014"
+    ],
+    "PETCT_8311aeddb9": [
+     "PETCT_8311aeddb9_20031113_20431618",
+     "PETCT_8311aeddb9_20051216_27057155"
+    ],
+    "PETCT_83e4c5b578": [
+     "PETCT_83e4c5b578"
+    ],
+    "PETCT_846c1af245": [
+     "PETCT_846c1af245"
+    ],
+    "PETCT_84e7715ed9": [
+     "PETCT_84e7715ed9"
+    ],
+    "PETCT_855c7fca12": [
+     "PETCT_855c7fca12"
+    ],
+    "PETCT_86153b2974": [
+     "PETCT_86153b2974_20030605_96172845",
+     "PETCT_86153b2974_20050403_28566144",
+     "PETCT_86153b2974_20051002_93013514",
+     "PETCT_86153b2974_20060319_24579492",
+     "PETCT_86153b2974_20061006_61983783"
+    ],
+    "PETCT_86e54ea60a": [
+     "PETCT_86e54ea60a"
+    ],
+    "PETCT_870181d7fd": [
+     "PETCT_870181d7fd"
+    ],
+    "PETCT_87afc291ec": [
+     "PETCT_87afc291ec_20030720_97360370",
+     "PETCT_87afc291ec_20060126_36676998"
+    ],
+    "PETCT_89065bc4ab": [
+     "PETCT_89065bc4ab"
+    ],
+    "PETCT_89fb723947": [
+     "PETCT_89fb723947"
+    ],
+    "PETCT_8a52353a72": [
+     "PETCT_8a52353a72"
+    ],
+    "PETCT_8aa48809ea": [
+     "PETCT_8aa48809ea"
+    ],
+    "PETCT_8b14e6a819": [
+     "PETCT_8b14e6a819"
+    ],
+    "PETCT_8b40e356dc": [
+     "PETCT_8b40e356dc"
+    ],
+    "PETCT_8b714a64e7": [
+     "PETCT_8b714a64e7"
+    ],
+    "PETCT_8b73608326": [
+     "PETCT_8b73608326"
+    ],
+    "PETCT_8bf08c9a42": [
+     "PETCT_8bf08c9a42"
+    ],
+    "PETCT_8c5d99b459": [
+     "PETCT_8c5d99b459"
+    ],
+    "PETCT_8de6953d23": [
+     "PETCT_8de6953d23"
+    ],
+    "PETCT_8e02f36295": [
+     "PETCT_8e02f36295"
+    ],
+    "PETCT_8e905366fe": [
+     "PETCT_8e905366fe"
+    ],
+    "PETCT_8eb3998417": [
+     "PETCT_8eb3998417"
+    ],
+    "PETCT_8ec13728df": [
+     "PETCT_8ec13728df"
+    ],
+    "PETCT_8fea5f0537": [
+     "PETCT_8fea5f0537"
+    ],
+    "PETCT_90d668ed29": [
+     "PETCT_90d668ed29"
+    ],
+    "PETCT_90ea6a6aaf": [
+     "PETCT_90ea6a6aaf"
+    ],
+    "PETCT_912a25778f": [
+     "PETCT_912a25778f"
+    ],
+    "PETCT_91cfa804b0": [
+     "PETCT_91cfa804b0"
+    ],
+    "PETCT_93132553f6": [
+     "PETCT_93132553f6"
+    ],
+    "PETCT_93bea242d1": [
+     "PETCT_93bea242d1"
+    ],
+    "PETCT_94986389d4": [
+     "PETCT_94986389d4"
+    ],
+    "PETCT_94cc0dac49": [
+     "PETCT_94cc0dac49_20060310_11553966",
+     "PETCT_94cc0dac49_20070309_87958245"
+    ],
+    "PETCT_956520090b": [
+     "PETCT_956520090b"
+    ],
+    "PETCT_95efdaba3c": [
+     "PETCT_95efdaba3c"
+    ],
+    "PETCT_960c5f4262": [
+     "PETCT_960c5f4262_20030116_13900303",
+     "PETCT_960c5f4262_20050225_84599933"
+    ],
+    "PETCT_97320b0b58": [
+     "PETCT_97320b0b58_20050417_12510200",
+     "PETCT_97320b0b58_20050728_96333245"
+    ],
+    "PETCT_978c395243": [
+     "PETCT_978c395243"
+    ],
+    "PETCT_979f9c3dba": [
+     "PETCT_979f9c3dba"
+    ],
+    "PETCT_9860ffe82d": [
+     "PETCT_9860ffe82d"
+    ],
+    "PETCT_98cd91d44e": [
+     "PETCT_98cd91d44e"
+    ],
+    "PETCT_9902caa7ec": [
+     "PETCT_9902caa7ec"
+    ],
+    "PETCT_993d40ea7e": [
+     "PETCT_993d40ea7e"
+    ],
+    "PETCT_997d4ef9a7": [
+     "PETCT_997d4ef9a7"
+    ],
+    "PETCT_99a7bfad23": [
+     "PETCT_99a7bfad23"
+    ],
+    "PETCT_99e5728030": [
+     "PETCT_99e5728030"
+    ],
+    "PETCT_9a2c6e618a": [
+     "PETCT_9a2c6e618a"
+    ],
+    "PETCT_9a418f3b3a": [
+     "PETCT_9a418f3b3a"
+    ],
+    "PETCT_9a66a81ad1": [
+     "PETCT_9a66a81ad1_20041031_97504122",
+     "PETCT_9a66a81ad1_20050226_13442006",
+     "PETCT_9a66a81ad1_20051021_16371418",
+     "PETCT_9a66a81ad1_20060513_58584406"
+    ],
+    "PETCT_9a83943958": [
+     "PETCT_9a83943958"
+    ],
+    "PETCT_9aa97cf103": [
+     "PETCT_9aa97cf103"
+    ],
+    "PETCT_9abb9583ec": [
+     "PETCT_9abb9583ec"
+    ],
+    "PETCT_9ad7dffae6": [
+     "PETCT_9ad7dffae6"
+    ],
+    "PETCT_9b1bb2165a": [
+     "PETCT_9b1bb2165a"
+    ],
+    "PETCT_9b982e72cb": [
+     "PETCT_9b982e72cb"
+    ],
+    "PETCT_9b9d67b3ff": [
+     "PETCT_9b9d67b3ff"
+    ],
+    "PETCT_9c36b318e8": [
+     "PETCT_9c36b318e8"
+    ],
+    "PETCT_9c8842d12e": [
+     "PETCT_9c8842d12e"
+    ],
+    "PETCT_9d6e9223cc": [
+     "PETCT_9d6e9223cc"
+    ],
+    "PETCT_9d97ac5d4d": [
+     "PETCT_9d97ac5d4d"
+    ],
+    "PETCT_9e864bb710": [
+     "PETCT_9e864bb710"
+    ],
+    "PETCT_9f206193d3": [
+     "PETCT_9f206193d3_20030407_51198703",
+     "PETCT_9f206193d3_20030804_70609043"
+    ],
+    "PETCT_9f6e8b1b43": [
+     "PETCT_9f6e8b1b43"
+    ],
+    "PETCT_9f7c68f5ca": [
+     "PETCT_9f7c68f5ca"
+    ],
+    "PETCT_9ffd8409b3": [
+     "PETCT_9ffd8409b3"
+    ],
+    "PETCT_a19c2a0c65": [
+     "PETCT_a19c2a0c65"
+    ],
+    "PETCT_a1bc00ad60": [
+     "PETCT_a1bc00ad60_20030306_94567040",
+     "PETCT_a1bc00ad60_20060810_14094184"
+    ],
+    "PETCT_a22ec7f62b": [
+     "PETCT_a22ec7f62b"
+    ],
+    "PETCT_a29cae0316": [
+     "PETCT_a29cae0316"
+    ],
+    "PETCT_a37b4bca43": [
+     "PETCT_a37b4bca43"
+    ],
+    "PETCT_a37c4e231f": [
+     "PETCT_a37c4e231f"
+    ],
+    "PETCT_a37da9e85d": [
+     "PETCT_a37da9e85d"
+    ],
+    "PETCT_a3ce52b2a8": [
+     "PETCT_a3ce52b2a8_20021019_99028693",
+     "PETCT_a3ce52b2a8_20031115_19348149"
+    ],
+    "PETCT_a41d59682f": [
+     "PETCT_a41d59682f"
+    ],
+    "PETCT_a471649d35": [
+     "PETCT_a471649d35"
+    ],
+    "PETCT_a4ccc397a9": [
+     "PETCT_a4ccc397a9"
+    ],
+    "PETCT_a4cd2b10de": [
+     "PETCT_a4cd2b10de_20011229_49814955",
+     "PETCT_a4cd2b10de_20051015_07978514",
+     "PETCT_a4cd2b10de_20061015_40015665"
+    ],
+    "PETCT_a4ff5d0d9d": [
+     "PETCT_a4ff5d0d9d"
+    ],
+    "PETCT_a57bd6b006": [
+     "PETCT_a57bd6b006"
+    ],
+    "PETCT_a61d8768d0": [
+     "PETCT_a61d8768d0"
+    ],
+    "PETCT_a7b323b3fd": [
+     "PETCT_a7b323b3fd"
+    ],
+    "PETCT_a87dda9193": [
+     "PETCT_a87dda9193"
+    ],
+    "PETCT_a8a5e96821": [
+     "PETCT_a8a5e96821_20050311_20081737",
+     "PETCT_a8a5e96821_20050930_88749352"
+    ],
+    "PETCT_a90955352e": [
+     "PETCT_a90955352e"
+    ],
+    "PETCT_a933c9af60": [
+     "PETCT_a933c9af60"
+    ],
+    "PETCT_aa27cb9156": [
+     "PETCT_aa27cb9156"
+    ],
+    "PETCT_ab1fa26e5e": [
+     "PETCT_ab1fa26e5e"
+    ],
+    "PETCT_ac700ab4db": [
+     "PETCT_ac700ab4db"
+    ],
+    "PETCT_ac75e49284": [
+     "PETCT_ac75e49284"
+    ],
+    "PETCT_ad7c6a4a58": [
+     "PETCT_ad7c6a4a58"
+    ],
+    "PETCT_ad7cd4a9d2": [
+     "PETCT_ad7cd4a9d2"
+    ],
+    "PETCT_adc49adb3d": [
+     "PETCT_adc49adb3d"
+    ],
+    "PETCT_ae3074834a": [
+     "PETCT_ae3074834a"
+    ],
+    "PETCT_ae4dcc5dd3": [
+     "PETCT_ae4dcc5dd3"
+    ],
+    "PETCT_ae6a37a9d6": [
+     "PETCT_ae6a37a9d6_20020915_73825113",
+     "PETCT_ae6a37a9d6_20030913_83787760",
+     "PETCT_ae6a37a9d6_20050210_49552902",
+     "PETCT_ae6a37a9d6_20050818_62380520",
+     "PETCT_ae6a37a9d6_20060218_64618818"
+    ],
+    "PETCT_ae96f738c0": [
+     "PETCT_ae96f738c0_20030501_21367749",
+     "PETCT_ae96f738c0_20030911_79360169"
+    ],
+    "PETCT_aea7906fd2": [
+     "PETCT_aea7906fd2"
+    ],
+    "PETCT_af119148fe": [
+     "PETCT_af119148fe_20021205_16232785",
+     "PETCT_af119148fe_20031005_85360877",
+     "PETCT_af119148fe_20050211_13259730"
+    ],
+    "PETCT_af73b85f2c": [
+     "PETCT_af73b85f2c"
+    ],
+    "PETCT_b04be2846e": [
+     "PETCT_b04be2846e"
+    ],
+    "PETCT_b0e002e974": [
+     "PETCT_b0e002e974_20050402_02874530",
+     "PETCT_b0e002e974_20050923_99706465",
+     "PETCT_b0e002e974_20070311_40727242"
+    ],
+    "PETCT_b1aa7ce13e": [
+     "PETCT_b1aa7ce13e"
+    ],
+    "PETCT_b1de3d4248": [
+     "PETCT_b1de3d4248"
+    ],
+    "PETCT_b2244b5591": [
+     "PETCT_b2244b5591"
+    ],
+    "PETCT_b258dfa7c2": [
+     "PETCT_b258dfa7c2"
+    ],
+    "PETCT_b2f82ed4b9": [
+     "PETCT_b2f82ed4b9_20021111_52706609",
+     "PETCT_b2f82ed4b9_20030417_94726753"
+    ],
+    "PETCT_b3d4773f85": [
+     "PETCT_b3d4773f85"
+    ],
+    "PETCT_b3e923029c": [
+     "PETCT_b3e923029c_20030719_36584735",
+     "PETCT_b3e923029c_20031121_03064843"
+    ],
+    "PETCT_b41bc7c1e5": [
+     "PETCT_b41bc7c1e5_20050312_95418795",
+     "PETCT_b41bc7c1e5_20060806_33919480",
+     "PETCT_b41bc7c1e5_20061105_35532035"
+    ],
+    "PETCT_b4247b8ecd": [
+     "PETCT_b4247b8ecd_20061020_71438148",
+     "PETCT_b4247b8ecd_20070527_14457904"
+    ],
+    "PETCT_b42adab18e": [
+     "PETCT_b42adab18e"
+    ],
+    "PETCT_b509ace2a2": [
+     "PETCT_b509ace2a2"
+    ],
+    "PETCT_b510436d83": [
+     "PETCT_b510436d83_20021110_65003941",
+     "PETCT_b510436d83_20031114_60935292"
+    ],
+    "PETCT_b52920038c": [
+     "PETCT_b52920038c"
+    ],
+    "PETCT_b57e1c1f5f": [
+     "PETCT_b57e1c1f5f"
+    ],
+    "PETCT_b5923963ac": [
+     "PETCT_b5923963ac_20070217_50432609",
+     "PETCT_b5923963ac_20070602_14859935"
+    ],
+    "PETCT_b663adb148": [
+     "PETCT_b663adb148"
+    ],
+    "PETCT_b66ba83594": [
+     "PETCT_b66ba83594"
+    ],
+    "PETCT_b6a1ee33ef": [
+     "PETCT_b6a1ee33ef"
+    ],
+    "PETCT_b6fc20942c": [
+     "PETCT_b6fc20942c"
+    ],
+    "PETCT_b7c1533a39": [
+     "PETCT_b7c1533a39"
+    ],
+    "PETCT_ba717a1f22": [
+     "PETCT_ba717a1f22"
+    ],
+    "PETCT_ba81e4b04b": [
+     "PETCT_ba81e4b04b"
+    ],
+    "PETCT_baacf43b4f": [
+     "PETCT_baacf43b4f"
+    ],
+    "PETCT_bb45bfcffd": [
+     "PETCT_bb45bfcffd"
+    ],
+    "PETCT_bbb83facb4": [
+     "PETCT_bbb83facb4"
+    ],
+    "PETCT_bc80d06f97": [
+     "PETCT_bc80d06f97"
+    ],
+    "PETCT_bd7603e9df": [
+     "PETCT_bd7603e9df"
+    ],
+    "PETCT_bd76c8d299": [
+     "PETCT_bd76c8d299"
+    ],
+    "PETCT_bd7c02faa9": [
+     "PETCT_bd7c02faa9"
+    ],
+    "PETCT_bdd21f5590": [
+     "PETCT_bdd21f5590"
+    ],
+    "PETCT_be3e55a32f": [
+     "PETCT_be3e55a32f"
+    ],
+    "PETCT_bef465b4ad": [
+     "PETCT_bef465b4ad"
+    ],
+    "PETCT_bf178a41b2": [
+     "PETCT_bf178a41b2"
+    ],
+    "PETCT_bf7652bccc": [
+     "PETCT_bf7652bccc"
+    ],
+    "PETCT_c08293f2b2": [
+     "PETCT_c08293f2b2"
+    ],
+    "PETCT_c094a24c03": [
+     "PETCT_c094a24c03_20060129_69487666",
+     "PETCT_c094a24c03_20070304_73867291"
+    ],
+    "PETCT_c16c13211c": [
+     "PETCT_c16c13211c"
+    ],
+    "PETCT_c16d325d12": [
+     "PETCT_c16d325d12"
+    ],
+    "PETCT_c252d734a0": [
+     "PETCT_c252d734a0"
+    ],
+    "PETCT_c29aba73da": [
+     "PETCT_c29aba73da"
+    ],
+    "PETCT_c2a51a65c6": [
+     "PETCT_c2a51a65c6"
+    ],
+    "PETCT_c2b776974a": [
+     "PETCT_c2b776974a"
+    ],
+    "PETCT_c2ffda4725": [
+     "PETCT_c2ffda4725_20030411_84294251",
+     "PETCT_c2ffda4725_20030919_69927018"
+    ],
+    "PETCT_c32e1daf9b": [
+     "PETCT_c32e1daf9b"
+    ],
+    "PETCT_c38b168f1a": [
+     "PETCT_c38b168f1a"
+    ],
+    "PETCT_c395306306": [
+     "PETCT_c395306306"
+    ],
+    "PETCT_c4a686881e": [
+     "PETCT_c4a686881e"
+    ],
+    "PETCT_c58477f3b4": [
+     "PETCT_c58477f3b4"
+    ],
+    "PETCT_c596a50286": [
+     "PETCT_c596a50286"
+    ],
+    "PETCT_c6730783de": [
+     "PETCT_c6730783de"
+    ],
+    "PETCT_c787334539": [
+     "PETCT_c787334539"
+    ],
+    "PETCT_c799ccc2f6": [
+     "PETCT_c799ccc2f6"
+    ],
+    "PETCT_c7dc6f848c": [
+     "PETCT_c7dc6f848c"
+    ],
+    "PETCT_c7fd7e3e30": [
+     "PETCT_c7fd7e3e30"
+    ],
+    "PETCT_c898e2abcb": [
+     "PETCT_c898e2abcb"
+    ],
+    "PETCT_ca16242e89": [
+     "PETCT_ca16242e89_20020913_84392869",
+     "PETCT_ca16242e89_20030918_99161834"
+    ],
+    "PETCT_ca29501275": [
+     "PETCT_ca29501275"
+    ],
+    "PETCT_ca5406d339": [
+     "PETCT_ca5406d339"
+    ],
+    "PETCT_ca89066e44": [
+     "PETCT_ca89066e44"
+    ],
+    "PETCT_ca9570a0eb": [
+     "PETCT_ca9570a0eb"
+    ],
+    "PETCT_cab58c1fee": [
+     "PETCT_cab58c1fee"
+    ],
+    "PETCT_cb1f5e74ab": [
+     "PETCT_cb1f5e74ab"
+    ],
+    "PETCT_cb83710e3d": [
+     "PETCT_cb83710e3d"
+    ],
+    "PETCT_cc1698663a": [
+     "PETCT_cc1698663a"
+    ],
+    "PETCT_cc5c58c82d": [
+     "PETCT_cc5c58c82d"
+    ],
+    "PETCT_cc7cb73213": [
+     "PETCT_cc7cb73213"
+    ],
+    "PETCT_ccb9c375b2": [
+     "PETCT_ccb9c375b2"
+    ],
+    "PETCT_ccd8f5ff71": [
+     "PETCT_ccd8f5ff71"
+    ],
+    "PETCT_cd2ef932b5": [
+     "PETCT_cd2ef932b5"
+    ],
+    "PETCT_cd9bdca46b": [
+     "PETCT_cd9bdca46b"
+    ],
+    "PETCT_cdd237e9b3": [
+     "PETCT_cdd237e9b3"
+    ],
+    "PETCT_ce0ffef966": [
+     "PETCT_ce0ffef966"
+    ],
+    "PETCT_cf20ad1656": [
+     "PETCT_cf20ad1656"
+    ],
+    "PETCT_cf3725edf0": [
+     "PETCT_cf3725edf0"
+    ],
+    "PETCT_d0086487f4": [
+     "PETCT_d0086487f4"
+    ],
+    "PETCT_d103e57f0e": [
+     "PETCT_d103e57f0e"
+    ],
+    "PETCT_d1f456d229": [
+     "PETCT_d1f456d229"
+    ],
+    "PETCT_d206b891ee": [
+     "PETCT_d206b891ee"
+    ],
+    "PETCT_d31a5688a2": [
+     "PETCT_d31a5688a2"
+    ],
+    "PETCT_d31c9ebd93": [
+     "PETCT_d31c9ebd93"
+    ],
+    "PETCT_d3208ff062": [
+     "PETCT_d3208ff062"
+    ],
+    "PETCT_d325897ff4": [
+     "PETCT_d325897ff4_20050715_43612812",
+     "PETCT_d325897ff4_20051112_12960657",
+     "PETCT_d325897ff4_20070510_72919525"
+    ],
+    "PETCT_d3d61785e6": [
+     "PETCT_d3d61785e6"
+    ],
+    "PETCT_d3dac0d1cd": [
+     "PETCT_d3dac0d1cd"
+    ],
+    "PETCT_d3f13dff4b": [
+     "PETCT_d3f13dff4b"
+    ],
+    "PETCT_d4112bc7ba": [
+     "PETCT_d4112bc7ba"
+    ],
+    "PETCT_d4a08e4bde": [
+     "PETCT_d4a08e4bde"
+    ],
+    "PETCT_d4b2ff9721": [
+     "PETCT_d4b2ff9721"
+    ],
+    "PETCT_d4d3d7dfc1": [
+     "PETCT_d4d3d7dfc1"
+    ],
+    "PETCT_d5103c8fbf": [
+     "PETCT_d5103c8fbf"
+    ],
+    "PETCT_d51bacdaba": [
+     "PETCT_d51bacdaba"
+    ],
+    "PETCT_d539f5a88b": [
+     "PETCT_d539f5a88b"
+    ],
+    "PETCT_d5e2aa7feb": [
+     "PETCT_d5e2aa7feb"
+    ],
+    "PETCT_d626611daf": [
+     "PETCT_d626611daf_20021129_46788747",
+     "PETCT_d626611daf_20030403_05463001",
+     "PETCT_d626611daf_20031002_49836435",
+     "PETCT_d626611daf_20041112_51309149",
+     "PETCT_d626611daf_20050619_63037237"
+    ],
+    "PETCT_d65cf203be": [
+     "PETCT_d65cf203be"
+    ],
+    "PETCT_d674a028b1": [
+     "PETCT_d674a028b1"
+    ],
+    "PETCT_d69c3fceba": [
+     "PETCT_d69c3fceba"
+    ],
+    "PETCT_d69eabbb20": [
+     "PETCT_d69eabbb20"
+    ],
+    "PETCT_d6a48a629d": [
+     "PETCT_d6a48a629d_20020727_38574240",
+     "PETCT_d6a48a629d_20030306_09661967"
+    ],
+    "PETCT_d6de1252d9": [
+     "PETCT_d6de1252d9"
+    ],
+    "PETCT_d7ca3d4aaa": [
+     "PETCT_d7ca3d4aaa"
+    ],
+    "PETCT_d8d9e52cd5": [
+     "PETCT_d8d9e52cd5_20040704_52731141",
+     "PETCT_d8d9e52cd5_20050313_76684919",
+     "PETCT_d8d9e52cd5_20051007_78771939",
+     "PETCT_d8d9e52cd5_20070507_77313911"
+    ],
+    "PETCT_d951eeb735": [
+     "PETCT_d951eeb735"
+    ],
+    "PETCT_da4ce0da01": [
+     "PETCT_da4ce0da01"
+    ],
+    "PETCT_dac5cd2a4d": [
+     "PETCT_dac5cd2a4d"
+    ],
+    "PETCT_dadcd69ba9": [
+     "PETCT_dadcd69ba9"
+    ],
+    "PETCT_dae86b88e2": [
+     "PETCT_dae86b88e2"
+    ],
+    "PETCT_db3bac356a": [
+     "PETCT_db3bac356a"
+    ],
+    "PETCT_dc3437c9b9": [
+     "PETCT_dc3437c9b9"
+    ],
+    "PETCT_dc6174cb5d": [
+     "PETCT_dc6174cb5d_20021215_99978881",
+     "PETCT_dc6174cb5d_20030329_20409363"
+    ],
+    "PETCT_dd6165ae36": [
+     "PETCT_dd6165ae36"
+    ],
+    "PETCT_dd68a71e0a": [
+     "PETCT_dd68a71e0a"
+    ],
+    "PETCT_dd8f9f217c": [
+     "PETCT_dd8f9f217c"
+    ],
+    "PETCT_dd975744e7": [
+     "PETCT_dd975744e7"
+    ],
+    "PETCT_ddbb3c69f0": [
+     "PETCT_ddbb3c69f0"
+    ],
+    "PETCT_ddca6cfba6": [
+     "PETCT_ddca6cfba6"
+    ],
+    "PETCT_ded50b1e68": [
+     "PETCT_ded50b1e68"
+    ],
+    "PETCT_df2e16771a": [
+     "PETCT_df2e16771a"
+    ],
+    "PETCT_e00c98b415": [
+     "PETCT_e00c98b415"
+    ],
+    "PETCT_e03b96666f": [
+     "PETCT_e03b96666f"
+    ],
+    "PETCT_e09a20d8fc": [
+     "PETCT_e09a20d8fc"
+    ],
+    "PETCT_e0a7ccecad": [
+     "PETCT_e0a7ccecad"
+    ],
+    "PETCT_e0aa99fa04": [
+     "PETCT_e0aa99fa04"
+    ],
+    "PETCT_e0fdc6212a": [
+     "PETCT_e0fdc6212a"
+    ],
+    "PETCT_e1a5b05186": [
+     "PETCT_e1a5b05186"
+    ],
+    "PETCT_e252be4334": [
+     "PETCT_e252be4334"
+    ],
+    "PETCT_e2834e6f5c": [
+     "PETCT_e2834e6f5c"
+    ],
+    "PETCT_e2a729e21f": [
+     "PETCT_e2a729e21f"
+    ],
+    "PETCT_e344879c2e": [
+     "PETCT_e344879c2e_20061117_49133234",
+     "PETCT_e344879c2e_20070308_66774906"
+    ],
+    "PETCT_e37d5b9bc2": [
+     "PETCT_e37d5b9bc2"
+    ],
+    "PETCT_e44480b9b8": [
+     "PETCT_e44480b9b8"
+    ],
+    "PETCT_e4749cda88": [
+     "PETCT_e4749cda88"
+    ],
+    "PETCT_e4e99dbb47": [
+     "PETCT_e4e99dbb47"
+    ],
+    "PETCT_e52eca67d7": [
+     "PETCT_e52eca67d7"
+    ],
+    "PETCT_e5b1d6b4bd": [
+     "PETCT_e5b1d6b4bd"
+    ],
+    "PETCT_e5d50c5569": [
+     "PETCT_e5d50c5569"
+    ],
+    "PETCT_e61c9da258": [
+     "PETCT_e61c9da258"
+    ],
+    "PETCT_e664932bbc": [
+     "PETCT_e664932bbc"
+    ],
+    "PETCT_e68c4577d8": [
+     "PETCT_e68c4577d8"
+    ],
+    "PETCT_e6a91fef70": [
+     "PETCT_e6a91fef70"
+    ],
+    "PETCT_e6b8b963b2": [
+     "PETCT_e6b8b963b2"
+    ],
+    "PETCT_e6f6c84ec5": [
+     "PETCT_e6f6c84ec5"
+    ],
+    "PETCT_e77124b7f4": [
+     "PETCT_e77124b7f4"
+    ],
+    "PETCT_e79291780d": [
+     "PETCT_e79291780d"
+    ],
+    "PETCT_e8624bab41": [
+     "PETCT_e8624bab41"
+    ],
+    "PETCT_e90a287d09": [
+     "PETCT_e90a287d09_20020822_16144603",
+     "PETCT_e90a287d09_20030224_89291559"
+    ],
+    "PETCT_e9feb1135e": [
+     "PETCT_e9feb1135e_20050701_24942484",
+     "PETCT_e9feb1135e_20050909_39813606"
+    ],
+    "PETCT_ea0fd89f0f": [
+     "PETCT_ea0fd89f0f"
+    ],
+    "PETCT_ea42c88cc7": [
+     "PETCT_ea42c88cc7"
+    ],
+    "PETCT_ea6c621616": [
+     "PETCT_ea6c621616"
+    ],
+    "PETCT_eafa147e24": [
+     "PETCT_eafa147e24"
+    ],
+    "PETCT_ebaa30ba2e": [
+     "PETCT_ebaa30ba2e"
+    ],
+    "PETCT_ebb0045704": [
+     "PETCT_ebb0045704"
+    ],
+    "PETCT_ec581d49ef": [
+     "PETCT_ec581d49ef_20020325_43441627",
+     "PETCT_ec581d49ef_20030123_97207785"
+    ],
+    "PETCT_ec6b934720": [
+     "PETCT_ec6b934720"
+    ],
+    "PETCT_eca59074b9": [
+     "PETCT_eca59074b9"
+    ],
+    "PETCT_ed7abf4433": [
+     "PETCT_ed7abf4433"
+    ],
+    "PETCT_ed9fa4eff1": [
+     "PETCT_ed9fa4eff1"
+    ],
+    "PETCT_eda00de6b0": [
+     "PETCT_eda00de6b0"
+    ],
+    "PETCT_ee97822c60": [
+     "PETCT_ee97822c60"
+    ],
+    "PETCT_eee2ede9ad": [
+     "PETCT_eee2ede9ad"
+    ],
+    "PETCT_eeeda112bb": [
+     "PETCT_eeeda112bb"
+    ],
+    "PETCT_ef9d41b836": [
+     "PETCT_ef9d41b836"
+    ],
+    "PETCT_efd619ecbf": [
+     "PETCT_efd619ecbf"
+    ],
+    "PETCT_f01e83894d": [
+     "PETCT_f01e83894d"
+    ],
+    "PETCT_f082a3d319": [
+     "PETCT_f082a3d319"
+    ],
+    "PETCT_f0a1a38a3b": [
+     "PETCT_f0a1a38a3b"
+    ],
+    "PETCT_f144b214af": [
+     "PETCT_f144b214af"
+    ],
+    "PETCT_f1501b1f45": [
+     "PETCT_f1501b1f45"
+    ],
+    "PETCT_f15b868db6": [
+     "PETCT_f15b868db6"
+    ],
+    "PETCT_f1ca0f7c4c": [
+     "PETCT_f1ca0f7c4c"
+    ],
+    "PETCT_f2f28337ba": [
+     "PETCT_f2f28337ba"
+    ],
+    "PETCT_f37014ec85": [
+     "PETCT_f37014ec85"
+    ],
+    "PETCT_f47e31ceb5": [
+     "PETCT_f47e31ceb5"
+    ],
+    "PETCT_f4813007a0": [
+     "PETCT_f4813007a0"
+    ],
+    "PETCT_f5c2c09846": [
+     "PETCT_f5c2c09846"
+    ],
+    "PETCT_f5cff2e59d": [
+     "PETCT_f5cff2e59d"
+    ],
+    "PETCT_f603eeceba": [
+     "PETCT_f603eeceba"
+    ],
+    "PETCT_f60ea3abc5": [
+     "PETCT_f60ea3abc5"
+    ],
+    "PETCT_f6295a93a6": [
+     "PETCT_f6295a93a6"
+    ],
+    "PETCT_f650c87621": [
+     "PETCT_f650c87621_20050311_40589620",
+     "PETCT_f650c87621_20051208_17218719"
+    ],
+    "PETCT_f75d25523c": [
+     "PETCT_f75d25523c"
+    ],
+    "PETCT_f7a9267a69": [
+     "PETCT_f7a9267a69_20021101_40975431",
+     "PETCT_f7a9267a69_20030201_38868818"
+    ],
+    "PETCT_f8314eb3f7": [
+     "PETCT_f8314eb3f7_20030314_10546438",
+     "PETCT_f8314eb3f7_20030920_70298309"
+    ],
+    "PETCT_f8aac0e202": [
+     "PETCT_f8aac0e202_20060226_80941484",
+     "PETCT_f8aac0e202_20060730_45685987"
+    ],
+    "PETCT_fa45f610c4": [
+     "PETCT_fa45f610c4"
+    ],
+    "PETCT_faf4a6dbaa": [
+     "PETCT_faf4a6dbaa"
+    ],
+    "PETCT_fbd907a179": [
+     "PETCT_fbd907a179"
+    ],
+    "PETCT_fc0389a486": [
+     "PETCT_fc0389a486"
+    ],
+    "PETCT_fcdbe15200": [
+     "PETCT_fcdbe15200"
+    ],
+    "PETCT_fde66dd53a": [
+     "PETCT_fde66dd53a"
+    ],
+    "PETCT_fde79b6aa9": [
+     "PETCT_fde79b6aa9_20030223_75188403",
+     "PETCT_fde79b6aa9_20030816_53988178",
+     "PETCT_fde79b6aa9_20050509_28413154"
+    ],
+    "PETCT_fe705ea1cc": [
+     "PETCT_fe705ea1cc_20021229_57093772",
+     "PETCT_fe705ea1cc_20030427_50847025"
+    ],
+    "PETCT_ff1451316e": [
+     "PETCT_ff1451316e"
+    ],
+    "PETCT_ff39795341": [
+     "PETCT_ff39795341"
+    ]
+   }
+  },
+  "val": {
+   "n_patients": 70,
+   "n_scans": 76,
+   "n_tumour_positive_patients": 38,
+   "n_tumour_positive_scans": 38,
+   "tumour_positive_patient_fraction": 0.5429,
+   "patients": [
+    "PETCT_099b3fd402",
+    "PETCT_0af7ffe12a",
+    "PETCT_0beb67c923",
+    "PETCT_11afab3485",
+    "PETCT_1472967bef",
+    "PETCT_14f931f634",
+    "PETCT_1a3d4e63ee",
+    "PETCT_1a8bd52f71",
+    "PETCT_21853fc15b",
+    "PETCT_275fb00a66",
+    "PETCT_2922971d0f",
+    "PETCT_3049d4f1a4",
+    "PETCT_36870de2f2",
+    "PETCT_3c3050f75e",
+    "PETCT_3f2ee0274d",
+    "PETCT_3fd361ec14",
+    "PETCT_416d3b9b78",
+    "PETCT_46ee4ddd68",
+    "PETCT_4760c0139a",
+    "PETCT_4ea806706c",
+    "PETCT_4ef69de4e1",
+    "PETCT_4f6ff86453",
+    "PETCT_52f84711a5",
+    "PETCT_53ccb9efbb",
+    "PETCT_5b10c3f524",
+    "PETCT_5e0bc6cdda",
+    "PETCT_63508c679d",
+    "PETCT_63dd9503eb",
+    "PETCT_65bd1a4c38",
+    "PETCT_6a3477cd9a",
+    "PETCT_6c469107a0",
+    "PETCT_72725f2bda",
+    "PETCT_75d1080946",
+    "PETCT_7abe274c10",
+    "PETCT_7b42056ee3",
+    "PETCT_7e5729ea40",
+    "PETCT_80b8393c44",
+    "PETCT_8838c53a63",
+    "PETCT_8f2878df50",
+    "PETCT_92c3de23f5",
+    "PETCT_963a71819a",
+    "PETCT_983a76fd43",
+    "PETCT_9a583160ea",
+    "PETCT_9c9a347388",
+    "PETCT_a09210d96b",
+    "PETCT_a2676f03c0",
+    "PETCT_a9d7a14ba1",
+    "PETCT_ad99263bec",
+    "PETCT_ae8c77a995",
+    "PETCT_af547fa618",
+    "PETCT_b1219c408b",
+    "PETCT_b899150306",
+    "PETCT_bfd89440db",
+    "PETCT_c10f48b173",
+    "PETCT_c58b637e17",
+    "PETCT_c5a143a604",
+    "PETCT_ca58410fad",
+    "PETCT_ca62984a81",
+    "PETCT_cbbc9e2879",
+    "PETCT_cd50f3fec4",
+    "PETCT_d32cf972af",
+    "PETCT_d46f0109f8",
+    "PETCT_d51664a9e4",
+    "PETCT_d6a491e16d",
+    "PETCT_d8e3aa97a0",
+    "PETCT_d9da6129f8",
+    "PETCT_dec9ff6a91",
+    "PETCT_e77c5fca12",
+    "PETCT_e9be8ec30f",
+    "PETCT_f11f3d3692"
+   ],
+   "cases": {
+    "PETCT_099b3fd402": [
+     "PETCT_099b3fd402"
+    ],
+    "PETCT_0af7ffe12a": [
+     "PETCT_0af7ffe12a"
+    ],
+    "PETCT_0beb67c923": [
+     "PETCT_0beb67c923"
+    ],
+    "PETCT_11afab3485": [
+     "PETCT_11afab3485"
+    ],
+    "PETCT_1472967bef": [
+     "PETCT_1472967bef"
+    ],
+    "PETCT_14f931f634": [
+     "PETCT_14f931f634"
+    ],
+    "PETCT_1a3d4e63ee": [
+     "PETCT_1a3d4e63ee"
+    ],
+    "PETCT_1a8bd52f71": [
+     "PETCT_1a8bd52f71"
+    ],
+    "PETCT_21853fc15b": [
+     "PETCT_21853fc15b"
+    ],
+    "PETCT_275fb00a66": [
+     "PETCT_275fb00a66"
+    ],
+    "PETCT_2922971d0f": [
+     "PETCT_2922971d0f"
+    ],
+    "PETCT_3049d4f1a4": [
+     "PETCT_3049d4f1a4"
+    ],
+    "PETCT_36870de2f2": [
+     "PETCT_36870de2f2"
+    ],
+    "PETCT_3c3050f75e": [
+     "PETCT_3c3050f75e"
+    ],
+    "PETCT_3f2ee0274d": [
+     "PETCT_3f2ee0274d"
+    ],
+    "PETCT_3fd361ec14": [
+     "PETCT_3fd361ec14"
+    ],
+    "PETCT_416d3b9b78": [
+     "PETCT_416d3b9b78"
+    ],
+    "PETCT_46ee4ddd68": [
+     "PETCT_46ee4ddd68"
+    ],
+    "PETCT_4760c0139a": [
+     "PETCT_4760c0139a"
+    ],
+    "PETCT_4ea806706c": [
+     "PETCT_4ea806706c"
+    ],
+    "PETCT_4ef69de4e1": [
+     "PETCT_4ef69de4e1"
+    ],
+    "PETCT_4f6ff86453": [
+     "PETCT_4f6ff86453"
+    ],
+    "PETCT_52f84711a5": [
+     "PETCT_52f84711a5"
+    ],
+    "PETCT_53ccb9efbb": [
+     "PETCT_53ccb9efbb"
+    ],
+    "PETCT_5b10c3f524": [
+     "PETCT_5b10c3f524"
+    ],
+    "PETCT_5e0bc6cdda": [
+     "PETCT_5e0bc6cdda"
+    ],
+    "PETCT_63508c679d": [
+     "PETCT_63508c679d_20050217_26571545",
+     "PETCT_63508c679d_20050821_33075693"
+    ],
+    "PETCT_63dd9503eb": [
+     "PETCT_63dd9503eb"
+    ],
+    "PETCT_65bd1a4c38": [
+     "PETCT_65bd1a4c38"
+    ],
+    "PETCT_6a3477cd9a": [
+     "PETCT_6a3477cd9a"
+    ],
+    "PETCT_6c469107a0": [
+     "PETCT_6c469107a0"
+    ],
+    "PETCT_72725f2bda": [
+     "PETCT_72725f2bda"
+    ],
+    "PETCT_75d1080946": [
+     "PETCT_75d1080946"
+    ],
+    "PETCT_7abe274c10": [
+     "PETCT_7abe274c10"
+    ],
+    "PETCT_7b42056ee3": [
+     "PETCT_7b42056ee3"
+    ],
+    "PETCT_7e5729ea40": [
+     "PETCT_7e5729ea40"
+    ],
+    "PETCT_80b8393c44": [
+     "PETCT_80b8393c44"
+    ],
+    "PETCT_8838c53a63": [
+     "PETCT_8838c53a63"
+    ],
+    "PETCT_8f2878df50": [
+     "PETCT_8f2878df50_20020822_78345456",
+     "PETCT_8f2878df50_20030221_18889268"
+    ],
+    "PETCT_92c3de23f5": [
+     "PETCT_92c3de23f5"
+    ],
+    "PETCT_963a71819a": [
+     "PETCT_963a71819a"
+    ],
+    "PETCT_983a76fd43": [
+     "PETCT_983a76fd43"
+    ],
+    "PETCT_9a583160ea": [
+     "PETCT_9a583160ea"
+    ],
+    "PETCT_9c9a347388": [
+     "PETCT_9c9a347388"
+    ],
+    "PETCT_a09210d96b": [
+     "PETCT_a09210d96b"
+    ],
+    "PETCT_a2676f03c0": [
+     "PETCT_a2676f03c0"
+    ],
+    "PETCT_a9d7a14ba1": [
+     "PETCT_a9d7a14ba1"
+    ],
+    "PETCT_ad99263bec": [
+     "PETCT_ad99263bec"
+    ],
+    "PETCT_ae8c77a995": [
+     "PETCT_ae8c77a995"
+    ],
+    "PETCT_af547fa618": [
+     "PETCT_af547fa618"
+    ],
+    "PETCT_b1219c408b": [
+     "PETCT_b1219c408b"
+    ],
+    "PETCT_b899150306": [
+     "PETCT_b899150306"
+    ],
+    "PETCT_bfd89440db": [
+     "PETCT_bfd89440db_20060205_74745908",
+     "PETCT_bfd89440db_20070311_26610321"
+    ],
+    "PETCT_c10f48b173": [
+     "PETCT_c10f48b173"
+    ],
+    "PETCT_c58b637e17": [
+     "PETCT_c58b637e17"
+    ],
+    "PETCT_c5a143a604": [
+     "PETCT_c5a143a604"
+    ],
+    "PETCT_ca58410fad": [
+     "PETCT_ca58410fad"
+    ],
+    "PETCT_ca62984a81": [
+     "PETCT_ca62984a81"
+    ],
+    "PETCT_cbbc9e2879": [
+     "PETCT_cbbc9e2879_20060116_88056695",
+     "PETCT_cbbc9e2879_20060331_98522146",
+     "PETCT_cbbc9e2879_20060806_26427031",
+     "PETCT_cbbc9e2879_20070628_20235581"
+    ],
+    "PETCT_cd50f3fec4": [
+     "PETCT_cd50f3fec4"
+    ],
+    "PETCT_d32cf972af": [
+     "PETCT_d32cf972af"
+    ],
+    "PETCT_d46f0109f8": [
+     "PETCT_d46f0109f8"
+    ],
+    "PETCT_d51664a9e4": [
+     "PETCT_d51664a9e4"
+    ],
+    "PETCT_d6a491e16d": [
+     "PETCT_d6a491e16d"
+    ],
+    "PETCT_d8e3aa97a0": [
+     "PETCT_d8e3aa97a0"
+    ],
+    "PETCT_d9da6129f8": [
+     "PETCT_d9da6129f8"
+    ],
+    "PETCT_dec9ff6a91": [
+     "PETCT_dec9ff6a91"
+    ],
+    "PETCT_e77c5fca12": [
+     "PETCT_e77c5fca12"
+    ],
+    "PETCT_e9be8ec30f": [
+     "PETCT_e9be8ec30f"
+    ],
+    "PETCT_f11f3d3692": [
+     "PETCT_f11f3d3692"
+    ]
+   }
+  },
+  "test": {
+   "n_patients": 200,
+   "n_scans": 200,
+   "n_tumour_positive_patients": 110,
+   "n_tumour_positive_scans": 110,
+   "tumour_positive_patient_fraction": 0.55,
+   "patients": [
+    "PETCT_01140d52d8",
+    "PETCT_0143bab87a",
+    "PETCT_0223010e46",
+    "PETCT_048981112f",
+    "PETCT_05d5a79faf",
+    "PETCT_072833774e",
+    "PETCT_07574bfa00",
+    "PETCT_0e9a98ecda",
+    "PETCT_1019ae8551",
+    "PETCT_141fffa2a9",
+    "PETCT_14c4d2c208",
+    "PETCT_154e94256c",
+    "PETCT_1774857f8e",
+    "PETCT_17d334cb6c",
+    "PETCT_185da4c8b6",
+    "PETCT_1b199d094d",
+    "PETCT_1bb48bfb40",
+    "PETCT_1bdefef7d5",
+    "PETCT_1fcfa34d10",
+    "PETCT_20a607649d",
+    "PETCT_2140db0ca5",
+    "PETCT_21e4ffcb52",
+    "PETCT_23ed525e82",
+    "PETCT_274688d0a8",
+    "PETCT_277fc3c67c",
+    "PETCT_27d69a8466",
+    "PETCT_2946d59a94",
+    "PETCT_2a41141775",
+    "PETCT_2ad62beb52",
+    "PETCT_34d3efa936",
+    "PETCT_390129c0d2",
+    "PETCT_3a40a26443",
+    "PETCT_3c3ee87fc6",
+    "PETCT_3cd49210eb",
+    "PETCT_3d8b79d739",
+    "PETCT_404f8c732f",
+    "PETCT_40a125468a",
+    "PETCT_411801de5a",
+    "PETCT_41fadf6520",
+    "PETCT_43647ff727",
+    "PETCT_44d6ba6772",
+    "PETCT_465176d213",
+    "PETCT_4848bebb10",
+    "PETCT_4a0d2e5166",
+    "PETCT_4a72eeb991",
+    "PETCT_4bab91dccd",
+    "PETCT_4cc808d16f",
+    "PETCT_4e3d83bfe3",
+    "PETCT_510fb36781",
+    "PETCT_527c5afc5d",
+    "PETCT_54977a7e76",
+    "PETCT_581fa95eb0",
+    "PETCT_59309d6625",
+    "PETCT_5a58935b68",
+    "PETCT_5ac4fd9091",
+    "PETCT_5c35fcbe89",
+    "PETCT_5ef99b0b6b",
+    "PETCT_6016a6c3af",
+    "PETCT_61348439bf",
+    "PETCT_62405d117c",
+    "PETCT_62a78a061f",
+    "PETCT_64909533c5",
+    "PETCT_64c0cba177",
+    "PETCT_6543c58e13",
+    "PETCT_6604b228c6",
+    "PETCT_685d7c09b5",
+    "PETCT_6efefcb92a",
+    "PETCT_6fe855c937",
+    "PETCT_7094acd4c0",
+    "PETCT_71ac560ffe",
+    "PETCT_7255ccbcf4",
+    "PETCT_75210090cd",
+    "PETCT_7785c10e91",
+    "PETCT_77bceab232",
+    "PETCT_78355d1d4f",
+    "PETCT_790246c76c",
+    "PETCT_792d7b6ad0",
+    "PETCT_7948aa0e26",
+    "PETCT_7cfd708a53",
+    "PETCT_7f2a604e03",
+    "PETCT_80ccbdadf9",
+    "PETCT_80d7e682f7",
+    "PETCT_82137245b0",
+    "PETCT_85b69fed1c",
+    "PETCT_88bcc970b3",
+    "PETCT_8af3757198",
+    "PETCT_8b74860ce6",
+    "PETCT_8bebb676bf",
+    "PETCT_8c8cd2699c",
+    "PETCT_8de70b5cd7",
+    "PETCT_901573a747",
+    "PETCT_92c5c944a5",
+    "PETCT_94962fe878",
+    "PETCT_9521502dbb",
+    "PETCT_96e7a3ab28",
+    "PETCT_9775598501",
+    "PETCT_9837205b34",
+    "PETCT_987c8a1160",
+    "PETCT_98c6af8b90",
+    "PETCT_9a2bfe901f",
+    "PETCT_9afd440677",
+    "PETCT_9b53627d23",
+    "PETCT_9c68e484a7",
+    "PETCT_9d6699f215",
+    "PETCT_9da159b835",
+    "PETCT_9f491f1481",
+    "PETCT_a0c4dc1ef1",
+    "PETCT_a19ef8e0d2",
+    "PETCT_a1d93ebc74",
+    "PETCT_a1db71e797",
+    "PETCT_a21200dcba",
+    "PETCT_a25083ff81",
+    "PETCT_a2a68bbe97",
+    "PETCT_a3df01d3a3",
+    "PETCT_a4a66c4fa7",
+    "PETCT_a4cb97ffc7",
+    "PETCT_a627fc68a1",
+    "PETCT_a82f03863a",
+    "PETCT_a86b2dc6ce",
+    "PETCT_a86b3fad40",
+    "PETCT_aaf2c3aa12",
+    "PETCT_ab953a5230",
+    "PETCT_ac11b344b6",
+    "PETCT_ae46202abb",
+    "PETCT_aee7d68f86",
+    "PETCT_b1d6679284",
+    "PETCT_b327726c24",
+    "PETCT_b4e5c1047c",
+    "PETCT_b53ba7c6bf",
+    "PETCT_b621742469",
+    "PETCT_b62864161e",
+    "PETCT_b6a3c72db6",
+    "PETCT_b79961f3f6",
+    "PETCT_b926177c87",
+    "PETCT_b92d7f441e",
+    "PETCT_bacc741e2c",
+    "PETCT_bb564e29d2",
+    "PETCT_bbb2df1e31",
+    "PETCT_bca97006e4",
+    "PETCT_bd52fdf529",
+    "PETCT_be0d3c767e",
+    "PETCT_c018b45a49",
+    "PETCT_c1c9e78e0e",
+    "PETCT_c227131152",
+    "PETCT_c3cc732d95",
+    "PETCT_c517c47bed",
+    "PETCT_c73c2685c0",
+    "PETCT_c852dfc0a5",
+    "PETCT_c9f1b9980f",
+    "PETCT_ca47fe5e7d",
+    "PETCT_caae8d63f0",
+    "PETCT_cb240e6f0f",
+    "PETCT_ce629e2993",
+    "PETCT_d098458d29",
+    "PETCT_d0ea6c975f",
+    "PETCT_d1c8141930",
+    "PETCT_d27451634d",
+    "PETCT_d393ab6c7b",
+    "PETCT_d3d3b7d4ff",
+    "PETCT_d40a16781a",
+    "PETCT_d472033d3b",
+    "PETCT_d4f3375362",
+    "PETCT_d63f6162a6",
+    "PETCT_d64d6a87c8",
+    "PETCT_d6b2218bf3",
+    "PETCT_d8a92bafe3",
+    "PETCT_da6161d7eb",
+    "PETCT_db3daf78d2",
+    "PETCT_dc15c1d9bb",
+    "PETCT_dd887591a9",
+    "PETCT_de118d7ab9",
+    "PETCT_e04b7fa860",
+    "PETCT_e1a4145b63",
+    "PETCT_e207c7a1a4",
+    "PETCT_e2309b8f92",
+    "PETCT_e4712dc58c",
+    "PETCT_e4e5baf901",
+    "PETCT_e5c7be07a8",
+    "PETCT_e5e1918765",
+    "PETCT_e69152b6b4",
+    "PETCT_e9e1a391b5",
+    "PETCT_ea051a3e6c",
+    "PETCT_ea9302fb0f",
+    "PETCT_ed9dca00d2",
+    "PETCT_ede28cc3c2",
+    "PETCT_f068e22258",
+    "PETCT_f0e1b89b41",
+    "PETCT_f1594a7d8a",
+    "PETCT_f21755a99b",
+    "PETCT_f24f3ce1da",
+    "PETCT_f4668d2bdc",
+    "PETCT_f4a5ebd915",
+    "PETCT_f5c9b0de6c",
+    "PETCT_f637b5930b",
+    "PETCT_f65602d938",
+    "PETCT_f7067b7bbb",
+    "PETCT_f8de0cde56",
+    "PETCT_f9c4d4f9ab",
+    "PETCT_f9e0c504af",
+    "PETCT_fb014a1ea0"
+   ],
+   "cases": {
+    "PETCT_01140d52d8": [
+     "PETCT_01140d52d8"
+    ],
+    "PETCT_0143bab87a": [
+     "PETCT_0143bab87a"
+    ],
+    "PETCT_0223010e46": [
+     "PETCT_0223010e46"
+    ],
+    "PETCT_048981112f": [
+     "PETCT_048981112f"
+    ],
+    "PETCT_05d5a79faf": [
+     "PETCT_05d5a79faf"
+    ],
+    "PETCT_072833774e": [
+     "PETCT_072833774e"
+    ],
+    "PETCT_07574bfa00": [
+     "PETCT_07574bfa00"
+    ],
+    "PETCT_0e9a98ecda": [
+     "PETCT_0e9a98ecda"
+    ],
+    "PETCT_1019ae8551": [
+     "PETCT_1019ae8551"
+    ],
+    "PETCT_141fffa2a9": [
+     "PETCT_141fffa2a9"
+    ],
+    "PETCT_14c4d2c208": [
+     "PETCT_14c4d2c208"
+    ],
+    "PETCT_154e94256c": [
+     "PETCT_154e94256c"
+    ],
+    "PETCT_1774857f8e": [
+     "PETCT_1774857f8e"
+    ],
+    "PETCT_17d334cb6c": [
+     "PETCT_17d334cb6c"
+    ],
+    "PETCT_185da4c8b6": [
+     "PETCT_185da4c8b6"
+    ],
+    "PETCT_1b199d094d": [
+     "PETCT_1b199d094d"
+    ],
+    "PETCT_1bb48bfb40": [
+     "PETCT_1bb48bfb40"
+    ],
+    "PETCT_1bdefef7d5": [
+     "PETCT_1bdefef7d5"
+    ],
+    "PETCT_1fcfa34d10": [
+     "PETCT_1fcfa34d10"
+    ],
+    "PETCT_20a607649d": [
+     "PETCT_20a607649d"
+    ],
+    "PETCT_2140db0ca5": [
+     "PETCT_2140db0ca5"
+    ],
+    "PETCT_21e4ffcb52": [
+     "PETCT_21e4ffcb52"
+    ],
+    "PETCT_23ed525e82": [
+     "PETCT_23ed525e82"
+    ],
+    "PETCT_274688d0a8": [
+     "PETCT_274688d0a8"
+    ],
+    "PETCT_277fc3c67c": [
+     "PETCT_277fc3c67c"
+    ],
+    "PETCT_27d69a8466": [
+     "PETCT_27d69a8466"
+    ],
+    "PETCT_2946d59a94": [
+     "PETCT_2946d59a94"
+    ],
+    "PETCT_2a41141775": [
+     "PETCT_2a41141775"
+    ],
+    "PETCT_2ad62beb52": [
+     "PETCT_2ad62beb52"
+    ],
+    "PETCT_34d3efa936": [
+     "PETCT_34d3efa936"
+    ],
+    "PETCT_390129c0d2": [
+     "PETCT_390129c0d2"
+    ],
+    "PETCT_3a40a26443": [
+     "PETCT_3a40a26443"
+    ],
+    "PETCT_3c3ee87fc6": [
+     "PETCT_3c3ee87fc6"
+    ],
+    "PETCT_3cd49210eb": [
+     "PETCT_3cd49210eb"
+    ],
+    "PETCT_3d8b79d739": [
+     "PETCT_3d8b79d739"
+    ],
+    "PETCT_404f8c732f": [
+     "PETCT_404f8c732f"
+    ],
+    "PETCT_40a125468a": [
+     "PETCT_40a125468a"
+    ],
+    "PETCT_411801de5a": [
+     "PETCT_411801de5a"
+    ],
+    "PETCT_41fadf6520": [
+     "PETCT_41fadf6520"
+    ],
+    "PETCT_43647ff727": [
+     "PETCT_43647ff727"
+    ],
+    "PETCT_44d6ba6772": [
+     "PETCT_44d6ba6772"
+    ],
+    "PETCT_465176d213": [
+     "PETCT_465176d213"
+    ],
+    "PETCT_4848bebb10": [
+     "PETCT_4848bebb10"
+    ],
+    "PETCT_4a0d2e5166": [
+     "PETCT_4a0d2e5166"
+    ],
+    "PETCT_4a72eeb991": [
+     "PETCT_4a72eeb991"
+    ],
+    "PETCT_4bab91dccd": [
+     "PETCT_4bab91dccd"
+    ],
+    "PETCT_4cc808d16f": [
+     "PETCT_4cc808d16f"
+    ],
+    "PETCT_4e3d83bfe3": [
+     "PETCT_4e3d83bfe3"
+    ],
+    "PETCT_510fb36781": [
+     "PETCT_510fb36781"
+    ],
+    "PETCT_527c5afc5d": [
+     "PETCT_527c5afc5d"
+    ],
+    "PETCT_54977a7e76": [
+     "PETCT_54977a7e76"
+    ],
+    "PETCT_581fa95eb0": [
+     "PETCT_581fa95eb0"
+    ],
+    "PETCT_59309d6625": [
+     "PETCT_59309d6625"
+    ],
+    "PETCT_5a58935b68": [
+     "PETCT_5a58935b68"
+    ],
+    "PETCT_5ac4fd9091": [
+     "PETCT_5ac4fd9091"
+    ],
+    "PETCT_5c35fcbe89": [
+     "PETCT_5c35fcbe89"
+    ],
+    "PETCT_5ef99b0b6b": [
+     "PETCT_5ef99b0b6b"
+    ],
+    "PETCT_6016a6c3af": [
+     "PETCT_6016a6c3af"
+    ],
+    "PETCT_61348439bf": [
+     "PETCT_61348439bf"
+    ],
+    "PETCT_62405d117c": [
+     "PETCT_62405d117c"
+    ],
+    "PETCT_62a78a061f": [
+     "PETCT_62a78a061f"
+    ],
+    "PETCT_64909533c5": [
+     "PETCT_64909533c5"
+    ],
+    "PETCT_64c0cba177": [
+     "PETCT_64c0cba177"
+    ],
+    "PETCT_6543c58e13": [
+     "PETCT_6543c58e13"
+    ],
+    "PETCT_6604b228c6": [
+     "PETCT_6604b228c6"
+    ],
+    "PETCT_685d7c09b5": [
+     "PETCT_685d7c09b5"
+    ],
+    "PETCT_6efefcb92a": [
+     "PETCT_6efefcb92a"
+    ],
+    "PETCT_6fe855c937": [
+     "PETCT_6fe855c937"
+    ],
+    "PETCT_7094acd4c0": [
+     "PETCT_7094acd4c0"
+    ],
+    "PETCT_71ac560ffe": [
+     "PETCT_71ac560ffe"
+    ],
+    "PETCT_7255ccbcf4": [
+     "PETCT_7255ccbcf4"
+    ],
+    "PETCT_75210090cd": [
+     "PETCT_75210090cd"
+    ],
+    "PETCT_7785c10e91": [
+     "PETCT_7785c10e91"
+    ],
+    "PETCT_77bceab232": [
+     "PETCT_77bceab232"
+    ],
+    "PETCT_78355d1d4f": [
+     "PETCT_78355d1d4f"
+    ],
+    "PETCT_790246c76c": [
+     "PETCT_790246c76c"
+    ],
+    "PETCT_792d7b6ad0": [
+     "PETCT_792d7b6ad0"
+    ],
+    "PETCT_7948aa0e26": [
+     "PETCT_7948aa0e26"
+    ],
+    "PETCT_7cfd708a53": [
+     "PETCT_7cfd708a53"
+    ],
+    "PETCT_7f2a604e03": [
+     "PETCT_7f2a604e03"
+    ],
+    "PETCT_80ccbdadf9": [
+     "PETCT_80ccbdadf9"
+    ],
+    "PETCT_80d7e682f7": [
+     "PETCT_80d7e682f7"
+    ],
+    "PETCT_82137245b0": [
+     "PETCT_82137245b0"
+    ],
+    "PETCT_85b69fed1c": [
+     "PETCT_85b69fed1c"
+    ],
+    "PETCT_88bcc970b3": [
+     "PETCT_88bcc970b3"
+    ],
+    "PETCT_8af3757198": [
+     "PETCT_8af3757198"
+    ],
+    "PETCT_8b74860ce6": [
+     "PETCT_8b74860ce6"
+    ],
+    "PETCT_8bebb676bf": [
+     "PETCT_8bebb676bf"
+    ],
+    "PETCT_8c8cd2699c": [
+     "PETCT_8c8cd2699c"
+    ],
+    "PETCT_8de70b5cd7": [
+     "PETCT_8de70b5cd7"
+    ],
+    "PETCT_901573a747": [
+     "PETCT_901573a747"
+    ],
+    "PETCT_92c5c944a5": [
+     "PETCT_92c5c944a5"
+    ],
+    "PETCT_94962fe878": [
+     "PETCT_94962fe878"
+    ],
+    "PETCT_9521502dbb": [
+     "PETCT_9521502dbb"
+    ],
+    "PETCT_96e7a3ab28": [
+     "PETCT_96e7a3ab28"
+    ],
+    "PETCT_9775598501": [
+     "PETCT_9775598501"
+    ],
+    "PETCT_9837205b34": [
+     "PETCT_9837205b34"
+    ],
+    "PETCT_987c8a1160": [
+     "PETCT_987c8a1160"
+    ],
+    "PETCT_98c6af8b90": [
+     "PETCT_98c6af8b90"
+    ],
+    "PETCT_9a2bfe901f": [
+     "PETCT_9a2bfe901f"
+    ],
+    "PETCT_9afd440677": [
+     "PETCT_9afd440677"
+    ],
+    "PETCT_9b53627d23": [
+     "PETCT_9b53627d23"
+    ],
+    "PETCT_9c68e484a7": [
+     "PETCT_9c68e484a7"
+    ],
+    "PETCT_9d6699f215": [
+     "PETCT_9d6699f215"
+    ],
+    "PETCT_9da159b835": [
+     "PETCT_9da159b835"
+    ],
+    "PETCT_9f491f1481": [
+     "PETCT_9f491f1481"
+    ],
+    "PETCT_a0c4dc1ef1": [
+     "PETCT_a0c4dc1ef1"
+    ],
+    "PETCT_a19ef8e0d2": [
+     "PETCT_a19ef8e0d2"
+    ],
+    "PETCT_a1d93ebc74": [
+     "PETCT_a1d93ebc74"
+    ],
+    "PETCT_a1db71e797": [
+     "PETCT_a1db71e797"
+    ],
+    "PETCT_a21200dcba": [
+     "PETCT_a21200dcba"
+    ],
+    "PETCT_a25083ff81": [
+     "PETCT_a25083ff81"
+    ],
+    "PETCT_a2a68bbe97": [
+     "PETCT_a2a68bbe97"
+    ],
+    "PETCT_a3df01d3a3": [
+     "PETCT_a3df01d3a3"
+    ],
+    "PETCT_a4a66c4fa7": [
+     "PETCT_a4a66c4fa7"
+    ],
+    "PETCT_a4cb97ffc7": [
+     "PETCT_a4cb97ffc7"
+    ],
+    "PETCT_a627fc68a1": [
+     "PETCT_a627fc68a1"
+    ],
+    "PETCT_a82f03863a": [
+     "PETCT_a82f03863a"
+    ],
+    "PETCT_a86b2dc6ce": [
+     "PETCT_a86b2dc6ce"
+    ],
+    "PETCT_a86b3fad40": [
+     "PETCT_a86b3fad40"
+    ],
+    "PETCT_aaf2c3aa12": [
+     "PETCT_aaf2c3aa12"
+    ],
+    "PETCT_ab953a5230": [
+     "PETCT_ab953a5230"
+    ],
+    "PETCT_ac11b344b6": [
+     "PETCT_ac11b344b6"
+    ],
+    "PETCT_ae46202abb": [
+     "PETCT_ae46202abb"
+    ],
+    "PETCT_aee7d68f86": [
+     "PETCT_aee7d68f86"
+    ],
+    "PETCT_b1d6679284": [
+     "PETCT_b1d6679284"
+    ],
+    "PETCT_b327726c24": [
+     "PETCT_b327726c24"
+    ],
+    "PETCT_b4e5c1047c": [
+     "PETCT_b4e5c1047c"
+    ],
+    "PETCT_b53ba7c6bf": [
+     "PETCT_b53ba7c6bf"
+    ],
+    "PETCT_b621742469": [
+     "PETCT_b621742469"
+    ],
+    "PETCT_b62864161e": [
+     "PETCT_b62864161e"
+    ],
+    "PETCT_b6a3c72db6": [
+     "PETCT_b6a3c72db6"
+    ],
+    "PETCT_b79961f3f6": [
+     "PETCT_b79961f3f6"
+    ],
+    "PETCT_b926177c87": [
+     "PETCT_b926177c87"
+    ],
+    "PETCT_b92d7f441e": [
+     "PETCT_b92d7f441e"
+    ],
+    "PETCT_bacc741e2c": [
+     "PETCT_bacc741e2c"
+    ],
+    "PETCT_bb564e29d2": [
+     "PETCT_bb564e29d2"
+    ],
+    "PETCT_bbb2df1e31": [
+     "PETCT_bbb2df1e31"
+    ],
+    "PETCT_bca97006e4": [
+     "PETCT_bca97006e4"
+    ],
+    "PETCT_bd52fdf529": [
+     "PETCT_bd52fdf529"
+    ],
+    "PETCT_be0d3c767e": [
+     "PETCT_be0d3c767e"
+    ],
+    "PETCT_c018b45a49": [
+     "PETCT_c018b45a49"
+    ],
+    "PETCT_c1c9e78e0e": [
+     "PETCT_c1c9e78e0e"
+    ],
+    "PETCT_c227131152": [
+     "PETCT_c227131152"
+    ],
+    "PETCT_c3cc732d95": [
+     "PETCT_c3cc732d95"
+    ],
+    "PETCT_c517c47bed": [
+     "PETCT_c517c47bed"
+    ],
+    "PETCT_c73c2685c0": [
+     "PETCT_c73c2685c0"
+    ],
+    "PETCT_c852dfc0a5": [
+     "PETCT_c852dfc0a5"
+    ],
+    "PETCT_c9f1b9980f": [
+     "PETCT_c9f1b9980f"
+    ],
+    "PETCT_ca47fe5e7d": [
+     "PETCT_ca47fe5e7d"
+    ],
+    "PETCT_caae8d63f0": [
+     "PETCT_caae8d63f0"
+    ],
+    "PETCT_cb240e6f0f": [
+     "PETCT_cb240e6f0f"
+    ],
+    "PETCT_ce629e2993": [
+     "PETCT_ce629e2993"
+    ],
+    "PETCT_d098458d29": [
+     "PETCT_d098458d29"
+    ],
+    "PETCT_d0ea6c975f": [
+     "PETCT_d0ea6c975f"
+    ],
+    "PETCT_d1c8141930": [
+     "PETCT_d1c8141930"
+    ],
+    "PETCT_d27451634d": [
+     "PETCT_d27451634d"
+    ],
+    "PETCT_d393ab6c7b": [
+     "PETCT_d393ab6c7b"
+    ],
+    "PETCT_d3d3b7d4ff": [
+     "PETCT_d3d3b7d4ff"
+    ],
+    "PETCT_d40a16781a": [
+     "PETCT_d40a16781a"
+    ],
+    "PETCT_d472033d3b": [
+     "PETCT_d472033d3b"
+    ],
+    "PETCT_d4f3375362": [
+     "PETCT_d4f3375362"
+    ],
+    "PETCT_d63f6162a6": [
+     "PETCT_d63f6162a6"
+    ],
+    "PETCT_d64d6a87c8": [
+     "PETCT_d64d6a87c8"
+    ],
+    "PETCT_d6b2218bf3": [
+     "PETCT_d6b2218bf3"
+    ],
+    "PETCT_d8a92bafe3": [
+     "PETCT_d8a92bafe3"
+    ],
+    "PETCT_da6161d7eb": [
+     "PETCT_da6161d7eb"
+    ],
+    "PETCT_db3daf78d2": [
+     "PETCT_db3daf78d2"
+    ],
+    "PETCT_dc15c1d9bb": [
+     "PETCT_dc15c1d9bb"
+    ],
+    "PETCT_dd887591a9": [
+     "PETCT_dd887591a9"
+    ],
+    "PETCT_de118d7ab9": [
+     "PETCT_de118d7ab9"
+    ],
+    "PETCT_e04b7fa860": [
+     "PETCT_e04b7fa860"
+    ],
+    "PETCT_e1a4145b63": [
+     "PETCT_e1a4145b63"
+    ],
+    "PETCT_e207c7a1a4": [
+     "PETCT_e207c7a1a4"
+    ],
+    "PETCT_e2309b8f92": [
+     "PETCT_e2309b8f92"
+    ],
+    "PETCT_e4712dc58c": [
+     "PETCT_e4712dc58c"
+    ],
+    "PETCT_e4e5baf901": [
+     "PETCT_e4e5baf901"
+    ],
+    "PETCT_e5c7be07a8": [
+     "PETCT_e5c7be07a8"
+    ],
+    "PETCT_e5e1918765": [
+     "PETCT_e5e1918765"
+    ],
+    "PETCT_e69152b6b4": [
+     "PETCT_e69152b6b4"
+    ],
+    "PETCT_e9e1a391b5": [
+     "PETCT_e9e1a391b5"
+    ],
+    "PETCT_ea051a3e6c": [
+     "PETCT_ea051a3e6c"
+    ],
+    "PETCT_ea9302fb0f": [
+     "PETCT_ea9302fb0f"
+    ],
+    "PETCT_ed9dca00d2": [
+     "PETCT_ed9dca00d2"
+    ],
+    "PETCT_ede28cc3c2": [
+     "PETCT_ede28cc3c2"
+    ],
+    "PETCT_f068e22258": [
+     "PETCT_f068e22258"
+    ],
+    "PETCT_f0e1b89b41": [
+     "PETCT_f0e1b89b41"
+    ],
+    "PETCT_f1594a7d8a": [
+     "PETCT_f1594a7d8a"
+    ],
+    "PETCT_f21755a99b": [
+     "PETCT_f21755a99b"
+    ],
+    "PETCT_f24f3ce1da": [
+     "PETCT_f24f3ce1da"
+    ],
+    "PETCT_f4668d2bdc": [
+     "PETCT_f4668d2bdc"
+    ],
+    "PETCT_f4a5ebd915": [
+     "PETCT_f4a5ebd915"
+    ],
+    "PETCT_f5c9b0de6c": [
+     "PETCT_f5c9b0de6c"
+    ],
+    "PETCT_f637b5930b": [
+     "PETCT_f637b5930b"
+    ],
+    "PETCT_f65602d938": [
+     "PETCT_f65602d938"
+    ],
+    "PETCT_f7067b7bbb": [
+     "PETCT_f7067b7bbb"
+    ],
+    "PETCT_f8de0cde56": [
+     "PETCT_f8de0cde56"
+    ],
+    "PETCT_f9c4d4f9ab": [
+     "PETCT_f9c4d4f9ab"
+    ],
+    "PETCT_f9e0c504af": [
+     "PETCT_f9e0c504af"
+    ],
+    "PETCT_fb014a1ea0": [
+     "PETCT_fb014a1ea0"
+    ]
+   }
+  }
+ }
+}

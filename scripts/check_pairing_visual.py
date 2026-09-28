@@ -23,6 +23,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import SimpleITK as sitk
+from scipy import ndimage as ndi
 
 
 def load(scan_dir: Path):
@@ -58,11 +59,27 @@ def render(scan_dir: Path, label: str, out_png: Path) -> dict:
         "ct_frac_air": float((ct <= -900).mean()),
         "pet_max": float(pet.max()),
         "lesion_voxels": int(seg.sum()),
-        "pet_in_mask": float(pet[seg].mean()) if seg.any() else float("nan"),
-        "pet_in_body": float(pet[(ct > -500) & ~seg].mean()) if (ct > -500).any() else float("nan"),
     }
-    stats["uptake_ratio"] = (stats["pet_in_mask"] / stats["pet_in_body"]
-                             if stats["pet_in_body"] and stats["pet_in_body"] > 0 else float("nan"))
+
+    # Per-lesion peak against the body's MEDIAN uptake, not mask-mean against
+    # body-mean: a mean over the mask is dragged down by partial volume at every
+    # lesion edge, and a bright bladder inflates the body mean, so a genuine
+    # multi-lesion case can score barely above 1 while every lesion is plainly
+    # on a hot spot. The per-lesion peak is what a reader actually looks at.
+    body = (ct > -500) & ~seg
+    if seg.any() and body.any():
+        bg_median = float(np.median(pet[body])) or 1.0
+        labels, n = ndi.label(seg)
+        peaks = ndi.maximum(pet, labels, index=range(1, n + 1))
+        ratios = sorted((float(p) / bg_median for p in np.atleast_1d(peaks)), reverse=True)
+        stats["n_lesions"] = int(n)
+        stats["lesion_peak_ratios"] = ratios
+        stats["worst_lesion_ratio"] = ratios[-1] if ratios else float("nan")
+        stats["best_lesion_ratio"] = ratios[0] if ratios else float("nan")
+    else:
+        stats["n_lesions"] = 0
+        stats["lesion_peak_ratios"] = []
+        stats["worst_lesion_ratio"] = stats["best_lesion_ratio"] = float("nan")
 
     fig, axes = plt.subplots(1, 3, figsize=(13, 6))
     # PET MIP, log-ish scaling so both the bright lesions and the body show
@@ -83,9 +100,11 @@ def render(scan_dir: Path, label: str, out_png: Path) -> dict:
 
     for a in axes:
         a.set_xticks([]); a.set_yticks([])
-    ratio = stats["uptake_ratio"]
-    fig.suptitle(f"{label}   |   PET uptake in mask / in body: "
-                 f"{ratio:.1f}x" if ratio == ratio else f"{label}   |   no lesion")
+    if stats["n_lesions"]:
+        fig.suptitle(f"{label}   |   {stats['n_lesions']} lesion(s), peak/body-median "
+                     f"{stats['best_lesion_ratio']:.0f}x..{stats['worst_lesion_ratio']:.0f}x")
+    else:
+        fig.suptitle(f"{label}   |   tumour-free")
     fig.tight_layout()
     out_png.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_png, dpi=110)
@@ -113,10 +132,15 @@ def main() -> None:
             s = render(scan_dir, label, png)
             verdict = []
             verdict.append("CT LOOKS BLANK" if s["ct_frac_air"] > 0.99 else "CT ok")
-            if s["lesion_voxels"]:
-                verdict.append(f"uptake ratio {s['uptake_ratio']:.1f}x"
-                               + (" (mask on hot spots)" if s["uptake_ratio"] > 2 else
-                                  " -- SUSPICIOUS, mask not on hot tissue"))
+            if s["n_lesions"]:
+                # every lesion should peak clearly above background; 2x on the
+                # *weakest* one is a deliberately forgiving floor, since AutoPET
+                # does contain genuinely faint lesions
+                bad = [r for r in s["lesion_peak_ratios"] if r < 2]
+                verdict.append(
+                    f"{s['n_lesions']} lesion(s), peak/body-median "
+                    f"{s['best_lesion_ratio']:.0f}x..{s['worst_lesion_ratio']:.0f}x"
+                    + (f" -- {len(bad)} below 2x, INSPECT" if bad else " (all on hot spots)"))
             else:
                 verdict.append("tumour-free")
             print(f"{label}: {', '.join(verdict)} | CT {s['ct_min']:.0f}..{s['ct_max']:.0f} HU "
