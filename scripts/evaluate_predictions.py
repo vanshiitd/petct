@@ -92,26 +92,24 @@ def fp_fn_volumes_ml(pred: np.ndarray, gt: np.ndarray,
     """
     voxel_ml = float(np.prod(spacing)) / 1000.0     # mm^3 -> mL
 
-    fp_vol = 0.0
-    n_fp = 0
-    if pred.any():
-        lab, n = ndi.label(pred)
-        for i in range(1, n + 1):
-            comp = lab == i
-            if not np.logical_and(comp, gt).any():
-                fp_vol += comp.sum() * voxel_ml
-                n_fp += 1
+    def unmatched(mask: np.ndarray, other: np.ndarray) -> tuple[float, int]:
+        """Volume and count of `mask`'s components that touch no part of `other`.
 
-    fn_vol = 0.0
-    n_fn = 0
-    if gt.any():
-        lab, n = ndi.label(gt)
-        for i in range(1, n + 1):
-            comp = lab == i
-            if not np.logical_and(comp, pred).any():
-                fn_vol += comp.sum() * voxel_ml
-                n_fn += 1
+        Labelled once, then both the component sizes and their overlaps come out
+        of two bincounts. Masking each component separately would mean a
+        full-volume pass per component, which is minutes per case once a model
+        over-predicts into dozens of components.
+        """
+        if not mask.any():
+            return 0.0, 0
+        lab, n = ndi.label(mask)
+        sizes = np.bincount(lab.ravel(), minlength=n + 1)
+        overlap = np.bincount(lab[other].ravel(), minlength=n + 1)
+        unmatched_labels = np.nonzero(overlap[1:] == 0)[0] + 1   # label 0 is background
+        return float(sizes[unmatched_labels].sum()) * voxel_ml, int(unmatched_labels.size)
 
+    fp_vol, n_fp = unmatched(pred, gt)
+    fn_vol, n_fn = unmatched(gt, pred)
     return fp_vol, fn_vol, n_fp, n_fn
 
 
