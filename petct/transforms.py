@@ -23,9 +23,14 @@ class AutoPETPreprocessd(MapTransform):
         d["label"] : float32 (1, Z, Y, X)  -- binary tumour mask
     """
 
-    def __init__(self, keys, target_spacing_zyx=config.TARGET_SPACING_ZYX):
+    def __init__(self, keys, target_spacing_zyx=config.TARGET_SPACING_ZYX,
+                 record_meta: bool = False):
         super().__init__(keys)
         self.target_spacing_zyx = np.asarray(target_spacing_zyx, dtype=float)
+        # Off by default: the training dataloader would have to collate the
+        # extra dict on every sample. Export needs it to map a prediction in
+        # this prepared grid back onto the original scan.
+        self.record_meta = record_meta
 
     def __call__(self, data):
         d = dict(data)
@@ -53,6 +58,7 @@ class AutoPETPreprocessd(MapTransform):
             pad=config.CROP_PAD,
             shape=pet_r.shape,
         )
+        resampled_shape = pet_r.shape
         if bbox is not None:
             pet_r, ct_r, seg_r = pet_r[bbox], ct_r[bbox], seg_r[bbox]
 
@@ -60,4 +66,18 @@ class AutoPETPreprocessd(MapTransform):
 
         d["image"] = image.astype(np.float32)
         d["label"] = np.expand_dims(seg_r, axis=0).astype(np.float32)
+        if self.record_meta:
+            d["prep_meta"] = {
+                "original_shape_zyx": list(pet.shape),
+                "resampled_shape_zyx": list(resampled_shape),
+                "prepared_shape_zyx": list(pet_r.shape),
+                # zoom applied by resample_to_spacing; 1 means the voxel grid is
+                # untouched and the crop can be undone exactly
+                "zoom_zyx": list(orig_spacing_zyx / self.target_spacing_zyx),
+                "rounded_source_spacing_zyx": list(orig_spacing_zyx),
+                "target_spacing_zyx": list(self.target_spacing_zyx),
+                "true_source_spacing_xyz": list(pet_img.GetSpacing()),
+                "crop_bbox_zyx": (None if bbox is None else
+                                  [[int(s.start), int(s.stop)] for s in bbox]),
+            }
         return d
