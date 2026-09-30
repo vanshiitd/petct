@@ -65,6 +65,15 @@ def main() -> None:
     p.add_argument("--nnunet-raw", type=Path, required=True)
     p.add_argument("--dataset-id", type=int, default=DATASET_ID)
     p.add_argument("--dataset-name", default=DATASET_NAME)
+    p.add_argument("--pet-file", default="PET.nii.gz",
+                   help="which PET representation to export as channel 1 "
+                        "(PET.nii.gz = raw Bq/mL, SUV.nii.gz = SUVbw)")
+    p.add_argument("--pet-channel-name", default="PET",
+                   help="channel_names entry for channel 1, which is what selects nnU-Net's "
+                        "normalisation: 'PET' (or any unknown name) gives the default "
+                        "per-image z-score; 'CT' gives CTNormalization, a dataset-wide "
+                        "percentile clip and z-score, i.e. the same transform for every "
+                        "patient; 'noNorm' leaves the data alone")
     args = p.parse_args()
 
     split = json.loads(args.split.read_text())
@@ -85,7 +94,7 @@ def main() -> None:
             for case_id in case_ids:
                 src = scan_dir_for_case(args.data_root, patient, case_id)
                 for src_name, chan in (("CT_resample.nii.gz", "_0000"),
-                                       ("PET.nii.gz", "_0001")):
+                                       (args.pet_file, "_0001")):
                     counts[link_or_copy(src / src_name,
                                         ds_dir / f"images{suffix}" / f"{case_id}{chan}.nii.gz")] += 1
                 counts[link_or_copy(src / "tumorSeg.nii.gz",
@@ -97,10 +106,14 @@ def main() -> None:
 
     n_training = per_set["train"] + per_set["val"]
     dataset_json = {
-        # "CT" triggers nnU-Net's CT normalisation (global foreground statistics,
-        # clipped to the 0.5/99.5 percentiles). PET has no such convention, so it
-        # gets the default per-image z-score.
-        "channel_names": {"0": "CT", "1": "PET"},
+        # The channel NAME is what selects the normalisation scheme, so it is a
+        # pipeline setting rather than a label. "CT" means CTNormalization:
+        # clip to the dataset-wide foreground 0.5/99.5 percentiles, then z-score
+        # with dataset-wide mean and std -- the identical transform for every
+        # patient. The default for any other name is a per-image z-score, which
+        # rescales each scan by its own statistics and so destroys the
+        # cross-patient calibration that makes PET uptake comparable.
+        "channel_names": {"0": "CT", "1": args.pet_channel_name},
         "labels": {"background": 0, "tumour": 1},
         "numTraining": n_training,
         "file_ending": ".nii.gz",
@@ -108,7 +121,9 @@ def main() -> None:
         "description": (
             "AutoPET whole-body FDG PET/CT lesion segmentation. Study-paired "
             "conversion of TCIA FDG-PET-CT-Lesions; split frozen in "
-            f"{args.split.name} (seed {split['seed']}, patient-level)."),
+            f"{args.split.name} (seed {split['seed']}, patient-level). "
+            f"Channel 1 is {args.pet_file}, normalised as "
+            f"'{args.pet_channel_name}'."),
         "reference": "https://www.cancerimagingarchive.net/collection/fdg-pet-ct-lesions/",
     }
     (ds_dir / "dataset.json").write_text(json.dumps(dataset_json, indent=1))
