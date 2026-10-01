@@ -72,7 +72,7 @@ def write_like(array: np.ndarray, reference: sitk.Image, bbox, out_path: Path,
 
 
 def export_case(job) -> dict:
-    case_id, scan_dir, ds_dir, suffix, label_dir = job
+    case_id, scan_dir, ds_dir, suffix, label_dir, pet_file, pet_mu, pet_sigma = job
     scan_dir, ds_dir = Path(scan_dir), Path(ds_dir)
 
     tf = AutoPETPreprocessd(keys=["image", "label"], record_meta=True)
@@ -92,7 +92,22 @@ def export_case(job) -> dict:
                 "detail": f"zoom {meta['zoom_zyx']} is not 1; inverse mapping would be approximate"}
 
     ref = sitk.ReadImage(str(scan_dir / "PET.nii.gz"))
-    write_like(image[0], ref, bbox, ds_dir / f"images{suffix}" / f"{case_id}_0000.nii.gz", np.float32)
+
+    pet_channel = image[0]          # per-scan z-scored PET, as in pretraining
+    if pet_mu is not None:
+        # One transform for every case instead of per-scan z-scoring. The volume
+        # is cropped with the SAME box the transform just computed, so the two
+        # channels stay voxel-aligned; only the normalisation differs.
+        alt = sitk.GetArrayFromImage(sitk.ReadImage(str(scan_dir / pet_file))).astype(np.float32)
+        if bbox is not None:
+            (z0, z1), (y0, y1), (x0, x1) = bbox
+            alt = alt[z0:z1, y0:y1, x0:x1]
+        if alt.shape != pet_channel.shape:
+            return {"case": case_id, "status": "shape_mismatch",
+                    "detail": f"{pet_file} crops to {alt.shape}, expected {pet_channel.shape}"}
+        pet_channel = (alt - np.float32(pet_mu)) / np.float32(pet_sigma)
+
+    write_like(pet_channel, ref, bbox, ds_dir / f"images{suffix}" / f"{case_id}_0000.nii.gz", np.float32)
     write_like(image[1], ref, bbox, ds_dir / f"images{suffix}" / f"{case_id}_0001.nii.gz", np.float32)
     write_like(label, ref, bbox, ds_dir / label_dir / f"{case_id}.nii.gz", np.uint8)
 
@@ -116,7 +131,19 @@ def main() -> None:
     p.add_argument("--dataset-name", default=DATASET_NAME)
     p.add_argument("--jobs", type=int, default=6)
     p.add_argument("--limit", type=int, default=None, help="export only the first N cases (sizing run)")
+    p.add_argument("--pet-file", default=None,
+                   help="use this volume for channel 0 instead of the per-scan z-scored PET, "
+                        "e.g. SUV.nii.gz. Requires --pet-mu and --pet-sigma.")
+    p.add_argument("--pet-mu", type=float, default=None,
+                   help="global mean for the PET channel: (x - mu) / sigma, the SAME for every "
+                        "case, replacing the per-scan z-score. From scripts/suv_global_stats.py.")
+    p.add_argument("--pet-sigma", type=float, default=None)
     args = p.parse_args()
+
+    if (args.pet_file is None) != (args.pet_mu is None):
+        raise SystemExit("--pet-file and --pet-mu/--pet-sigma must be given together")
+    if args.pet_mu is not None and not args.pet_sigma:
+        raise SystemExit("--pet-sigma must be given and non-zero")
 
     split = json.loads(args.split.read_text())
     ds_dir = args.nnunet_raw / f"Dataset{args.dataset_id:03d}_{args.dataset_name}"
@@ -128,7 +155,8 @@ def main() -> None:
         for patient, case_ids in sorted(split["splits"][set_name]["cases"].items()):
             for case_id in case_ids:
                 jobs.append((case_id, str(scan_dir_for_case(args.data_root, patient, case_id)),
-                             str(ds_dir), suffix, label_dir))
+                             str(ds_dir), suffix, label_dir,
+                             args.pet_file, args.pet_mu, args.pet_sigma))
                 case_lists[set_name].append(case_id)
 
     if args.limit:
@@ -177,6 +205,17 @@ def main() -> None:
 
     (ds_dir / "splits_final.json").write_text(json.dumps(
         [{"train": case_lists["train"], "val": case_lists["val"]}], indent=1))
+
+    if args.pet_mu is not None:
+        (ds_dir / "pet_normalisation.json").write_text(json.dumps({
+            "channel_0_source": args.pet_file,
+            "scheme": "global affine, identical for every case",
+            "formula": "(x - mu) / sigma",
+            "mu": args.pet_mu,
+            "sigma": args.pet_sigma,
+            "fitted_on": "training cases only, voxels inside the body crop",
+            "channel_1_source": "CT_resample.nii.gz, per-scan z-score (unchanged)",
+        }, indent=1))
 
     shapes = np.array([r["shape"] for r in ok])
     print(f"prepared shape (z,y,x): min {shapes.min(0)} | median {np.median(shapes,0).astype(int)} "
