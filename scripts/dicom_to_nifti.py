@@ -192,14 +192,22 @@ def convert_patient(patient_id: str, series: list[dict], out_dir: Path) -> str:
     # regions outside the original CT field of view.
     ct_res = sitk.Resample(ct, pet, sitk.Transform(), sitk.sitkLinear, -1000.0, ct.GetPixelID())
 
-    seg_bin = sitk.Cast(seg > 0, sitk.sitkUInt8)
-    if seg_bin.GetSize() != pet.GetSize():
-        # geometry disagrees: resample with nearest neighbour so no label
-        # values are invented by interpolation
-        seg_bin = sitk.Resample(seg_bin, pet, sitk.Transform(), sitk.sitkNearestNeighbor, 0,
-                                seg_bin.GetPixelID())
-    else:
-        seg_bin.CopyInformation(pet)
+    # Always resample the mask onto the PET grid through physical space, with
+    # nearest neighbour so no label value is invented by interpolation.
+    #
+    # This used to call CopyInformation(pet) whenever the two had the same
+    # size, which stamps the PET's geometry onto the mask instead of moving the
+    # mask onto the PET's grid. Matching sizes do not imply matching geometry:
+    # for 317 of this collection's 501 tumour-positive scans the SEG's
+    # orientation differs from the PET's, and the shortcut silently mirrored the
+    # lesion left-right. Models trained on those labels could not fit them --
+    # training Dice equalled test Dice at 0.29 -- and nothing downstream
+    # revealed it, because the mask stayed the right shape and the right size.
+    #
+    # Resampling is correct whether or not the geometries agree, and costs
+    # nothing when they do.
+    seg_bin = sitk.Resample(sitk.Cast(seg > 0, sitk.sitkUInt8), pet, sitk.Transform(),
+                            sitk.sitkNearestNeighbor, 0, sitk.sitkUInt8)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     sitk.WriteImage(pet, str(out_dir / "PET.nii.gz"))
