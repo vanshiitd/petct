@@ -59,29 +59,31 @@ if not hasattr(pydicom, "read_file"):
 OFFICIAL = r"D:\data\external\TCIA_processing"
 
 
-def find_scans(raw_root: Path) -> list[tuple[str, Path]]:
-    """(case_id, dicom_dir) for every scan, in both flat and per-study layouts."""
+def find_scans(raw_root: Path) -> list[tuple[str, Path, str]]:
+    """(case_id, dicom_dir, out_rel) for every scan.
+
+    `out_rel` is carried from the raw layout rather than inferred back out of
+    the case id. Deriving it from the id meant guessing where the patient name
+    ended, and a study dated 1999 broke a heuristic that looked for a year
+    starting "20", writing that scan to a flat directory instead of a nested
+    one.
+    """
     scans = []
     for patient_dir in sorted(d for d in raw_root.iterdir() if d.is_dir()):
         if (patient_dir / "PT.zip").exists():
-            scans.append((patient_dir.name, patient_dir))
+            scans.append((patient_dir.name, patient_dir, patient_dir.name))
             continue
         for study_dir in sorted(d for d in patient_dir.iterdir() if d.is_dir()):
             if (study_dir / "PT.zip").exists():
-                scans.append((f"{patient_dir.name}_{study_dir.name}", study_dir))
+                scans.append((f"{patient_dir.name}_{study_dir.name}", study_dir,
+                              f"{patient_dir.name}/{study_dir.name}"))
     return scans
 
 
 def convert_one(job) -> dict:
-    case_id, dicom_dir, out_root, tmp_root, overwrite = job
+    case_id, dicom_dir, out_rel, out_root, tmp_root, overwrite = job
     dicom_dir, out_root = Path(dicom_dir), Path(out_root)
-
-    # mirror our per-scan layout: <patient>/ or <patient>/<study>/
-    parts = case_id.split("_")
-    if len(parts) >= 3 and parts[2][:2] == "20":
-        out_dir = out_root / f"{parts[0]}_{parts[1]}" / "_".join(parts[2:])
-    else:
-        out_dir = out_root / case_id
+    out_dir = out_root.joinpath(*out_rel.split("/"))
 
     if (out_dir / "tumorSeg.nii.gz").exists() and not overwrite:
         return {"case": case_id, "status": "already"}
@@ -163,8 +165,8 @@ def main() -> None:
         scans = scans[: args.limit]
     print(f"{len(scans)} scans under {args.raw_root} -> {args.out_root}\n", flush=True)
 
-    jobs = [(c, str(d), str(args.out_root), str(args.tmp_dir), args.overwrite)
-            for c, d in scans]
+    jobs = [(c, str(d), rel, str(args.out_root), str(args.tmp_dir), args.overwrite)
+            for c, d, rel in scans]
     rows, t0 = [], time.time()
     with ProcessPoolExecutor(max_workers=args.jobs) as pool:
         for i, r in enumerate(pool.map(convert_one, jobs, chunksize=1), 1):
