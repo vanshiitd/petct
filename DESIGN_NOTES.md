@@ -145,6 +145,34 @@ Before adding a patient here, check whether the corruption is actually in
 than the source DICOM -- a converter bug is fixable and should be fixed
 instead of excluding otherwise-good data.
 
+## 8c. Equal size does not mean equal geometry
+
+`dicom_to_nifti.py` used to place the lesion mask on the PET grid with
+`seg_bin.CopyInformation(pet)` whenever the two had the same voxel dimensions.
+`CopyInformation` stamps the PET's origin, spacing and direction onto the mask;
+it does not move the mask. Where the SEG's own orientation differs from the
+PET's — 317 of this collection's 501 tumour-positive scans — that silently
+mirrors the lesion left–right.
+
+Nothing downstream could catch it. The mask kept its shape, its voxel count and
+its file size, the split was unaffected, training ran to completion, and the
+loss went down. What it cost was the labels themselves: a model trained on them
+reached test Dice 0.2962 and scored *the same on its own training data* (0.2950),
+because there was nothing learnable left. Reconverting and retraining the same
+recipe gave 0.6421 test and 0.7461 train.
+
+Two rules follow:
+
+- Move a mask onto a reference grid with `sitk.Resample(..., sitk.sitkNearestNeighbor)`,
+  which goes through physical space. Reserve `CopyInformation` for images you
+  already know share a grid, and prefer asserting that over assuming it.
+- Matching array shapes prove nothing about alignment. A geometry check has to
+  compare origin, spacing and direction, or — better, and what caught this one —
+  an independent physical signal. A lesion label must sit on elevated FDG uptake;
+  `tests/test_seg_orientation.py` asserts exactly that on a real scan.
+
+---
+
 ## 8. Environment variables
 
 | Variable | Default | Meaning |
