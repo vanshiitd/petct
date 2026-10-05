@@ -49,6 +49,14 @@ def load_label_ids(path: Path | None) -> dict[str, int]:
     return dict(DEFAULT_LABEL_IDS)
 
 
+def _geom(img) -> tuple:
+    """Everything that fixes where a voxel sits in the patient."""
+    return (img.GetSize(),
+            tuple(round(v, 6) for v in img.GetSpacing()),
+            tuple(round(v, 3) for v in img.GetOrigin()),
+            tuple(round(v, 6) for v in img.GetDirection()))
+
+
 def clean_one(job) -> dict:
     (pred_path, out_path, min_volume_ml, totalseg_path,
      organ_ids, organ_overlap) = job
@@ -81,7 +89,15 @@ def clean_one(job) -> dict:
     if totalseg_path and organ_ids:
         ts_file = Path(totalseg_path)
         if ts_file.exists():
-            ts = sitk.GetArrayFromImage(sitk.ReadImage(str(ts_file)))
+            ts_img = sitk.ReadImage(str(ts_file))
+            ts = sitk.GetArrayFromImage(ts_img)
+            # Geometry, not shape. Organ masks built from the old conversion share
+            # the prediction's (400, 400, N) shape but traverse y the other way, so
+            # indexing one against the other mirrors every organ and masks the wrong
+            # side of the patient -- with no shape check anywhere to notice.
+            if _geom(ts_img) != _geom(img):
+                return {"case": pred_path.name, "status": "geometry_mismatch",
+                        "detail": f"organ mask {_geom(ts_img)} != prediction {_geom(img)}"}
             if ts.shape == arr.shape:
                 organ = np.isin(ts, list(organ_ids))
                 # how much of each component lies inside an allowed organ

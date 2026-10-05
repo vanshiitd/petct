@@ -42,14 +42,27 @@ def one(job) -> dict | None:
     if not ts_path.exists():
         return None
     seg_path = scan_dir_for_case(Path(data_root), case) / "tumorSeg.nii.gz"
-    gt = sitk.GetArrayFromImage(sitk.ReadImage(str(seg_path))) > 0
+    gt_img = sitk.ReadImage(str(seg_path))
+    gt = sitk.GetArrayFromImage(gt_img) > 0
     if not gt.any():
         return {"case": case, "lesion_voxels": 0, "per_organ": {}}
 
     ts_img = sitk.ReadImage(str(ts_path))
     ts = sitk.GetArrayFromImage(ts_img)
-    if ts.shape != gt.shape:
-        return {"case": case, "error": f"organ mask {ts.shape} != label {gt.shape}"}
+    # Geometry, not just shape. Organ masks built from the old conversion have
+    # the same (400, 400, N) shape as v2's labels but traverse y in the opposite
+    # direction, so indexing one against the other mirrors every organ while
+    # every shape check passes. That is the bug this whole reconversion exists
+    # to fix; do not let it back in one level up.
+    def geom(img):
+        return (img.GetSize(),
+                tuple(round(v, 6) for v in img.GetSpacing()),
+                tuple(round(v, 3) for v in img.GetOrigin()),
+                tuple(round(v, 6) for v in img.GetDirection()))
+
+    if geom(ts_img) != geom(gt_img):
+        return {"case": case,
+                "error": f"organ mask geometry {geom(ts_img)} != label {geom(gt_img)}"}
     sx, sy, sz = ts_img.GetSpacing()
     voxel_ml = sx * sy * sz / 1000.0
 
