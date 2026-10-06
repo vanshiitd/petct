@@ -35,7 +35,7 @@ def main() -> None:
     args = p.parse_args()
 
     folds = json.loads(args.splits_final.read_text())
-    before = json.dumps(folds[args.base_fold], sort_keys=True)
+    before = [json.dumps(f, sort_keys=True) for f in folds]
     base = folds[args.base_fold]
 
     split = json.loads(args.split.read_text())
@@ -54,8 +54,13 @@ def main() -> None:
     if overlap:
         raise SystemExit(f"{len(overlap)} subset case(s) are in the validation list")
 
+    # Append. An earlier version spliced at `base_fold + 1`, which silently
+    # dropped every fold after the base: adding a 30% subset with --base-fold 0
+    # replaced the already-trained 10% fold 1, so the file no longer described
+    # what fold 1 had trained on. `base_fold` selects the validation list to
+    # reuse and nothing else.
     new_fold = {"train": train, "val": list(base["val"])}
-    folds = folds[: args.base_fold + 1] + [new_fold]
+    folds = folds + [new_fold]
 
     print(f"fold {args.base_fold}: {len(base['train'])} train / {len(base['val'])} val")
     print(f"fold {len(folds) - 1}: {len(new_fold['train'])} train / {len(new_fold['val'])} val"
@@ -64,10 +69,13 @@ def main() -> None:
     print(f"validation identical to fold {args.base_fold}: "
           f"{new_fold['val'] == base['val']}")
 
-    after = json.dumps(folds[args.base_fold], sort_keys=True)
+    after = [json.dumps(f, sort_keys=True) for f in folds[: len(before)]]
     if after != before:
-        raise SystemExit(f"fold {args.base_fold} changed; refusing to write")
-    print(f"fold {args.base_fold} unchanged: OK")
+        changed = [i for i, (x, y) in enumerate(zip(before, after)) if x != y]
+        raise SystemExit(f"existing fold(s) {changed} changed; refusing to write")
+    if len(folds) != len(before) + 1:
+        raise SystemExit(f"expected {len(before) + 1} folds, built {len(folds)}")
+    print(f"all {len(before)} existing fold(s) unchanged: OK")
 
     if args.dry_run:
         print("\n--dry-run: splits_final.json not modified")

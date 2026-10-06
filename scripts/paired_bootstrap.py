@@ -56,6 +56,17 @@ def main() -> None:
     cases = sorted(set(a_map) & set(b_map))
     if len(cases) != len(a_map) or len(cases) != len(b_map):
         print(f"WARNING: pairing on {len(cases)} of {len(a_map)}/{len(b_map)} cases")
+    # Some metrics are undefined for some cases -- precision has no value when a
+    # prediction is empty. Drop those pairs and say so, rather than letting one
+    # nan turn every statistic into nan.
+    undefined = [c for c in cases
+                 if not (np.isfinite(a_map[c]) and np.isfinite(b_map[c]))]
+    if undefined:
+        print(f"NOTE: {len(undefined)} case(s) dropped, '{args.metric}' undefined "
+              f"for at least one run: {undefined[:4]}")
+        cases = [c for c in cases if c not in set(undefined)]
+    if not cases:
+        raise SystemExit(f"no case has '{args.metric}' defined in both runs")
     a = np.array([a_map[c] for c in cases])
     b = np.array([b_map[c] for c in cases])
     d = b - a
