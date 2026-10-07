@@ -52,13 +52,20 @@ def main() -> None:
     args = p.parse_args()
 
     fig, (ax, ax2) = plt.subplots(1, 2, figsize=(13, 5))
-    colours = ["#1f77b4", "#d62728", "#2ca02c", "#9467bd"]
+    # One colour per run, never reused: a four-colour cycle silently gave the
+    # fifth and sixth runs the same colours as the first and second, which makes
+    # a six-run plot say the opposite of what it means.
+    colours = ["#1f77b4", "#d62728", "#2ca02c", "#9467bd",
+               "#ff7f0e", "#17becf", "#8c564b", "#e377c2"]
+    if len(args.run) > len(colours):
+        raise SystemExit(f"{len(args.run)} runs but only {len(colours)} distinct "
+                         f"colours; add more before plotting")
     ok = True
     n_epochs = 0
 
     for i, (label, log) in enumerate(args.run):
         dice, ema, best_logged = parse(Path(log))
-        c = colours[i % len(colours)]
+        c = colours[i]
         ax.plot(range(len(dice)), dice, color=c, alpha=0.18, lw=0.8)
         ax.plot(range(len(ema)), ema, color=c, lw=1.8,
                 label=f"{label} (best {max(ema):.4f})")
