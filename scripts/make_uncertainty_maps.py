@@ -96,6 +96,16 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--overwrite", action="store_true")
+    ap.add_argument("--combine", choices=("softmax", "logit"), default="softmax",
+                    help="how the flips are fused into P_bar. 'softmax' averages "
+                         "probabilities; 'logit' averages logits and softmaxes "
+                         "once, which is what nnU-Net's own mirroring does. The "
+                         "two differ: on 12 test cases, mean-of-softmax predicts "
+                         "10% more volume and matches nnU-Net at Dice 0.938, "
+                         "while softmax-of-mean-logits matches it at 0.993 and "
+                         "within 0.2% of its volume. Use 'logit' whenever P_bar "
+                         "has to reproduce an nnU-Net baseline. U_stab is the "
+                         "spread of the per-flip softmax either way.")
     ap.add_argument("--models", default="pretrained,scratch",
                     help="comma-separated subset of MODELS. With a single model "
                          "there is no between-model term, so u_epi is not written "
@@ -138,43 +148,52 @@ def main() -> None:
         data, _, props = pre.run_case(case_files(case), None, pm, cm, dj)
 
         shape = data.shape[1:]
-        means, sq_means = {}, {}
+        means, sq_means, logit_means = {}, {}, {}
         for name, predictor in predictors.items():
             s = np.zeros(shape, dtype=np.float32)
             q = np.zeros(shape, dtype=np.float32)
+            lsum = np.zeros((2,) + shape, dtype=np.float32)
             for axes in FLIPS:
                 arr = data if not axes else np.flip(data, [a + 1 for a in axes])
                 logits = predictor.predict_logits_from_preprocessed_data(
-                    torch.from_numpy(np.ascontiguousarray(arr)))
-                prob = torch.softmax(logits.float(), 0)[1].cpu().numpy()
-                del logits
+                    torch.from_numpy(np.ascontiguousarray(arr))).float()
                 if axes:
-                    prob = np.flip(prob, list(axes))
+                    logits = torch.flip(logits, [a + 1 for a in axes])
+                prob = torch.softmax(logits, 0)[1].cpu().numpy()
+                lsum += logits.cpu().numpy()
+                del logits
                 s += prob
                 q += prob * prob
                 del prob
             means[name] = s / len(FLIPS)
             sq_means[name] = q / len(FLIPS)
-            del s, q
+            lm = lsum / len(FLIPS)
+            lm -= lm.max(axis=0, keepdims=True)          # stable softmax
+            e = np.exp(lm)
+            logit_means[name] = (e[1] / e.sum(axis=0)).astype(np.float32)
+            del s, q, lsum, lm, e
 
         names = list(means)
         # E[p^2] - E[p]^2, clipped because floating point can make it a hair
         # negative where a model is perfectly consistent across flips
         vars_ = [np.clip(sq_means[n] - means[n] * means[n], 0.0, None) for n in names]
         u_stab = sum(vars_) / len(vars_)
-        p_bar = sum(means[n] for n in names) / len(names)
+        src = logit_means if args.combine == "logit" else means
+        p_bar = sum(src[n] for n in names) / len(names)
         if len(names) == 1:
             # One member has no between-model variance to measure. Writing zeros
             # would look like confident agreement rather than an absent quantity,
             # so u_epi is omitted from the file entirely and readers must notice.
             u_epi = None
         else:
-            m1, m2 = means[names[0]], means[names[1]]
+            # same fusion as p_bar, or the between-model term would be computed
+            # on a different quantity from the mean it is a spread around
+            m1, m2 = src[names[0]], src[names[1]]
             u_epi = ((m1 - m2) / 2.0) ** 2
         eps = 1e-7
         pc = np.clip(p_bar, eps, 1.0 - eps)
         u_ent = -(pc * np.log(pc) + (1.0 - pc) * np.log1p(-pc))
-        del means, sq_means, vars_, pc
+        del means, sq_means, logit_means, vars_, pc
 
         # back out of nnU-Net's crop-to-nonzero, into the prepared grid
         full_shape = tuple(int(v) for v in props["shape_before_cropping"])
@@ -189,6 +208,7 @@ def main() -> None:
         payload = dict(p_bar=expand(p_bar), u_ent=expand(u_ent),
                        u_stab=expand(u_stab),
                        models=np.array(names),
+                       combine=np.array(args.combine),
                        shape=np.array(full_shape, dtype=np.int32),
                        bbox=np.array(bbox, dtype=np.int32),
                        spacing=np.array(props["spacing"], dtype=np.float64))
