@@ -96,6 +96,10 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--overwrite", action="store_true")
+    ap.add_argument("--models", default="pretrained,scratch",
+                    help="comma-separated subset of MODELS. With a single model "
+                         "there is no between-model term, so u_epi is not written "
+                         "and u_stab is that model's own variance across flips.")
     args = ap.parse_args()
 
     os.environ.setdefault("nnUNet_raw", r"C:\nnunet_raw")
@@ -109,10 +113,16 @@ def main() -> None:
     if args.limit:
         cases = cases[: args.limit]
     args.out.mkdir(parents=True, exist_ok=True)
-    print(f"{len(cases)} cases, {len(MODELS)} models x {len(FLIPS)} flips "
-          f"= {len(MODELS) * len(FLIPS)} passes each -> {args.out}\n", flush=True)
+    n_models = len([m for m in args.models.split(",") if m.strip()])
+    print(f"{len(cases)} cases, {n_models} model(s) x {len(FLIPS)} flips "
+          f"= {n_models * len(FLIPS)} passes each -> {args.out}", flush=True)
+    print(flush=True)
 
-    predictors = {name: build_predictor(d) for name, d in MODELS.items()}
+    wanted = [m.strip() for m in args.models.split(",") if m.strip()]
+    unknown = [m for m in wanted if m not in MODELS]
+    if unknown:
+        raise SystemExit(f"unknown model(s) {unknown}; have {sorted(MODELS)}")
+    predictors = {name: build_predictor(MODELS[name]) for name in wanted}
     first = next(iter(predictors.values()))
     pm, dj, cm = first.plans_manager, first.dataset_json, first.configuration_manager
     pre = DefaultPreprocessor(verbose=False)
@@ -147,18 +157,24 @@ def main() -> None:
             sq_means[name] = q / len(FLIPS)
             del s, q
 
-        m1, m2 = means["pretrained"], means["scratch"]
-        p_bar = (m1 + m2) / 2.0
-        u_epi = ((m1 - m2) / 2.0) ** 2
+        names = list(means)
         # E[p^2] - E[p]^2, clipped because floating point can make it a hair
         # negative where a model is perfectly consistent across flips
-        v1 = np.clip(sq_means["pretrained"] - m1 * m1, 0.0, None)
-        v2 = np.clip(sq_means["scratch"] - m2 * m2, 0.0, None)
-        u_stab = (v1 + v2) / 2.0
+        vars_ = [np.clip(sq_means[n] - means[n] * means[n], 0.0, None) for n in names]
+        u_stab = sum(vars_) / len(vars_)
+        p_bar = sum(means[n] for n in names) / len(names)
+        if len(names) == 1:
+            # One member has no between-model variance to measure. Writing zeros
+            # would look like confident agreement rather than an absent quantity,
+            # so u_epi is omitted from the file entirely and readers must notice.
+            u_epi = None
+        else:
+            m1, m2 = means[names[0]], means[names[1]]
+            u_epi = ((m1 - m2) / 2.0) ** 2
         eps = 1e-7
         pc = np.clip(p_bar, eps, 1.0 - eps)
         u_ent = -(pc * np.log(pc) + (1.0 - pc) * np.log1p(-pc))
-        del means, sq_means, m1, m2, v1, v2, pc
+        del means, sq_means, vars_, pc
 
         # back out of nnU-Net's crop-to-nonzero, into the prepared grid
         full_shape = tuple(int(v) for v in props["shape_before_cropping"])
@@ -170,14 +186,15 @@ def main() -> None:
             out[sl] = a.astype(np.float16)
             return out
 
-        np.savez_compressed(
-            out_file,
-            p_bar=expand(p_bar), u_ent=expand(u_ent),
-            u_epi=expand(u_epi), u_stab=expand(u_stab),
-            shape=np.array(full_shape, dtype=np.int32),
-            bbox=np.array(bbox, dtype=np.int32),
-            spacing=np.array(props["spacing"], dtype=np.float64),
-        )
+        payload = dict(p_bar=expand(p_bar), u_ent=expand(u_ent),
+                       u_stab=expand(u_stab),
+                       models=np.array(names),
+                       shape=np.array(full_shape, dtype=np.int32),
+                       bbox=np.array(bbox, dtype=np.int32),
+                       spacing=np.array(props["spacing"], dtype=np.float64))
+        if u_epi is not None:
+            payload["u_epi"] = expand(u_epi)
+        np.savez_compressed(out_file, **payload)
         done += 1
         rate = (time.time() - t_start) / done
         print(f"  [{idx}/{len(cases)}] {case}: {full_shape} "
