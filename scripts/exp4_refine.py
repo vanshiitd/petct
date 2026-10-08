@@ -160,9 +160,13 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--val-cand", type=Path, required=True)
     ap.add_argument("--test-cand", type=Path, required=True)
+    ap.add_argument("--maps-root", type=Path, default=None,
+                    help="directory holding val/ and test/ probability maps; the corrected logit-fused M0 lives elsewhere from the first one")
     ap.add_argument("--out", type=Path,
                     default=Path(r"D:\data\reports\exp4_refine.json"))
     args = ap.parse_args()
+    if args.maps_root:
+        globals()["UNC"] = args.maps_root
 
     # --- fit both detectors on val -----------------------------------
     models = {}

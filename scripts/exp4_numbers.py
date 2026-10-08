@@ -42,8 +42,12 @@ GT = Path(r"D:\data\nnunet\gt_v2_test")
 BINS = [(0, 0.1, "<0.1"), (0.1, 0.5, "0.1-0.5"), (0.5, 1.0, "0.5-1"), (1.0, 1e9, ">=1")]
 
 
+M0_CSV = "evalM0_test"          # overridden by --m0
+M0_DIR = "test_M0_mapped"       # overridden by --m0-dir
+
+
 def read_eval(tag: str) -> dict:
-    path = REP / f"eval_{tag}.csv" if tag != "M0" else REP / "evalM0_test.csv"
+    path = REP / f"eval_{tag}.csv" if tag != "M0" else REP / f"{M0_CSV}.csv"
     with open(path, newline="", encoding="utf-8") as f:
         return {r["case"]: r for r in csv.DictReader(f)}
 
@@ -115,7 +119,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--variants", nargs="+", required=True)
+    ap.add_argument("--m0", default="evalM0_test",
+                    help="evaluation CSV stem for the baseline")
+    ap.add_argument("--m0-dir", default="test_M0_mapped",
+                    help="mapped-mask directory for the baseline")
     args = ap.parse_args()
+    globals()["M0_CSV"] = args.m0
+    globals()["M0_DIR"] = args.m0_dir
 
     m0 = read_eval("M0")
     print(f"{'variant':12s} {'Dice':>7s} {'dDice':>8s} {'impr':>6s} {'unch':>6s} "
@@ -137,7 +147,7 @@ def main() -> None:
         cleaned = sum(1 for c in cases if m0[c]["gt_positive"] == "0"
                       and fnum(m0[c]["fp_volume_ml"]) > 0
                       and fnum(ev[c]["fp_volume_ml"]) == 0)
-        flow = lesion_flow(PRED / f"test_{tag}_mapped", PRED / "test_M0_mapped")
+        flow = lesion_flow(PRED / f"test_{tag}_mapped", PRED / M0_DIR)
         lost = sum(v["lost"] for v in flow.values())
         rec = sum(v["recovered"] for v in flow.values())
         rng = np.random.default_rng(2026)

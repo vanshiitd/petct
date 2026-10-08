@@ -45,8 +45,12 @@ def main() -> None:
     ap.add_argument("--decisions", type=Path, required=True)
     ap.add_argument("--variant", required=True)
     ap.add_argument("--split", required=True)
+    ap.add_argument("--maps-root", type=Path, default=None,
+                    help="directory holding the probability maps")
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
+    if args.maps_root:
+        globals()["UNC"] = args.maps_root
 
     dec = json.loads(args.decisions.read_text())["decisions"][args.variant]
     args.out.mkdir(parents=True, exist_ok=True)
