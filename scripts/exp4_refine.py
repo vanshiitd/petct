@@ -121,17 +121,24 @@ def score_case(bk: dict, keep_pred: set, add_rec: set) -> dict:
     dice = (2 * inter / (pv + gtv)) if (pv + gtv) else float("nan")
     return {"dice": dice, "fp_ml": fp, "fn_ml": fn, "pred_ml": pv * vml,
             "tp_ml": inter * vml, "gt_positive": bk["gt_positive"],
-            "any_fp": fp > 0}
+            "any_fp": fp > 0,
+            # lesion-level sensitivity, the quantity a clinical operating point
+            # has to hold: how many distinct true lesions are still touched
+            "n_gt": len(bk["gt_sizes"]), "n_hit": len(hit)}
 
 
 def summarise(books, decisions) -> dict:
     rows = [score_case(bk, *decisions[bk["case"]]) for bk in books]
     pos = [r for r in rows if r["gt_positive"]]
     neg = [r for r in rows if not r["gt_positive"]]
+    n_gt = sum(r["n_gt"] for r in pos)
+    n_hit = sum(r["n_hit"] for r in pos)
     return {"dice": float(np.mean([r["dice"] for r in pos])),
             "fp_ml": float(np.mean([r["fp_ml"] for r in rows])),
             "fn_ml": float(np.mean([r["fn_ml"] for r in rows])),
             "tp_ml": float(np.sum([r["tp_ml"] for r in pos])),
+            "lesion_sens": (n_hit / n_gt) if n_gt else float("nan"),
+            "n_gt": n_gt, "n_hit": n_hit,
             "neg_with_fp": int(sum(r["any_fp"] for r in neg)), "n_neg": len(neg)}
 
 
@@ -207,7 +214,8 @@ def main() -> None:
 
     base_v = summarise(books_v, {bk["case"]: (set(bk["pred"]), set()) for bk in books_v})
     print(f"val M0: Dice {base_v['dice']:.4f}  FP {base_v['fp_ml']:.2f} mL  "
-          f"neg-with-FP {base_v['neg_with_fp']}/{base_v['n_neg']}  TP vol {base_v['tp_ml']:.0f} mL")
+          f"neg-with-FP {base_v['neg_with_fp']}/{base_v['n_neg']}  "
+          f"TP vol {base_v['tp_ml']:.0f} mL  lesion sens {base_v['lesion_sens']:.4f}")
 
     # --- tune on val --------------------------------------------------
     grid_a = [1.01] + list(np.round(np.arange(0.95, 0.19, -0.05), 2))
@@ -223,6 +231,15 @@ def main() -> None:
     tp_floor = base_v["tp_ml"] * 0.99
     ok = [s for s in results if s["tp_ml"] >= tp_floor]
     best_cons = min(ok, key=lambda s: (s["neg_with_fp"], -s["dice"])) if ok else best_dice
+    # A third point, the clinically meaningful one: cut as much false-positive
+    # volume as possible while lesion-level sensitivity stays within 1 point of
+    # the baseline. Dice is indifferent between a missed lesion and a spurious
+    # blob; this is not, and it is the constraint a reader would actually
+    # impose. The earlier "conservative" point budgeted true-positive *volume*,
+    # which a model can satisfy while still deleting many small lesions.
+    sens_floor = base_v["lesion_sens"] - 0.01
+    ok_s = [s for s in results if s["lesion_sens"] >= sens_floor]
+    best_sens = min(ok_s, key=lambda s: (s["fp_ml"], -s["dice"])) if ok_s else best_dice
     print(f"\ntuned on val:")
     print(f"  dice point        tau_A {best_dice['tau_a']:.2f} tau_B {best_dice['tau_b']:.2f}"
           f" -> Dice {best_dice['dice']:.4f} FP {best_dice['fp_ml']:.2f} "
@@ -232,7 +249,12 @@ def main() -> None:
           f"neg-with-FP {best_cons['neg_with_fp']} (TP vol kept "
           f"{100*best_cons['tp_ml']/base_v['tp_ml']:.2f}%)")
 
-    out = {"val_m0": base_v, "tuned": {"dice": best_dice, "conservative": best_cons}}
+    print(f"  sensitivity point  tau_A {best_sens['tau_a']:.2f} tau_B {best_sens['tau_b']:.2f}"
+          f" -> Dice {best_sens['dice']:.4f} FP {best_sens['fp_ml']:.2f} "
+          f"neg-with-FP {best_sens['neg_with_fp']} (lesion sens "
+          f"{best_sens['lesion_sens']:.4f} vs baseline {base_v['lesion_sens']:.4f})")
+    out = {"val_m0": base_v, "tuned": {"dice": best_dice, "conservative": best_cons,
+                                       "sensitivity": best_sens}}
 
     # --- apply to test ------------------------------------------------
     print(f"\n{'variant':34s} {'Dice':>7s} {'FP mL':>8s} {'FN mL':>8s} {'neg+FP':>8s}")
@@ -240,7 +262,8 @@ def main() -> None:
     variants = {}
     m0_t = {bk["case"]: (set(bk["pred"]), set()) for bk in books_t}
     variants["M0"] = m0_t
-    for pname, pt in (("dice", best_dice), ("conservative", best_cons)):
+    for pname, pt in (("dice", best_dice), ("conservative", best_cons),
+                      ("sensitivity", best_sens)):
         ta, tb = pt["tau_a"], pt["tau_b"]
         variants[f"A remove [{pname}]"] = decide(books_t, st_fp, st_rec, ta, 1.01)
         variants[f"B recover [{pname}]"] = decide(books_t, st_fp, st_rec, 1.01, tb)
@@ -251,7 +274,7 @@ def main() -> None:
         s = summarise(books_t, d)
         summ[name] = s
         print(f"{name:34s} {s['dice']:7.4f} {s['fp_ml']:8.2f} {s['fn_ml']:8.2f} "
-              f"{s['neg_with_fp']:>5d}/{s['n_neg']}")
+              f"{s['neg_with_fp']:>5d}/{s['n_neg']} {s['lesion_sens']:>9.4f}")
     out["test"] = summ
     out["decisions"] = {name: {c: [sorted(k), sorted(a)] for c, (k, a) in d.items()}
                         for name, d in variants.items()}
