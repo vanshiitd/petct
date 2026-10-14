@@ -45,11 +45,13 @@ from pathlib import Path
 import numpy as np
 import SimpleITK as sitk
 from scipy import ndimage as ndi
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GroupKFold
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from exp3_detect import GROUPS, load, matrix     # noqa: E402
+from exp3_detect import GROUPS, load, matrix, patient_of   # noqa: E402
 
 RAW = Path(r"C:\nnunet_raw\Dataset505_AutoPET_MAEprep_v2")
 UNC = Path(r"D:\data\uncertainty_m0")
@@ -162,122 +164,209 @@ def decide(books, pfp, prec, tau_a, tau_b, reflect=False):
     return out
 
 
+def load_books(split: str, cases: list[str], cache: Path | None) -> list[dict]:
+    """Bookkeeping for a split, cached because it is the expensive part.
+
+    Each case costs a map load plus a ground-truth load; the out-of-fold split
+    is 738 of them, and both detectors need exactly the same bookkeeping. The
+    cache is keyed by split and validated against the case list, so a stale
+    file is detected rather than silently reused.
+    """
+    import pickle
+    if cache and cache.exists():
+        with open(cache, "rb") as f:
+            got = pickle.load(f)
+        if [b["case"] for b in got] == cases:
+            print(f"  {split}: {len(got)} cases from cache")
+            return got
+        print(f"  {split}: cache case list differs, rebuilding")
+    books = []
+    for i, c in enumerate(cases, 1):
+        books.append(bookkeep(c, split))
+        if i % 100 == 0 or i == len(cases):
+            print(f"  {split}: {i}/{len(cases)}", flush=True)
+    if cache:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        with open(cache, "wb") as f:
+            pickle.dump(books, f)
+    return books
+
+
+def sweep(books, pfp, prec, grid_a, grid_b):
+    out = []
+    for ta in grid_a:
+        for tb in grid_b:
+            s = summarise(books, decide(books, pfp, prec, ta, tb))
+            s.update(tau_a=float(ta), tau_b=float(tb))
+            out.append(s)
+    return out
+
+
+def pick(results, base, point: str):
+    """The three operating points, each a different definition of better."""
+    if point == "dice":
+        return max(results, key=lambda s: s["dice"])
+    if point == "conservative":
+        ok = [s for s in results if s["tp_ml"] >= base["tp_ml"] * 0.99]
+        return (min(ok, key=lambda s: (s["neg_with_fp"], -s["dice"])) if ok
+                else max(results, key=lambda s: s["dice"]))
+    if point == "sensitivity":
+        ok = [s for s in results if s["lesion_sens"] >= base["lesion_sens"] - 0.01]
+        return (min(ok, key=lambda s: (s["fp_ml"], -s["dice"])) if ok
+                else max(results, key=lambda s: s["dice"]))
+    raise ValueError(point)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--val-cand", type=Path, required=True)
     ap.add_argument("--test-cand", type=Path, required=True)
-    ap.add_argument("--maps-root", type=Path, default=None,
-                    help="directory holding val/ and test/ probability maps; the corrected logit-fused M0 lives elsewhere from the first one")
+    ap.add_argument("--fit-cand", type=Path, default=None,
+                    help="candidates to fit detectors and tune thresholds on; "
+                         "without it both happen on val, as in Phase III")
+    ap.add_argument("--fit-split", default="oof",
+                    help="subdirectory of --maps-root holding the fitting maps")
+    ap.add_argument("--detector", choices=("logistic", "gbt"), default="logistic")
+    ap.add_argument("--gbt-from", type=Path, default=None,
+                    help="exp3 JSON to read out-of-fold-tuned GBT parameters from")
+    ap.add_argument("--drop", nargs="*", default=[])
+    ap.add_argument("--add", nargs="*", default=[])
+    ap.add_argument("--maps-root", type=Path, default=None)
+    ap.add_argument("--cache-dir", type=Path,
+                    default=Path(r"D:\data\reports\bookcache"))
     ap.add_argument("--out", type=Path,
                     default=Path(r"D:\data\reports\exp4_refine.json"))
     args = ap.parse_args()
     if args.maps_root:
         globals()["UNC"] = args.maps_root
+    feats = [f for f in GROUPS["d all"] if f not in args.drop]
+    feats += [f for f in args.add if f not in feats]
+    print(f"detector {args.detector!r} on {len(feats)} features")
 
-    # --- fit both detectors on val -----------------------------------
+    gbt_params = {}
+    if args.detector == "gbt":
+        if not args.gbt_from:
+            raise SystemExit("--detector gbt needs --gbt-from")
+        j = json.loads(args.gbt_from.read_text())
+        gbt_params = {k: j[k]["d all (GBT)"]["params"] for k in ("pred", "recover")}
+        print(f"  GBT params from {args.gbt_from.name}: {gbt_params}")
+
+    fit_cand = args.fit_cand or args.val_cand
+    fit_split = args.fit_split if args.fit_cand else "val"
+
+    # --- detectors, fitted on the fitting split only ------------------
     models = {}
     for kind in ("pred", "recover"):
-        rows_v, yv, gv, _ = load(args.val_cand, kind)
-        feats = GROUPS["d all"]
-        Xv, med, _ = matrix(rows_v, feats, None)
-        mu, sd = Xv.mean(0), Xv.std(0); sd[sd == 0] = 1.0
-        clf = LogisticRegression(max_iter=5000, C=1.0).fit((Xv - mu) / sd, yv)
-        models[kind] = (clf, mu, sd, med, feats)
-        print(f"fitted '{kind}' detector on {len(yv)} val candidates "
-              f"({int(yv.sum())} positive)")
+        rows_v, yv, gv, _ = load(fit_cand, kind)
+        Xv, med, nmiss = matrix(rows_v, feats, None)
+        mu, sd = Xv.mean(0), Xv.std(0)
+        sd[sd == 0] = 1.0
+        if args.detector == "gbt":
+            clf = HistGradientBoostingClassifier(random_state=0, early_stopping=False,
+                                                 **gbt_params[kind]).fit(Xv, yv)
+            std = False
+        else:
+            clf = LogisticRegression(max_iter=5000, C=1.0).fit((Xv - mu) / sd, yv)
+            std = True
+        models[kind] = (clf, mu, sd, med, std)
+        print(f"fitted {kind!r} on {len(yv)} {fit_split} candidates "
+              f"({int(yv.sum())} positive, {nmiss} imputed cells)")
 
     def scores(path: Path):
         out = {}
         for kind in ("pred", "recover"):
-            clf, mu, sd, med, feats = models[kind]
-            rows, y, g, _ = load(path, kind)
+            clf, mu, sd, med, std = models[kind]
+            rows, _, _, _ = load(path, kind)
             X, _, _ = matrix(rows, feats, med)
-            p = clf.predict_proba((X - mu) / sd)[:, 1]
+            p = clf.predict_proba((X - mu) / sd if std else X)[:, 1]
             out[kind] = {(r["case"], int(r["component_id"])): float(v)
                          for r, v in zip(rows, p)}
         return out["pred"], out["recover"]
 
+    sf_fp, sf_rec = scores(fit_cand)
     sv_fp, sv_rec = scores(args.val_cand)
     st_fp, st_rec = scores(args.test_cand)
 
-    # Every case in the split, not just those with candidates. A case where M0
-    # predicts nothing and has nothing above t_low contributes no CSV row, and
-    # taking the case list from the CSV silently dropped 6 val and 10 test cases
-    # -- shifting every mean and the tumour-free denominator (80 instead of 90).
-    # Those cases are part of the result: they are the ones already correct.
-    val_cases = sorted(f.stem for f in (UNC / "val").glob("*.npz"))
-    test_cases = sorted(f.stem for f in (UNC / "test").glob("*.npz"))
-    print(f"\nbuilding bookkeeping: {len(val_cases)} val, {len(test_cases)} test cases")
-    books_v = [bookkeep(c, "val") for c in val_cases]
-    books_t = [bookkeep(c, "test") for c in test_cases]
+    # Every case in the split, not just those with candidates: a case where M0
+    # predicts nothing contributes no CSV row but is still part of the result.
+    print("\nbookkeeping")
+    splits = {}
+    for name in (fit_split, "val", "test"):
+        cases = sorted(f.stem for f in (UNC / name).glob("*.npz"))
+        splits[name] = load_books(name, cases, args.cache_dir / f"{name}.pkl")
 
-    base_v = summarise(books_v, {bk["case"]: (set(bk["pred"]), set()) for bk in books_v})
-    print(f"val M0: Dice {base_v['dice']:.4f}  FP {base_v['fp_ml']:.2f} mL  "
-          f"neg-with-FP {base_v['neg_with_fp']}/{base_v['n_neg']}  "
-          f"TP vol {base_v['tp_ml']:.0f} mL  lesion sens {base_v['lesion_sens']:.4f}")
+    books_f, books_v, books_t = splits[fit_split], splits["val"], splits["test"]
+    base_f = summarise(books_f, {b["case"]: (set(b["pred"]), set()) for b in books_f})
+    base_v = summarise(books_v, {b["case"]: (set(b["pred"]), set()) for b in books_v})
+    base_t = summarise(books_t, {b["case"]: (set(b["pred"]), set()) for b in books_t})
+    for nm, b in ((fit_split, base_f), ("val", base_v), ("test", base_t)):
+        print(f"{nm:5s} M0: Dice {b['dice']:.4f}  FP {b['fp_ml']:6.2f} mL  "
+              f"neg-with-FP {b['neg_with_fp']:>3d}/{b['n_neg']:<3d} "
+              f"lesion sens {b['lesion_sens']:.4f}")
 
-    # --- tune on val --------------------------------------------------
+    # --- thresholds, tuned on the fitting split -----------------------
     grid_a = [1.01] + list(np.round(np.arange(0.95, 0.19, -0.05), 2))
     grid_b = [1.01] + list(np.round(np.arange(0.9, 0.09, -0.05), 2))
-    results = []
-    for ta in grid_a:
-        for tb in grid_b:
-            d = decide(books_v, sv_fp, sv_rec, ta, tb)
-            s = summarise(books_v, d)
-            s.update(tau_a=float(ta), tau_b=float(tb))
-            results.append(s)
-    best_dice = max(results, key=lambda s: s["dice"])
-    tp_floor = base_v["tp_ml"] * 0.99
-    ok = [s for s in results if s["tp_ml"] >= tp_floor]
-    best_cons = min(ok, key=lambda s: (s["neg_with_fp"], -s["dice"])) if ok else best_dice
-    # A third point, the clinically meaningful one: cut as much false-positive
-    # volume as possible while lesion-level sensitivity stays within 1 point of
-    # the baseline. Dice is indifferent between a missed lesion and a spurious
-    # blob; this is not, and it is the constraint a reader would actually
-    # impose. The earlier "conservative" point budgeted true-positive *volume*,
-    # which a model can satisfy while still deleting many small lesions.
-    sens_floor = base_v["lesion_sens"] - 0.01
-    ok_s = [s for s in results if s["lesion_sens"] >= sens_floor]
-    best_sens = min(ok_s, key=lambda s: (s["fp_ml"], -s["dice"])) if ok_s else best_dice
-    print(f"\ntuned on val:")
-    print(f"  dice point        tau_A {best_dice['tau_a']:.2f} tau_B {best_dice['tau_b']:.2f}"
-          f" -> Dice {best_dice['dice']:.4f} FP {best_dice['fp_ml']:.2f} "
-          f"neg-with-FP {best_dice['neg_with_fp']}")
-    print(f"  conservative point tau_A {best_cons['tau_a']:.2f} tau_B {best_cons['tau_b']:.2f}"
-          f" -> Dice {best_cons['dice']:.4f} FP {best_cons['fp_ml']:.2f} "
-          f"neg-with-FP {best_cons['neg_with_fp']} (TP vol kept "
-          f"{100*best_cons['tp_ml']/base_v['tp_ml']:.2f}%)")
+    results = sweep(books_f, sf_fp, sf_rec, grid_a, grid_b)
+    points = ("dice", "conservative", "sensitivity")
+    chosen = {p: pick(results, base_f, p) for p in points}
 
-    print(f"  sensitivity point  tau_A {best_sens['tau_a']:.2f} tau_B {best_sens['tau_b']:.2f}"
-          f" -> Dice {best_sens['dice']:.4f} FP {best_sens['fp_ml']:.2f} "
-          f"neg-with-FP {best_sens['neg_with_fp']} (lesion sens "
-          f"{best_sens['lesion_sens']:.4f} vs baseline {base_v['lesion_sens']:.4f})")
-    out = {"val_m0": base_v, "tuned": {"dice": best_dice, "conservative": best_cons,
-                                       "sensitivity": best_sens}}
+    # Patient-grouped CV *within* the fitting split, to say whether the chosen
+    # threshold is a stable property of the data or an artefact of one draw.
+    groups = np.array([patient_of(b["case"]) for b in books_f])
+    gkf = GroupKFold(n_splits=5)
+    stab = {p: [] for p in points}
+    for tr, _ in gkf.split(np.zeros(len(books_f)), None, groups):
+        sub = [books_f[i] for i in tr]
+        b0 = summarise(sub, {b["case"]: (set(b["pred"]), set()) for b in sub})
+        rs = sweep(sub, sf_fp, sf_rec, grid_a, grid_b)
+        for p in points:
+            s = pick(rs, b0, p)
+            stab[p].append((s["tau_a"], s["tau_b"]))
+    print(f"\nthresholds tuned on {fit_split} "
+          f"({len(books_f)} cases, {len(set(groups))} patients)")
+    out = {"detector": args.detector, "features": feats, "fit_split": fit_split,
+           "gbt_params": gbt_params,
+           "m0": {fit_split: base_f, "val": base_v, "test": base_t}, "tuned": {}}
+    for p in points:
+        s = chosen[p]
+        ta = [t[0] for t in stab[p]]
+        tb = [t[1] for t in stab[p]]
+        print(f"  {p:13s} tau_A {s['tau_a']:.2f} tau_B {s['tau_b']:.2f}"
+              f"  | across 5 patient-grouped folds tau_A "
+              f"{min(ta):.2f}-{max(ta):.2f}, tau_B {min(tb):.2f}-{max(tb):.2f}")
+        out["tuned"][p] = {**s, "cv_tau_a": ta, "cv_tau_b": tb}
 
-    # --- apply to test ------------------------------------------------
-    print(f"\n{'variant':34s} {'Dice':>7s} {'FP mL':>8s} {'FN mL':>8s} {'neg+FP':>8s}")
-    print("-" * 70)
-    variants = {}
-    m0_t = {bk["case"]: (set(bk["pred"]), set()) for bk in books_t}
-    variants["M0"] = m0_t
-    for pname, pt in (("dice", best_dice), ("conservative", best_cons),
-                      ("sensitivity", best_sens)):
-        ta, tb = pt["tau_a"], pt["tau_b"]
-        variants[f"A remove [{pname}]"] = decide(books_t, st_fp, st_rec, ta, 1.01)
-        variants[f"B recover [{pname}]"] = decide(books_t, st_fp, st_rec, 1.01, tb)
-        variants[f"A+B [{pname}]"] = decide(books_t, st_fp, st_rec, ta, tb)
-        variants[f"A+B+reflect [{pname}]"] = decide(books_t, st_fp, st_rec, ta, tb, True)
-    summ = {}
-    for name, d in variants.items():
-        s = summarise(books_t, d)
-        summ[name] = s
-        print(f"{name:34s} {s['dice']:7.4f} {s['fp_ml']:8.2f} {s['fn_ml']:8.2f} "
-              f"{s['neg_with_fp']:>5d}/{s['n_neg']} {s['lesion_sens']:>9.4f}")
-    out["test"] = summ
-    out["decisions"] = {name: {c: [sorted(k), sorted(a)] for c, (k, a) in d.items()}
-                        for name, d in variants.items()}
+    # --- val as a check, then test once -------------------------------
+    for split_name, books, sfp, srec in (("val", books_v, sv_fp, sv_rec),
+                                         ("test", books_t, st_fp, st_rec)):
+        print(f"\n{split_name.upper()}  {'variant':30s} {'Dice':>7s} {'FP mL':>8s} "
+              f"{'FN mL':>8s} {'neg+FP':>9s} {'lesSens':>8s}")
+        print("-" * 82)
+        base = base_v if split_name == "val" else base_t
+        vs = {"M0": {b["case"]: (set(b["pred"]), set()) for b in books}}
+        for p in points:
+            ta, tb = chosen[p]["tau_a"], chosen[p]["tau_b"]
+            vs[f"A remove [{p}]"] = decide(books, sfp, srec, ta, 1.01)
+            vs[f"B recover [{p}]"] = decide(books, sfp, srec, 1.01, tb)
+            vs[f"A+B [{p}]"] = decide(books, sfp, srec, ta, tb)
+            vs[f"A+B+reflect [{p}]"] = decide(books, sfp, srec, ta, tb, True)
+        summ = {}
+        for name, d in vs.items():
+            s = summarise(books, d)
+            summ[name] = s
+            flag = ""
+            if name != "M0":
+                ds = s["lesion_sens"] - base["lesion_sens"]
+                flag = f"  dSens {ds:+.4f}" + ("  OVER BUDGET" if ds < -0.01 else "")
+            print(f"      {name:30s} {s['dice']:7.4f} {s['fp_ml']:8.2f} "
+                  f"{s['fn_ml']:8.2f} {s['neg_with_fp']:>5d}/{s['n_neg']:<3d} "
+                  f"{s['lesion_sens']:8.4f}{flag}")
+        out[split_name] = summ
+        if split_name == "test":
+            out["decisions"] = {n: {c: [sorted(k), sorted(a)] for c, (k, a) in d.items()}
+                                for n, d in vs.items()}
     args.out.write_text(json.dumps(out, indent=1))
     print(f"\nwritten to {args.out}")
 

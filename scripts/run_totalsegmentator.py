@@ -48,6 +48,9 @@ def main() -> None:
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--fast", action="store_true", default=True)
     p.add_argument("--full-res", dest="fast", action="store_false")
+    # the saving pool ships the label volume through a Windows pipe, which
+    # fails on the tallest scans (>590 slices); 1 writes in-process instead
+    p.add_argument("--nr-thr-saving", type=int, default=6)
     args = p.parse_args()
 
     from totalsegmentator.python_api import totalsegmentator
@@ -70,7 +73,7 @@ def main() -> None:
             out_file.parent.mkdir(parents=True, exist_ok=True)
             totalsegmentator(str(scan), str(out_file), ml=True, fast=args.fast,
                              roi_subset=ROI_SUBSET, device="gpu", quiet=True,
-                             nr_thr_saving=6)
+                             nr_thr_saving=args.nr_thr_saving)
             times.append(time.time() - t0)
             done += 1
         except Exception as e:
