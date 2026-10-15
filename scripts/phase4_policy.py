@@ -38,15 +38,30 @@ CLASS_ORDER = ["spurious_physio", "spurious_liver_spleen", "spurious_other",
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--table", type=Path, required=True)
+    ap.add_argument("--table", type=Path, nargs="+", required=True)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--no-ban", action="store_true",
+                    help="measure and report the gaming check but do not "
+                         "remove the strategies that fail it. The ban exists "
+                         "to protect the Q gate; with the gate disabled (the "
+                         "section 21 refinement rung) there is nothing to "
+                         "game, so this is the honest library there. It is "
+                         "post-hoc and is labelled as such.")
     ap.add_argument("--fig", type=Path, default=Path(r"D:\data\reports\fig_strategy_heatmap.png"))
     args = ap.parse_args()
 
-    rows = list(csv.DictReader(open(args.table)))
+    rows = []
+    for t in args.table:
+        n0 = len(rows)
+        rows.extend(csv.DictReader(open(t)))
+        print(f"  {len(rows) - n0:6d} rows from {t.name}")
     for r in rows:
-        for k in ("d_dice", "d_fp_ml", "d_q", "vol_ml_before", "vol_ml_after"):
-            r[k] = float(r[k])
+        r.setdefault("d_qdice", r.get("d_dice", "nan"))
+    for r in rows:
+        for k in ("d_dice", "d_qdice", "d_fp_ml", "d_q",
+                  "vol_ml_before", "vol_ml_after"):
+            r[k] = float(r[k]) if r[k] not in ("", "nan") else float("nan")
+        r["gt_positive"] = r["gt_positive"] == "True"
         for k in ("lesions_lost", "lesions_gained"):
             r[k] = int(r[k])
     print(f"{len(rows)} measured actions over "
@@ -57,23 +72,35 @@ def main() -> None:
     # ---- gaming check, over the whole library -------------------------
     print(f"\nQ as a judge, per strategy (out-of-fold):")
     print(f"  {'strategy':18s}{'n':>7s}{'dQ>0':>8s}{'honest':>9s}{'gamed':>8s}"
-          f"{'agree%':>9s}  verdict")
+          f"{'prec%':>8s}{'agree%':>8s}  verdict")
     banned = []
     gaming = {}
     for s in strategies:
         rs = [r for r in rows if r["strategy"] == s]
+        # Q was trained to predict d_qdice, so that is what "does Q agree
+        # with the truth it was fitted to" must be measured against. Using the
+        # tumour-positive-only Dice here would score Q as wrong on every
+        # tumour-free case it correctly cleaned.
         up = [r for r in rs if r["d_q"] > 0]
-        honest = sum(1 for r in up if r["d_dice"] > 0)
-        gamed = sum(1 for r in up if r["d_dice"] < 0)
-        agree = sum(1 for r in rs if (r["d_q"] > 0) == (r["d_dice"] > 0))
+        honest = sum(1 for r in up if r["d_qdice"] > 0)
+        gamed = sum(1 for r in up if r["d_qdice"] < 0)
+        agree = sum(1 for r in rs if (r["d_q"] > 0) == (r["d_qdice"] > 0))
         pct = 100.0 * agree / len(rs) if rs else float("nan")
         bad = gamed > honest
+        decided = honest + gamed
+        prec = (100.0 * honest / decided) if decided else float("nan")
         gaming[s] = {"n": len(rs), "n_dq_up": len(up), "honest": honest,
-                     "gamed": gamed, "agree_pct": pct, "banned": bool(bad)}
-        if bad:
+                     "gamed": gamed, "agree_pct": pct,
+                     "precision_pct": prec, "banned": bool(bad)}
+        if bad and not args.no_ban:
             banned.append(s)
         print(f"  {s:18s}{len(rs):7d}{len(up):8d}{honest:9d}{gamed:8d}"
-              f"{pct:8.1f}%  {'REMOVED (games Q)' if bad else 'kept'}")
+              f"{prec:8.1f}%{pct:8.1f}%  "
+              f"{('games Q (ban lifted)' if args.no_ban else 'REMOVED (games Q)') if bad else 'kept'}")
+    if args.no_ban:
+        n_fail = sum(1 for g in gaming.values() if g["banned"])
+        print(f"\n  --no-ban: {n_fail} strategies fail the gaming check "
+              "but are KEPT (this is the post-hoc variant)")
     if banned:
         print(f"\n  removed from the library: {banned}")
 
@@ -92,11 +119,11 @@ def main() -> None:
     for i, c in enumerate(classes):
         line = f"  {c:22s}"
         for j, s in enumerate(strategies):
-            rs = cells.get((c, s), [])
+            rs = [r for r in cells.get((c, s), []) if r["gt_positive"]]
             if not rs:
                 line += f"{'':>13s}"
                 continue
-            d = float(np.mean([r["d_dice"] for r in rs]))
+            d = float(np.nanmean([r["d_dice"] for r in rs]))
             grid[i, j] = d
             line += f"{d:+9.4f}({len(rs):3d})"[:13].rjust(13)
         print(line)
@@ -111,19 +138,21 @@ def main() -> None:
         for s in strategies:
             if s in banned:
                 continue
-            rs = cells.get((c, s), [])
-            if len(rs) < 10:
+            allrs = cells.get((c, s), [])
+            rs = [r for r in allrs if r["gt_positive"]]
+            if len(allrs) < 10:
                 continue
-            lost = sum(r["lesions_lost"] for r in rs)
-            gained = sum(r["lesions_gained"] for r in rs)
+            lost = sum(r["lesions_lost"] for r in allrs)
+            gained = sum(r["lesions_gained"] for r in allrs)
             if lost > gained:
                 detail.setdefault(c, []).append(
                     {"strategy": s, "dropped": "loses more lesions than it gains",
                      "lost": lost, "gained": gained})
                 continue
-            scored.append((float(np.mean([r["d_dice"] for r in rs])),
-                           -float(np.mean([r["d_fp_ml"] for r in rs])), s,
-                           len(rs), lost, gained))
+            dd = float(np.nanmean([r["d_dice"] for r in rs])) if rs else 0.0
+            scored.append((dd if dd == dd else 0.0,
+                           -float(np.mean([r["d_fp_ml"] for r in allrs])), s,
+                           len(allrs), lost, gained))
         scored.sort(reverse=True)
         policy[c] = [t[2] for t in scored if t[0] > 0]
         print(f"  {c:22s}{policy[c] if policy[c] else '(nothing helps)'}")
@@ -134,7 +163,9 @@ def main() -> None:
 
     args.out.write_text(json.dumps(
         {"policy": policy, "detail": detail, "gaming": gaming,
-         "banned": banned, "classes": classes, "strategies": strategies},
+         "banned": banned, "classes": classes, "strategies": strategies,
+         "variant": "no_ban_posthoc" if args.no_ban else "preregistered",
+         "tables": [str(t) for t in args.table]},
         indent=1))
     print(f"\nwritten to {args.out}")
 

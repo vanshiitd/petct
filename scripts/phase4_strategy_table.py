@@ -70,6 +70,23 @@ def q_vector(feats: list[dict], ctxinfo: dict) -> np.ndarray:
     return np.array([f[k] for k in QFEATS], float)
 
 
+def two_dices(iv: float, pv: float, gt: float) -> tuple[float, float]:
+    """(Dice for the primary endpoint, Dice under Q's training convention).
+
+    On a tumour-free case the ordinary Dice is 0/0 once a strategy empties the
+    mask -- which is exactly the outcome removal exists to produce. Reporting
+    that as nan poisons the mean and hides removal's best use, so two numbers
+    are kept: the first is nan on tumour-free cases, because the pre-registered
+    primary endpoint is Dice over tumour-POSITIVE cases only; the second
+    follows q_model and scores an empty prediction on a tumour-free case as a
+    perfect 1.0, which is the target Q was actually trained against and so the
+    right basis for asking whether Q is gamed.
+    """
+    d_pos = (2.0 * iv / (pv + gt)) if gt > 0 and (pv + gt) > 0 else float("nan")
+    d_q = (2.0 * iv / (pv + gt)) if (pv + gt) > 0 else 1.0
+    return d_pos, d_q
+
+
 def classes_of(diag: dict) -> tuple[dict, dict]:
     """component id -> set of failure classes, and lesion id -> classes."""
     cc = {}
@@ -148,6 +165,10 @@ def main() -> None:
                  "c_vol_m0_ml": sum(f["vol_ml"] for f in base_feats.values() if f)}
         base_q = qpred(case, q_vector(list(base_feats.values()), cinfo))
         base = ctx.score()
+        base_pv = base["pred_ml"] / ctx.vml
+        base_iv = (base["dice"] * (base_pv + ctx.gt_vox) / 2
+                   if base["dice"] == base["dice"] else 0.0)
+        b_pos, b_q = two_dices(base_iv, base_pv, ctx.gt_vox)
 
         # per-lesion touch counts, so a lesion is only "lost" when nothing holds it
         touch = {}
@@ -181,9 +202,8 @@ def main() -> None:
                 if n_n == o_n and n_i == o_i and n_g == o_g:
                     continue                     # the strategy did nothing here
                 dp, di = n_n - o_n, n_i - o_i
-                pv = base["pred_ml"] / ctx.vml + dp
-                iv = (base["dice"] * (base["pred_ml"] / ctx.vml + ctx.gt_vox) / 2) + di
-                dice = 2 * iv / (pv + ctx.gt_vox) if (pv + ctx.gt_vox) else float("nan")
+                pv, iv = base_pv + dp, base_iv + di
+                d_pos, d_q = two_dices(iv, pv, ctx.gt_vox)
                 lost = sum(1 for g in o_g - n_g if touch.get(g, 0) <= 1)
                 gained = sum(1 for g in n_g - o_g if touch.get(g, 0) == 0)
                 was_fp, is_fp = o_i == 0, n_i == 0
@@ -196,7 +216,8 @@ def main() -> None:
                     "case": case, "component_id": cid, "strategy": name,
                     "classes": "|".join(sorted(cls.get(cid, set()))) or "none",
                     "vol_ml_before": o_n * ctx.vml, "vol_ml_after": n_n * ctx.vml,
-                    "d_dice": dice - base["dice"], "lesions_lost": lost,
+                    "d_dice": d_pos - b_pos, "d_qdice": d_q - b_q,
+                    "lesions_lost": lost,
                     "lesions_gained": gained, "d_fp_ml": dfp,
                     "d_q": q - base_q, "base_dice": base["dice"],
                     "gt_positive": bool(ctx.gt_vox > 0)})
@@ -206,9 +227,8 @@ def main() -> None:
             n_n = int(local.sum())
             n_i = int((local & gt_sl[sl]).sum())
             n_g = set(np.unique(ctx.g_lab[sl][local]).tolist()) - {0}
-            pv = base["pred_ml"] / ctx.vml + n_n
-            iv = (base["dice"] * (base["pred_ml"] / ctx.vml + ctx.gt_vox) / 2) + n_i
-            dice = 2 * iv / (pv + ctx.gt_vox) if (pv + ctx.gt_vox) else float("nan")
+            pv, iv = base_pv + n_n, base_iv + n_i
+            d_pos, d_q = two_dices(iv, pv, ctx.gt_vox)
             gained = sum(1 for g in n_g if touch.get(g, 0) == 0)
             nf = ctx.features(sl, local)
             feats = list(base_feats.values()) + [nf]
@@ -217,7 +237,7 @@ def main() -> None:
                 "case": case, "component_id": -rid, "strategy": "recover",
                 "classes": "missed" if gained else "none",
                 "vol_ml_before": 0.0, "vol_ml_after": n_n * ctx.vml,
-                "d_dice": dice - base["dice"], "lesions_lost": 0,
+                "d_dice": d_pos - b_pos, "d_qdice": d_q - b_q, "lesions_lost": 0,
                 "lesions_gained": gained, "d_fp_ml": (n_n * ctx.vml) if n_i == 0 else 0.0,
                 "d_q": q - base_q, "base_dice": base["dice"],
                 "gt_positive": bool(ctx.gt_vox > 0)})
