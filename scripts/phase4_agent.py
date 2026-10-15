@@ -42,29 +42,40 @@ from phase4_strategies import CaseContext, REGISTRY
 from phase4_strategy_table import q_vector, CPU_STRATEGIES
 from phase4_diag_model import PRED_CLASSES, DROP, ADD
 from q_model import read_cand, patient_of
-from exp3_detect import GROUPS, matrix
+from exp3_detect import GROUPS, matrix, load
 from evaluate_predictions import hd95_mm
 
 
-def observable_rows(cand: dict, case: str, kind: str, feats: list[str],
-                    median: np.ndarray):
-    ids, raw = [], []
-    for (c, k, cid), row in cand.items():
-        if c == case and k == kind:
-            ids.append(cid)
-            raw.append(row)
-    if not ids:
+def observable_index(path: Path, kind: str) -> dict:
+    """{case: [raw candidate row, ...]} straight from the candidate CSV.
+
+    The diagnosis model was fitted on `exp3_detect.load`, which keeps the whole
+    CSV row. `q_model.read_cand` keeps only the handful of columns Q needs, so
+    feeding Q's dict to the diagnosis model silently loses features. The two
+    readers are therefore kept apart rather than shared.
+    """
+    rows, _, _, _ = load(path, kind)
+    idx = {}
+    for r in rows:
+        idx.setdefault(r["case"], []).append(r)
+    return idx
+
+
+def observable_rows(obs: dict, case: str, feats: list[str], median: dict):
+    raw = obs.get(case, [])
+    if not raw:
         return [], None
-    X = np.array([[r.get(f, np.nan) for f in feats] for r in raw], float)
-    bad = ~np.isfinite(X)
-    if bad.any():
-        X[bad] = np.take(median, np.where(bad)[1])
+    ids = [int(r["component_id"]) for r in raw]
+    # built by exp3_detect.matrix, not by hand: it is the same function the
+    # diagnosis model was fitted with, so log_volume and the median imputation
+    # (median is a dict keyed by feature name) cannot drift apart from training.
+    X, _, _ = matrix(raw, feats, median)
     return ids, X
 
 
 class Agent:
     def __init__(self, policy, qmodel, diagmodel, tau_q, T, eps, lam,
-                 split="oof", gate=True):
+                 split="oof", gate=True, min_pfail=0.0):
         self.policy = policy
         self.Q = qmodel
         self.D = diagmodel
@@ -74,6 +85,7 @@ class Agent:
         self.lam = lam
         self.split = split
         self.gate = gate
+        self.min_pfail = min_pfail
 
     def q_of(self, case, feats, cinfo):
         vec = q_vector(list(feats.values()), cinfo)
@@ -84,7 +96,7 @@ class Agent:
                     return float(m.predict(vec[None])[0])
         return float(self.Q["full"].predict(vec[None])[0])
 
-    def run(self, ctx: CaseContext, cand, ctxmap, with_truth=True):
+    def run(self, ctx: CaseContext, cand, obs, ctxmap, with_truth=True):
         case = ctx.case
         feats = {cid: ctx.features(ctx.comp_slice(cid), ctx.labels[ctx.comp_slice(cid)] == cid)
                  for cid in ctx.comp_ids}
@@ -97,10 +109,11 @@ class Agent:
                  "attempts": 0, "stopped": "tau_Q" if q > self.tau_q else ""}
         rows = []
         if q > self.tau_q:
+            trace["q_final"] = q
             return q, trace, rows, self._truth(ctx) if with_truth else None
 
         md = self.D["pred"]
-        ids, X = observable_rows(cand, case, "pred", md["feats"], md["median"])
+        ids, X = observable_rows(obs["pred"], case, md["feats"], md["median"])
         prob = {}
         if ids:
             for k in PRED_CLASSES:
@@ -108,7 +121,26 @@ class Agent:
                 prob[k] = (m.predict_proba(X)[:, 1] if m is not None
                            else np.zeros(len(ids)))
 
+        # Recovery acts on the sub-threshold pool rather than on an existing
+        # component, so it is scored by the separate "recover" head and keyed
+        # ("rec", rid) to keep it apart from predicted component ids. Only ids
+        # present in BOTH the candidate CSV and this context are used: the two
+        # were built by different scripts and an id that exists in one but not
+        # the other would silently pair a score with the wrong blob.
+        pool = ctx.recovery_candidates()
+        mr = self.D["recover"]
+        rec_all, Xr = observable_rows(obs["recover"], case,
+                                      mr["feats"], mr["median"])
+        rec_ids, rprob = [], []
+        if rec_all:
+            pr = mr["models"]["missed"].predict_proba(Xr)[:, 1]
+            for rid, s_ in zip(rec_all, pr):
+                if rid in pool:
+                    rec_ids.append(rid)
+                    rprob.append(float(s_))
+
         truth0 = self._truth(ctx) if with_truth else None
+        cur = truth0
         exhausted, best_q, best_state = set(), q, ctx.labels.copy()
         for t in range(1, self.T + 1):
             order = []
@@ -117,7 +149,15 @@ class Agent:
                     continue
                 pk = max(((prob[k][i], k) for k in PRED_CLASSES), default=(0.0, None))
                 order.append((pk[0], pk[1], cid))
-            order.sort(reverse=True)
+            for rid, pr in zip(rec_ids, rprob):
+                if ("rec", rid) in exhausted:
+                    continue
+                order.append((pr, "missed", ("rec", rid)))
+            order.sort(key=lambda t: (t[0], str(t[2])), reverse=True)
+            # post-hoc guard (section 10): act only where the diagnostic head is
+            # confident the component really is that failure. Chosen on OOF.
+            if self.min_pfail > 0.0:
+                order = [o for o in order if o[0] >= self.min_pfail]
             if not order:
                 trace["stopped"] = trace["stopped"] or "no candidate"
                 break
@@ -167,24 +207,36 @@ class Agent:
                        "vol_ml": float((nf or {}).get("vol_ml", np.nan)) if is_rec else (float(feats[cid]["vol_ml"]) if feats.get(cid) else np.nan),
                        "q_before": q, "d_q": dq}
                 if with_truth:
+                    # measured against the state this action started from, not
+                    # against M0: otherwise every row after the first accepted
+                    # action reports the running total and the experience log
+                    # cannot attribute an effect to the action that caused it.
                     tr = self._truth(ctx)
-                    row["d_dice"] = tr["dice"] - truth0["dice"]
-                    row["d_hd95"] = tr["hd95"] - truth0["hd95"]
+                    row["d_dice"] = tr["dice"] - cur["dice"]
+                    row["d_hd95"] = tr["hd95"] - cur["hd95"]
                     row["reward"] = row["d_dice"] - self.lam * (
                         row["d_hd95"] if np.isfinite(row["d_hd95"]) else 0.0)
-                    row["lesions_lost"] = truth0["n_hit"] - tr["n_hit"]
+                    row["lesions_lost"] = cur["n_hit"] - tr["n_hit"]
+                    row["dice_from_m0"] = tr["dice"] - truth0["dice"]
                 keep = dq > 0 if self.gate else True
                 row["accepted"] = int(keep)
                 rows.append(row)
                 if keep:
                     q, accepted_any = q2, True
                     feats = f2
+                    if with_truth:
+                        cur = tr
                     trace["accepted"] += 1
                     if q > best_q:
                         best_q, best_state = q, ctx.labels.copy()
                     break
                 ctx.labels[sl] = before      # revert
             trace["iterations"] = t
+            if with_truth:
+                snap = self._truth(ctx)
+                for k in ("dice", "fp_ml", "fn_ml", "hd95", "n_hit", "n_fp_comp"):
+                    trace[f"m{t}_{k}"] = snap[k]
+                trace[f"m{t}_q"] = q
             if not accepted_any:
                 exhausted.add(("rec", cid[1]) if is_rec else cid)
                 if len(exhausted) >= len(ids) + len(rprob):
@@ -223,20 +275,26 @@ def main() -> None:
                     help="accept every proposed action (the section 21 ablation)")
     ap.add_argument("--out-prefix", type=Path, required=True)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--min-pfail", type=float, default=0.0,
+                    help="act only on proposals whose diagnostic probability is "
+                         "at least this (post-hoc guard, section 10)")
     args = ap.parse_args()
 
     policy = json.loads(args.policy.read_text())["policy"]
     Qm = pickle.load(open(args.qpkl, "rb"))
     Dm = pickle.load(open(args.diagpkl, "rb"))
     cand, ctxmap = read_cand(args.cand)
+    obs = {k: observable_index(args.cand, k) for k in ("pred", "recover")}
     agent = Agent(policy, Qm, Dm, args.tau_q, args.T, args.eps, args.lam,
-                  split=args.split, gate=not args.no_gate)
+                  split=args.split, gate=not args.no_gate,
+                  min_pfail=args.min_pfail)
 
     cases = sorted(f.stem for f in args.maps.glob("*.npz"))
     if args.limit:
         cases = cases[: args.limit]
     print(f"{len(cases)} cases | tau_Q {args.tau_q} T {args.T} eps {args.eps} "
-          f"| gate {'off' if args.no_gate else 'on'}", flush=True)
+          f"| gate {'off' if args.no_gate else 'on'} "
+          f"| min_pfail {args.min_pfail}", flush=True)
 
     traces, exp, base_rows, final_rows = [], [], [], []
     t0 = time.time()
@@ -245,7 +303,7 @@ def main() -> None:
         b = agent._truth(ctx)
         b["case"] = case
         base_rows.append(b)
-        _, tr, rows, fin = agent.run(ctx, cand, ctxmap)
+        _, tr, rows, fin = agent.run(ctx, cand, obs, ctxmap)
         tr["seconds"] = time.time() - t0
         traces.append(tr)
         exp.extend(rows)
