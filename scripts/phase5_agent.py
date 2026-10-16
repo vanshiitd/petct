@@ -78,7 +78,20 @@ class Phase5Agent:
         return float(self.Q["full"].predict(vec[None])[0])
 
     # ---- one case --------------------------------------------------------
-    def run(self, case, maps, obs_pred, obs_rec, ctxmap, repredictor=None):
+    def run(self, case, maps, obs_pred, obs_rec, ctxmap, make_rp=None):
+        # `make_rp` is a factory, not an instance, and is called at most once
+        # per case and only if an roi_repredict action is actually selected.
+        # Preprocessing a whole-body case and building its fold predictor costs
+        # far more than the CPU strategies, and the p_failure gate admits about
+        # 0.6 actions per case: building it eagerly would pay that cost on every
+        # case to use it on a handful.
+        _rp = []
+
+        def repredictor(ctx_, cid_):
+            if not _rp:
+                _rp.append(make_rp())
+            return _rp[0](ctx_, cid_)
+
         ctx = CaseContext(case, maps)
         Dp, Dr = self.D["pred"], self.D["recover"]
         ids, X = observable_rows(obs_pred, case, Dp["feats"], Dp["median"])
@@ -100,7 +113,7 @@ class Phase5Agent:
                  "c_vol_m0_ml": sum(f["vol_ml"] for f in base_feats.values() if f)}
 
         strategies = list(CPU_ONLY)
-        if self.with_roi and repredictor is not None:
+        if self.with_roi and make_rp is not None:
             strategies.append("roi_repredict")
 
         # candidate pairs, fixed up front: one action per component
@@ -272,13 +285,13 @@ def main() -> None:
     base_rows, final_rows, traces, exp = [], [], [], []
     t0 = time.time()
     for n, case in enumerate(cases, 1):
-        rp = None
+        make_rp = None
         if args.with_roi:
             from phase4_strategy6 import build_repredictor
-            rp = build_repredictor(case, args.maps, args.split, pre,
-                                   get_predictors)
+            make_rp = (lambda c=case: build_repredictor(
+                c, args.maps, args.split, pre, get_predictors))
         trace, rows, base, final = agent.run(case, args.maps, obs_pred,
-                                             obs_rec, ctxmap, rp)
+                                             obs_rec, ctxmap, make_rp)
         base_rows.append({"case": case, **{k: base[k] for k in
                           ("dice", "fp_ml", "fn_ml", "hd95", "n_fp_comp",
                            "n_gt", "n_hit", "pred_ml")}})
