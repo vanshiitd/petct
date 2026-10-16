@@ -92,6 +92,74 @@ def predict_crop(predictors, data_crop) -> np.ndarray:
     return (e[1] / e.sum(axis=0)).astype(np.float32)
 
 
+class CaseRepredictor:
+    """`roi_repredict` as a REGISTRY-compatible strategy, bound to one case.
+
+    Phase IV measured this strategy only as a per-component counterfactual,
+    because the expensive parts -- preprocessing the case and building the fold
+    predictors -- are per case, not per component, and the strategy table could
+    amortise them while the agent loop could not. Holding them on an instance
+    lets the agent call `self(ctx, cid)` like any other strategy, so Phase V can
+    measure what Phase IV could not: whether the per-component gains survive
+    composing several of them on one case.
+
+    Construct once per case, then call as a strategy. Returns (None, None) when
+    the component lies outside the preprocessed crop box, which the agent reads
+    as "not applicable" exactly as it does for the CPU strategies.
+    """
+
+    def __init__(self, preds, data, off, ext):
+        self.preds = preds
+        self.data = data
+        self.off = off
+        self.ext = ext
+
+    def __call__(self, ctx, cid: int, **kw):
+        if cid not in ctx.comp_ids:
+            return None, None
+        sl = crop_box(ctx.comp_slice(cid), ctx.shape, ctx.spacing,
+                      self.preds[0].configuration_manager.patch_size)
+        sl_pre = tuple(slice(max(0, a.start - o), min(e, a.stop - o))
+                       for a, o, e in zip(sl, self.off, self.ext))
+        if any(x.stop <= x.start for x in sl_pre):
+            return None, None
+        sl = tuple(slice(x.start + o, x.stop + o)
+                   for x, o in zip(sl_pre, self.off))
+        P = predict_crop(self.preds, self.data[(slice(None),) + sl_pre])
+        old_local = ctx.labels[sl] == cid
+        new_local = P > 0.5
+        lab, nl = ndi.label(new_local)
+        if nl and old_local.any():
+            keep = np.unique(lab[old_local])
+            keep = keep[keep > 0]
+            new_local = np.isin(lab, keep) if keep.size else old_local
+        other = (ctx.labels[sl] > 0) & ~old_local
+        new_local &= ~other
+        return sl, new_local
+
+
+def build_repredictor(case: str, maps: Path, split: str, pre, get_predictors):
+    """Preprocess one case and bind a CaseRepredictor to it."""
+    z = np.load(maps / f"{case}.npz")
+    folds = [int(v) for v in z["folds"]]
+    if split == "oof" and len(folds) != 1:
+        raise SystemExit(f"{case}: out-of-fold map lists {folds}; expected one "
+                         f"held-out fold. Refusing to leak.")
+    preds = get_predictors(folds)
+    data, _, props = pre.run_case(case_files(case), None,
+                                  preds[0].plans_manager,
+                                  preds[0].configuration_manager,
+                                  preds[0].dataset_json)
+    bbox = props["bbox_used_for_cropping"]
+    off = [int(b[0]) for b in bbox]
+    ext = tuple(int(b[1]) - int(b[0]) for b in bbox)
+    if tuple(data.shape[1:]) != ext:
+        raise SystemExit(f"{case}: preprocessed {data.shape[1:]} != crop box "
+                         f"{ext}; the plan resamples, so component boxes cannot "
+                         f"be carried over unchanged.")
+    return CaseRepredictor(preds, data, off, ext)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
