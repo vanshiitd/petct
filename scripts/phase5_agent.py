@@ -49,7 +49,7 @@ CPU_ONLY = [s for s in STRATEGIES if s != "roi_repredict"]
 
 class Phase5Agent:
     def __init__(self, av, qmodel, diagmodel, T, eps_hat, min_pfail,
-                 split="oof", policy=None, with_roi=False):
+                 split="oof", policy=None, with_roi=False, fixed=None):
         self.av = av                      # None -> hand-built policy ordering
         self.Q = qmodel
         self.D = diagmodel
@@ -59,6 +59,7 @@ class Phase5Agent:
         self.split = split
         self.policy = policy or {}
         self.with_roi = with_roi
+        self.fixed = fixed                # always this strategy, if set
 
     # ---- scoring ---------------------------------------------------------
     def value(self, x_obs, pfail, pcls, strat) -> float:
@@ -135,7 +136,13 @@ class Phase5Agent:
                           "pfail": float(Pr[i]), "cls": "missed",
                           "strat": "recover"})
 
-        if self.av is not None:
+        if self.fixed is not None:
+            # attribution arm (a): no selection at all. Every gated component
+            # gets the same strategy, so whatever this arm achieves is what the
+            # budget and the p_failure gate achieve on their own.
+            for c in cands:
+                c["v"] = 1.0 if c["strat"] == self.fixed else -1.0
+        elif self.av is not None:
             for c in cands:
                 c["v"] = self.value(c["obs"], c["pfail"], c["cls"], c["strat"])
         else:
@@ -240,6 +247,9 @@ def main() -> None:
     ap.add_argument("--eps-hat", type=float, default=0.0)
     ap.add_argument("--min-pfail", type=float, default=0.90)
     ap.add_argument("--with-roi", action="store_true")
+    ap.add_argument("--fixed-strategy", default=None,
+                    help="attribution arm: always apply this strategy to every "
+                         "gated component, with no selection")
     ap.add_argument("--out-prefix", type=Path, required=True)
     ap.add_argument("--limit", type=int, default=None)
     args = ap.parse_args()
@@ -254,7 +264,7 @@ def main() -> None:
 
     agent = Phase5Agent(av, Q, D, args.T, args.eps_hat, args.min_pfail,
                         split=args.split, policy=policy,
-                        with_roi=args.with_roi)
+                        with_roi=args.with_roi, fixed=args.fixed_strategy)
 
     pre = get_predictors = None
     if args.with_roi:
@@ -279,7 +289,8 @@ def main() -> None:
         cases = cases[: args.limit]
     print(f"{len(cases)} cases | T {args.T} eps_hat {args.eps_hat} "
           f"min_pfail {args.min_pfail} | selector "
-          f"{'learned' if av else 'hand-built'} | roi {args.with_roi}",
+          f"{args.fixed_strategy or ('learned' if av else 'hand-built')}"
+          f" | roi {args.with_roi}",
           flush=True)
 
     base_rows, final_rows, traces, exp = [], [], [], []

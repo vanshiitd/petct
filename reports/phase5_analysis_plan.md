@@ -36,10 +36,16 @@ model** (Experiment 5), pre-registers **`p_failure` gating**, puts
 
 ## 2. Hypotheses
 
-- **H5.** A learned action-value model selects better actions than the Phase IV
+- **H5.** Experience-based strategy memory improves strategy selection: a model
+  fitted on measured action outcomes selects better actions than the Phase IV
   hand-built policy, measured by the co-primary endpoints in section 4.
-- **H6.** With `roi_repredict` available in the loop, the agent improves Dice on
-  tumour-positive cases - the endpoint every previous phase failed to move.
+
+**H5 is the only work-plan hypothesis Phase V tests.** An earlier revision of
+this plan also labelled a second question "H6" - whether `roi_repredict` in the
+loop improves Dice on tumour-positive cases. That label was wrong: H6 in the
+work plan is backbone independence (SwinUNet), which Phase V does not touch. The
+question is a legitimate Phase V objective and is kept as **objective B**, but it
+is not a numbered hypothesis and no H6 verdict is reported here.
 
 ## 3. Data, splits and discipline
 
@@ -80,7 +86,7 @@ As a **pre-registered secondary** comparison, Phase V is additionally compared
 against the **Phase IV guarded configuration** (`agent_*_pf90`, tau_Q = 1.00,
 `p_failure >= 0.90`), which answers the different question "does learned
 selection beat the hand-built policy". H5 is judged on this second comparison;
-H6 on the first.
+objective B on the first.
 
 ### Success criterion
 
@@ -183,7 +189,8 @@ mislabelled them as ablation rungs.
 
 - **H5 fails** if the learned model does not beat the hand-built policy on either
   co-primary under the section 4 criterion.
-- **H6 fails** if the Dice co-primary interval does not exclude zero on test.
+- **Objective B fails** if the Dice co-primary interval does not exclude zero on
+  test.
 - **The loop is not deployable** if no configuration satisfies section 4 while
   meeting section 5.
 - **Learned selection is not usable** if its out-of-fold precision does not
