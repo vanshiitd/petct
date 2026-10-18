@@ -46,12 +46,13 @@ CV_FOLDS = (3, 4, 5, 6, 7)
 FLIPS = [()] + [c for i in range(3) for c in itertools.combinations((0, 1, 2), i + 1)]
 
 
-def build_predictor(fold: int):
+def build_predictor(fold: int, trainer: str | None = None):
     from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
     p = nnUNetPredictor(tile_step_size=0.5, use_gaussian=True, use_mirroring=False,
                         device=torch.device("cuda"), verbose=False,
                         verbose_preprocessing=False, allow_tqdm=False)
-    p.initialize_from_trained_model_folder(str(RESULTS / TRAINER), use_folds=(fold,),
+    p.initialize_from_trained_model_folder(str(RESULTS / (trainer or TRAINER)),
+                                           use_folds=(fold,),
                                            checkpoint_name="checkpoint_final.pth")
     return p
 
@@ -95,6 +96,14 @@ def main() -> None:
     ap.add_argument("--cases", type=Path, default=None)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--trainer", default=None,
+                    help="results subfolder; defaults to the nnU-Net 500-epoch "
+                         "trainer. Phase VI passes the SwinUNETR trainer here so "
+                         "both backbones go through identical preprocessing, "
+                         "flip fusion and uncertainty definitions")
+    ap.add_argument("--folds", type=int, nargs="+", default=None,
+                    help="folds to combine; defaults to the 5 CV folds. Pass a "
+                         "single fold for a single-model map")
     args = ap.parse_args()
 
     os.environ.setdefault("nnUNet_raw", r"C:\nnunet_raw")
@@ -115,7 +124,9 @@ def main() -> None:
     else:
         cases = [c.strip() for c in args.cases.read_text().splitlines() if c.strip()]
         owner = None
-        print(f"ensemble of {len(CV_FOLDS)} folds over {len(cases)} cases")
+        use_folds = tuple(args.folds) if args.folds else CV_FOLDS
+        print(f"{'ensemble of ' + str(len(use_folds)) + ' folds' if len(use_folds) > 1 else 'single model, fold ' + str(use_folds[0])}"
+              f" ({args.trainer or TRAINER}) over {len(cases)} cases")
     if args.limit:
         cases = cases[: args.limit]
     args.out.mkdir(parents=True, exist_ok=True)
@@ -129,10 +140,10 @@ def main() -> None:
         if out_file.exists():
             print(f"  [{i}/{len(cases)}] {case}: already", flush=True)
             continue
-        use = [owner[case]] if owner else list(CV_FOLDS)
+        use = [owner[case]] if owner else list(use_folds)
         for k in use:
             if k not in predictors:
-                predictors[k] = build_predictor(k)
+                predictors[k] = build_predictor(k, args.trainer)
                 first = first or predictors[k]
         data, _, props = pre.run_case(case_files(case), None, first.plans_manager,
                                       first.configuration_manager, first.dataset_json)
