@@ -27,3 +27,7 @@ venv/
 
 # OS
 .DS_Store
+
+# The write-up figures under docs/results are part of the record and are
+# committed deliberately. Everything else matching *.png stays ignored.
+!docs/results/*.png
