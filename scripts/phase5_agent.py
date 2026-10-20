@@ -49,7 +49,8 @@ CPU_ONLY = [s for s in STRATEGIES if s != "roi_repredict"]
 
 class Phase5Agent:
     def __init__(self, av, qmodel, diagmodel, T, eps_hat, min_pfail,
-                 split="oof", policy=None, with_roi=False, fixed=None):
+                 split="oof", policy=None, with_roi=False, fixed=None,
+                 q_gate=False):
         self.av = av                      # None -> hand-built policy ordering
         self.Q = qmodel
         self.D = diagmodel
@@ -60,6 +61,7 @@ class Phase5Agent:
         self.policy = policy or {}
         self.with_roi = with_roi
         self.fixed = fixed                # always this strategy, if set
+        self.q_gate = q_gate              # accept only if Delta-Q > 0
 
     # ---- scoring ---------------------------------------------------------
     def value(self, x_obs, pfail, pcls, strat) -> float:
@@ -101,8 +103,13 @@ class Phase5Agent:
         classes = list(Dp["models"].keys())
         P = (np.column_stack([Dp["models"][c].predict_proba(X)[:, 1]
                               for c in classes]) if ids else np.zeros((0, len(classes))))
-        Pr = (Dr["models"]["missed"].predict_proba(Xr)[:, 1]
-              if rids else np.zeros(0))
+        # A detector may carry no recovery head at all -- the uncertainty-only
+        # detector of section 21 rung 2 does not, since removal by uncertainty
+        # has nothing to say about sub-threshold blobs. Treat that as "no
+        # recovery candidates" rather than crashing on a None estimator.
+        rec_head = Dr["models"].get("missed")
+        Pr = (rec_head.predict_proba(Xr)[:, 1]
+              if (rids and rec_head is not None) else np.zeros(len(rids)))
 
         pool = ctx.recovery_candidates() if rids else {}
         base_feats = {c: ctx.features(ctx.comp_slice(c),
@@ -200,6 +207,15 @@ class Phase5Agent:
             else:
                 f2[key] = nf
             q2 = self.q_of(case, f2, cinfo)
+            q_prev = self.q_of(case, feats, cinfo)
+            if self.q_gate and q2 - q_prev <= 0:
+                # Section 21 rung 5 onwards: the Phase IV reflection gate. The
+                # action is reverted and the component retired, so the loop does
+                # not propose it again on the next iteration.
+                ctx.labels[sl] = before
+                used.add(best["key"])
+                trace["iterations"] = t
+                continue
             tr = self._truth(ctx)
             rows.append({
                 "case": case, "patient": patient_of(case), "iteration": t,
@@ -209,7 +225,7 @@ class Phase5Agent:
                 "d_dice": tr["dice"] - cur["dice"],
                 "d_fp_ml": tr["fp_ml"] - cur["fp_ml"],
                 "lesions_lost": cur["n_hit"] - tr["n_hit"],
-                "d_q": q2 - self.q_of(case, feats, cinfo),
+                "d_q": q2 - q_prev,
                 "vol_ml": float((nf or {}).get("vol_ml", np.nan)),
                 "accepted": 1,
             })
@@ -247,6 +263,9 @@ def main() -> None:
     ap.add_argument("--eps-hat", type=float, default=0.0)
     ap.add_argument("--min-pfail", type=float, default=0.90)
     ap.add_argument("--with-roi", action="store_true")
+    ap.add_argument("--q-gate", action="store_true",
+                    help="accept an action only if Delta-Q > 0 (Phase IV "
+                         "reflection gate); off by default, as in Phase V")
     ap.add_argument("--fixed-strategy", default=None,
                     help="attribution arm: always apply this strategy to every "
                          "gated component, with no selection")
@@ -264,7 +283,8 @@ def main() -> None:
 
     agent = Phase5Agent(av, Q, D, args.T, args.eps_hat, args.min_pfail,
                         split=args.split, policy=policy,
-                        with_roi=args.with_roi, fixed=args.fixed_strategy)
+                        with_roi=args.with_roi, fixed=args.fixed_strategy,
+                        q_gate=args.q_gate)
 
     pre = get_predictors = None
     if args.with_roi:
@@ -290,7 +310,7 @@ def main() -> None:
     print(f"{len(cases)} cases | T {args.T} eps_hat {args.eps_hat} "
           f"min_pfail {args.min_pfail} | selector "
           f"{args.fixed_strategy or ('learned' if av else 'hand-built')}"
-          f" | roi {args.with_roi}",
+          f" | roi {args.with_roi} | q_gate {args.q_gate}",
           flush=True)
 
     base_rows, final_rows, traces, exp = [], [], [], []
