@@ -360,14 +360,47 @@ of small-component removal.
 `evaluate_predictions.py`'s own functions on masks taken from the stored maps at
 0.5.
 
-See the JSON for the full table (IoU, ASSD, signed and median relative volume
-error, component counts, lesion-count error) for single 505, M0 and Swin f0 on
-validation and test.
+### Validation (n=76, 38 tumour-positive)
 
-**Not executed:** the Phase V agent and final agent rows. The agents write
-per-case metrics rather than masks, so those rows need a mask-saving re-run
-(about 40 minutes per configuration for val+test). Reported as not executed
-rather than approximated.
+| model | Dice | IoU | ASSD mm | HD95 mm | vol err mL | rel vol err (median) | components/case | lesion count err |
+|---|---|---|---|---|---|---|---|---|
+| single 505 (fold 0, logit 8-flip) | 0.6959 | 0.5800 | 24.49 | 79.73 | -25.99 | -20.5% | 10.17 | +0.66 |
+| **M0 (5-fold ensemble)** | **0.7061** | **0.5901** | **23.41** | 79.95 | -32.84 | -26.4% | **8.78** | -0.74 |
+| Swin f0 | 0.6594 | 0.5348 | 30.49 | 130.06 | -31.87 | -24.3% | **16.14** | **+6.63** |
+
+### Test (n=200, 110 tumour-positive) - descriptive
+
+| model | Dice | IoU | ASSD mm | HD95 mm | vol err mL | rel vol err (median) | components/case | lesion count err |
+|---|---|---|---|---|---|---|---|---|
+| single 505 (fold 0, logit 8-flip) | 0.6425 | 0.5305 | 43.75 | 128.27 | -7.97 | -4.5% | 9.29 | +0.30 |
+| **M0 (5-fold ensemble)** | **0.6638** | **0.5511** | **33.54** | **120.69** | -16.17 | -5.8% | **8.09** | -0.90 |
+| Swin f0 | 0.5860 | 0.4754 | 57.66 | 188.22 | -6.58 | -5.9% | **15.88** | **+6.89** |
+
+**The connectivity columns say something about Swin that FP volume alone does
+not.** Swin predicts **15.88 components per case on test against M0's 8.09**,
+and over-counts lesions by **+6.89 per case against M0's -0.90**. Its
+false-positive volume is only half again as large as M0's, but it is split
+across roughly twice as many objects. So Swin's failure mode is
+**fragmentation**, not a few large spurious masses - which is also why its ASSD
+(57.66 against 33.54) and HD95 (188.22 against 120.69) degrade more than Dice
+does: scattered small objects are far from the tumour.
+
+This matters for Phase VI's reading. A repair loop that removes whole components
+is well matched to that failure mode, which is consistent with the agent clearing
+more false-positive volume on Swin (-3.19 mL) than on nnU-Net (-1.71 mL) in
+`phase6_swin.md` section 3.
+
+Note also that **every model under-predicts volume** - the signed error is
+negative everywhere - and that M0 under-predicts most (-16.17 mL on test against
+the single model's -7.97). Ensembling trims the mask. That is the mechanism
+behind its lower false-positive volume, and it costs nothing in Dice here, but
+it is worth stating plainly rather than describing the ensemble as uniformly
+better.
+
+**Still not executed at the time of writing:** the Phase V agent and final agent
+rows. `phase5_agent.py` now has `--save-masks` and those four runs (two
+configurations x validation and test) are queued; their rows will be appended
+here.
 
 ---
 
