@@ -19,6 +19,7 @@ Each section names the script and the JSON behind its numbers.
 | **"A fixed strategy matches or beats the learned selector" is false cross-fitted.** Fixed +0.0033 (straddles zero), learned +0.0052, rule-based +0.0065 | **contradicts `phase5_memory.md` §6a** |
 | **The post-fix uptake medians do not reproduce.** Report says 6.14x / 1.46x; recomputation gives **3.81 / 0.89** | **contradicts `nnunet_505_corrected_labels.md` l.49-50** |
 | **The Phase IV guarded TEST run predates the Phase V pre-registration by ~22 h**, so the plan's "pre-registered secondary comparison" was written with those test numbers already in existence | **weakens `phase5_analysis_plan.md` §4** |
+| **Both backbones were MAE-pretrained on a corpus that included AutoPET** (Liu et al. 2026). Symmetric, so the Phase VI contrast is unaffected, but no model here was pretrained on data disjoint from AutoPET | **to state in `phase6_swin.md`** |
 | The final agent itself survives cross-fitting: 0.6943 -> **0.6938**, 240 -> **239** patients cleared | holds |
 | H5's verdict (learned does not beat the hand-built policy) | holds |
 | Phase V's confirmatory test result | unchanged, and not re-run |
@@ -172,7 +173,8 @@ All arms at T=10, `p_failure` >= 0.90, cross-fitted.
 | **(a) fixed** | **+0.0033** | **[-0.0035, +0.0099]** | 230/385 | -0.0034 | 0.82 | 7.4 / 91.2 / 1.4 |
 | **(b) rule-based** | **+0.0065** | **[+0.0025, +0.0118]** | 231/385 | -0.0034 | 0.80 | 7.4 / 91.8 / 0.8 |
 | **(c) learned** | **+0.0052** | **[+0.0022, +0.0099]** | 237/385 | -0.0035 | 0.77 | 7.1 / 92.4 / 0.6 |
-| PV rung 2 (fixed, T=3) | -0.0002 | [-0.0056, +0.0038] | 237/385 | -0.0025 | 0.69 | 6.5 / 92.1 / 1.4 |
+| fixed strategy, T=3 (relabelled, see R1(g)) | -0.0002 | [-0.0056, +0.0038] | 237/385 | -0.0025 | 0.69 | 6.5 / 92.1 / 1.4 |
+| **PV rung 2 (hand-built policy, T=3)** | *running* | | | | | |
 | PV rung 3 (learned, T=3) | +0.0028 | [+0.0016, +0.0043] | 242/385 | -0.0025 | 0.65 | 6.2 / 93.2 / 0.6 |
 | PV rung 5-noroi (T=10) | +0.0052 | [+0.0022, +0.0099] | 237/385 | -0.0035 | 0.77 | 7.1 / 92.4 / 0.6 |
 | R2(3) corrected variant | +0.0049 | [+0.0014, +0.0094] | 240/385 | -0.0006 | 0.26 | 4.8 / 94.6 / 0.6 |
@@ -199,9 +201,18 @@ So:
 
 ### R1(g) Phase V ladder
 
-In the table above. Rung 2 (fixed, T=3) falls to **-0.0002 [-0.0056, +0.0038]**,
-rung 3 (learned, T=3) to +0.0028, rung 5-noroi to +0.0052. The published
-in-sample values were +0.0020, +0.0033 and +0.0057. The ordering is preserved;
+**Correction to an earlier draft of this report.** A row labelled "PV rung 2
+(fixed, T=3)" was not rung 2. `phase5_memory.md` section 6 defines rung 2 as the
+`p_failure` gate plus the **hand-built policy** (the Phase IV guarded
+configuration), and that is what `agent_oof_pf90` ran: its action mix is
+`topology_remove` 420, `suv_percist` 19, `suv41` 12, `recover` 2, which a fixed
+strategy cannot produce. The run labelled rung 2 here used
+`--fixed-strategy topology_remove --T 3`, so it is a fixed-strategy
+configuration and is relabelled above. **The thesis is correct; this report was
+wrong.** The true cross-fitted rung 2 is running and will be added.
+
+Rung 3 (learned, T=3) falls to +0.0028, rung 5-noroi to +0.0052, against
+published in-sample values of +0.0033 and +0.0057. The ordering is preserved;
 the levels drop.
 
 ### R1(3) Validation and test unchanged
@@ -451,8 +462,10 @@ intervals overlap almost completely. The honest reading is that the Phase V
 configuration is not demonstrably better than the Phase IV guarded one on the
 co-primaries; it is better on Dice point estimate only.
 
-The T=3 comparison (rung 2 against rung 3), cross-fitted: fixed **-0.0002
-[-0.0056, +0.0038]** against learned **+0.0028 [+0.0016, +0.0043]**.
+The T=3 comparison, cross-fitted: a **fixed strategy** at T=3 gives **-0.0002
+[-0.0056, +0.0038]** against the learned selector's **+0.0028 [+0.0016,
++0.0043]**. The true rung 2 (hand-built policy at T=3) is running; see the
+correction in R1(g).
 
 ---
 
@@ -495,14 +508,24 @@ rounded to two decimals in a table whose other columns are also two-decimal;
 
 ### R9(4) Swin MAE pretraining corpus
 
-`weights/swin_small_mae_best.pth` was produced by this project's own MAE
-pretraining. **Whether its corpus included AutoPET could not be established from
-the artefacts on disk**: the checkpoint carries no corpus manifest, and the
-pretraining logs are not under `D:\data\reports`. This matters for Phase VI -
-if AutoPET was in the MAE corpus, the Swin encoder saw the test images without
-labels, which is a weaker but real form of contamination. **It should be
-resolved from the pretraining run records before submission**, and until it is,
-Phase VI's backbone comparison carries that caveat.
+**Resolved from the project's own records.** `midterm/training_runs.md` l.18
+and l.61-62 record that both `swin_small_mae_best.pth` and
+`nnunet_v2_mim_best.pth` come from **Liu et al. 2026 (arXiv 2605.21835)**, an
+MAE pretraining over roughly 5,000 scans **which included AutoPET**.
+
+This should be stated in `phase6_swin.md`. The Swin encoder - and equally the
+MAE-initialised nnU-Net, which is M0's ancestor - saw AutoPET images during
+self-supervised pretraining, without labels. That is a weaker form of exposure
+than label leakage, and it is **symmetric**: both backbones in the Experiment 1
+comparison carry it, so the Swin-against-nnU-Net contrast is not biased by it.
+What it does affect is any claim that the absolute test numbers represent
+performance on wholly unseen data. The honest statement is that **no model in
+this project was pretrained on a corpus disjoint from AutoPET**, and the
+backbone comparison is unaffected because both sides share the exposure.
+
+The artefacts on disk could not have settled this: the checkpoints carry no
+corpus manifest and the pretraining logs are not under `D:\data\reports`.
+Citation supplied by the author from `midterm/training_runs.md`.
 
 ---
 
@@ -555,4 +578,9 @@ relabelling (md5 `a17eff48`) and differs from the text at `8dc2fea`
    to test.
 7. **Add the R3 baseline comparison.** It is the strongest evidence that the
    agent is doing something a volume threshold cannot.
-8. **Resolve the Swin MAE corpus question** before submission.
+8. **State the MAE pretraining exposure** in `phase6_swin.md`: both backbones
+   were pretrained on a corpus including AutoPET (Liu et al. 2026,
+   arXiv 2605.21835), so no model here was pretrained on data disjoint from the
+   evaluation set. The Swin-against-nnU-Net contrast is unaffected, being
+   symmetric, but absolute numbers should not be described as performance on
+   wholly unseen data.

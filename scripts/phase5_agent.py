@@ -51,7 +51,7 @@ class Phase5Agent:
     def __init__(self, av, qmodel, diagmodel, T, eps_hat, min_pfail,
                  split="oof", policy=None, with_roi=False, fixed=None,
                  q_gate=False, pfail_table=None, gate_classes=None,
-                 order_by_pfail=False, iter_trace=False):
+                 order_by_pfail=False, iter_trace=False, save_masks=None):
         self.av = av                      # None -> hand-built policy ordering
         self.Q = qmodel
         self.D = diagmodel
@@ -75,6 +75,10 @@ class Phase5Agent:
         self.gate_classes = set(gate_classes) if gate_classes else None
         self.order_by_pfail = order_by_pfail
         self.iter_trace = iter_trace
+        # Audit R4: write the final mask per case so Experiment 1 metrics
+        # (IoU, ASSD, volume error, connectivity) can be computed on the
+        # agent's own output rather than only on the base model's maps.
+        self.save_masks = save_masks
 
     # ---- scoring ---------------------------------------------------------
     def value(self, x_obs, pfail, pcls, strat) -> float:
@@ -288,6 +292,12 @@ class Phase5Agent:
                 trace[f"k{t}_fp_ml"] = tr["fp_ml"]
                 trace[f"k{t}_n_hit"] = tr["n_hit"]
 
+        if self.save_masks is not None:
+            import numpy as _np
+            self.save_masks.mkdir(parents=True, exist_ok=True)
+            _np.savez_compressed(self.save_masks / f"{case}.npz",
+                                 mask=ctx.mask().astype(_np.uint8),
+                                 spacing=_np.asarray(ctx.spacing, float))
         trace["seconds"] = time.time() - t0
         trace["q_final"] = self.q_of(case, feats, cinfo)
         return trace, rows, base, cur
@@ -324,6 +334,8 @@ def main() -> None:
                     help="audit R2(3): gate only on these predicted classes")
     ap.add_argument("--order-by-pfail", action="store_true",
                     help="audit R2(3): order the queue by p_failure descending")
+    ap.add_argument("--save-masks", type=Path, default=None,
+                    help="audit R4: directory to write the final mask per case")
     ap.add_argument("--iter-trace", action="store_true",
                     help="audit R5: record metrics after each accepted edit")
     ap.add_argument("--q-gate", action="store_true",
@@ -350,7 +362,8 @@ def main() -> None:
                         q_gate=args.q_gate,
                         gate_classes=args.gate_classes,
                         order_by_pfail=args.order_by_pfail,
-                        iter_trace=args.iter_trace)
+                        iter_trace=args.iter_trace,
+                        save_masks=args.save_masks)
     if args.pfail_table:
         zz = np.load(args.pfail_table, allow_pickle=True)
         agent.pfail_table = {
