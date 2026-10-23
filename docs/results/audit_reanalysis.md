@@ -16,7 +16,7 @@ Each section names the script and the JSON behind its numbers.
 | **The "98%" gated precision is in-sample.** Cross-fitted it is **85.3%**, and lesions lost at the 0.90 gate rise from 3 to 41 | **contradicts `final_eval.md` §4** |
 | **The +reasoning ablation rung loses its Dice gain.** Published +0.0031, cross-fitted **-0.0012 [-0.0064, +0.0025]** | **contradicts `final_eval.md` §1** |
 | **H4 does not survive multiplicity correction.** Both hardest-group Bonferroni lower bounds fall to **+0.0000** | **weakens `final_eval.md` §2** |
-| **"A fixed strategy matches or beats the learned selector" is false cross-fitted.** Fixed +0.0033 (straddles zero), learned +0.0052, rule-based +0.0065 | **contradicts `phase5_memory.md` §6a** |
+| **"A fixed strategy matches or beats the learned selector" is false cross-fitted.** Fixed +0.0033 (straddles zero), learned +0.0052, rule-based +0.0065 at T=10; and at T=3 the hand-built policy clears **51** patients against the final agent's 50 | **contradicts `phase5_memory.md` §6a** |
 | **The post-fix uptake medians do not reproduce.** Report says 6.14x / 1.46x; recomputation gives **3.81 / 0.89** | **contradicts `nnunet_505_corrected_labels.md` l.49-50** |
 | **The Phase IV guarded TEST run predates the Phase V pre-registration by ~22 h**, so the plan's "pre-registered secondary comparison" was written with those test numbers already in existence | **weakens `phase5_analysis_plan.md` §4** |
 | **Both backbones were MAE-pretrained on a corpus that included AutoPET** (Liu et al. 2026). Symmetric, so the Phase VI contrast is unaffected, but no model here was pretrained on data disjoint from AutoPET | **to state in `phase6_swin.md`** |
@@ -174,7 +174,7 @@ All arms at T=10, `p_failure` >= 0.90, cross-fitted.
 | **(b) rule-based** | **+0.0065** | **[+0.0025, +0.0118]** | 231/385 | -0.0034 | 0.80 | 7.4 / 91.8 / 0.8 |
 | **(c) learned** | **+0.0052** | **[+0.0022, +0.0099]** | 237/385 | -0.0035 | 0.77 | 7.1 / 92.4 / 0.6 |
 | fixed strategy, T=3 (relabelled, see R1(g)) | -0.0002 | [-0.0056, +0.0038] | 237/385 | -0.0025 | 0.69 | 6.5 / 92.1 / 1.4 |
-| **PV rung 2 (hand-built policy, T=3)** | *running* | | | | | |
+| **PV rung 2 (hand-built policy, T=3)** | **+0.0030** | **[+0.0018, +0.0046]** | **238/385** | -0.0025 | 0.67 | 6.8 / 92.6 / 0.6 |
 | PV rung 3 (learned, T=3) | +0.0028 | [+0.0016, +0.0043] | 242/385 | -0.0025 | 0.65 | 6.2 / 93.2 / 0.6 |
 | PV rung 5-noroi (T=10) | +0.0052 | [+0.0022, +0.0099] | 237/385 | -0.0035 | 0.77 | 7.1 / 92.4 / 0.6 |
 | R2(3) corrected variant | +0.0049 | [+0.0014, +0.0094] | 240/385 | -0.0006 | 0.26 | 4.8 / 94.6 / 0.6 |
@@ -209,7 +209,19 @@ configuration), and that is what `agent_oof_pf90` ran: its action mix is
 strategy cannot produce. The run labelled rung 2 here used
 `--fixed-strategy topology_remove --T 3`, so it is a fixed-strategy
 configuration and is relabelled above. **The thesis is correct; this report was
-wrong.** The true cross-fitted rung 2 is running and will be added.
+wrong.**
+
+The true cross-fitted rung 2 is now in the table above, and it is the most
+interesting row in it. The hand-built policy at T=3 gives **+0.0030 [+0.0018,
++0.0046] and clears 51 tumour-free patients (289 -> 238)** - one *more* than the
+final agent's 50, at half the budget. Its action mix confirms the configuration:
+`topology_remove` 485, `suv_percist` 4, `volume_grow` 1, `recover` 1.
+
+Against the published in-sample rung 2 (+0.0020, 240/385), the cross-fitted
+value is **higher**, which is the opposite of what cross-fitting did to every
+other rung. The reason is visible in the mix: rung 2 is the only configuration
+whose strategy choice comes from a policy fitted on *measured outcomes* rather
+than from the detector, so honest gating costs it less.
 
 Rung 3 (learned, T=3) falls to +0.0028, rung 5-noroi to +0.0052, against
 published in-sample values of +0.0033 and +0.0057. The ordering is preserved;
@@ -495,10 +507,18 @@ intervals overlap almost completely. The honest reading is that the Phase V
 configuration is not demonstrably better than the Phase IV guarded one on the
 co-primaries; it is better on Dice point estimate only.
 
-The T=3 comparison, cross-fitted: a **fixed strategy** at T=3 gives **-0.0002
-[-0.0056, +0.0038]** against the learned selector's **+0.0028 [+0.0016,
-+0.0043]**. The true rung 2 (hand-built policy at T=3) is running; see the
-correction in R1(g).
+The T=3 comparison, cross-fitted:
+
+| configuration at T=3 | dDice | tumour-free with FP |
+|---|---|---|
+| fixed strategy | -0.0002 [-0.0056, +0.0038] | 237/385 |
+| learned selector (rung 3) | +0.0028 [+0.0016, +0.0043] | 242/385 |
+| **hand-built policy (rung 2)** | **+0.0030 [+0.0018, +0.0046]** | **238/385** |
+
+**Rung 2 beats rung 3**, which is the pre-registered H5 contrast at T=3 and
+points the same way as the T=10 attribution in R1(d): the hand-built policy is
+the strongest selector at both budgets. See the correction in R1(g) for why an
+earlier draft of this table was wrong.
 
 ---
 
