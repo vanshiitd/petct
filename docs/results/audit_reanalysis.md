@@ -527,10 +527,19 @@ either the thesis or the earlier part of this audit gives.
 
 Validation, same configurations:
 
-| experience | dDice | tumour-free with FP | cleared | d lesion sens |
-|---|---|---|---|---|
-| 10% (58 patients) | +0.0011 [+0.0001, +0.0030] | 22 -> 21 | 1 | -0.0014 |
-| 25% / 50% / 100% | *pending* | | | |
+| experience | dDice | tumour-free with FP | cleared | d lesion sens | actions/case |
+|---|---|---|---|---|---|
+| 10% (58 patients) | +0.0011 [+0.0001, +0.0030] | 22 -> 21 | 1 | -0.0014 | 0.29 |
+| 25% (144) | +0.0012 [-0.0000, +0.0032] | 22 -> 20 | 2 | -0.0014 | 0.34 |
+| 50% (289) | +0.0013 [+0.0001, +0.0032] | 22 -> 20 | 2 | -0.0014 | 0.33 |
+| 100% (578) | +0.0008 [-0.0010, +0.0030] | 22 -> 20 | 2 | -0.0014 | 0.30 |
+
+Validation agrees and is, if anything, blunter: the four sizes span 0.0005 in
+dDice, clear one or two patients, and the **100% row is the weakest of the
+four** with an interval that straddles zero. With 38 tumour-positive and 38
+tumour-free cases validation cannot resolve differences this small, which is
+itself worth stating - it is the same power limitation that made the Phase V
+validation eligibility check uninformative.
 
 ---
 
