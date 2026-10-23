@@ -21,6 +21,7 @@ Each section names the script and the JSON behind its numbers.
 | **The Phase IV guarded TEST run predates the Phase V pre-registration by ~22 h**, so the plan's "pre-registered secondary comparison" was written with those test numbers already in existence | **weakens `phase5_analysis_plan.md` §4** |
 | **Both backbones were MAE-pretrained on a corpus that included AutoPET** (Liu et al. 2026). Symmetric, so the Phase VI contrast is unaffected, but no model here was pretrained on data disjoint from AutoPET | **to state in `phase6_swin.md`** |
 | The final agent itself survives cross-fitting: 0.6943 -> **0.6938**, 240 -> **239** patients cleared | holds |
+| **The agent reduces mean surface distance by 27% (ASSD 33.54 -> 24.46 mm) while Dice moves 1%.** Never reported in any phase | **add to the thesis** |
 | H5's verdict (learned does not beat the hand-built policy) | holds |
 | Phase V's confirmatory test result | unchanged, and not re-run |
 | U_stab beats U_ent at component level | holds, now with intervals |
@@ -377,16 +378,20 @@ of small-component removal.
 | model | Dice | IoU | ASSD mm | HD95 mm | vol err mL | rel vol err (median) | components/case | lesion count err |
 |---|---|---|---|---|---|---|---|---|
 | single 505 (fold 0, logit 8-flip) | 0.6959 | 0.5800 | 24.49 | 79.73 | -25.99 | -20.5% | 10.17 | +0.66 |
-| **M0 (5-fold ensemble)** | **0.7061** | **0.5901** | **23.41** | 79.95 | -32.84 | -26.4% | **8.78** | -0.74 |
+| M0 (5-fold ensemble) | 0.7061 | 0.5901 | 23.41 | 79.95 | -32.84 | -26.4% | 8.78 | -0.74 |
 | Swin f0 | 0.6594 | 0.5348 | 30.49 | 130.06 | -31.87 | -24.3% | **16.14** | **+6.63** |
+| **Phase V agent** (on M0) | **0.7069** | **0.5915** | **17.65** | **63.94** | -33.12 | -26.6% | 8.47 | -1.04 |
+| **final agent** (on M0) | 0.7065 | 0.5911 | 18.46 | 65.11 | -33.03 | -26.4% | 8.66 | -0.86 |
 
 ### Test (n=200, 110 tumour-positive) - descriptive
 
 | model | Dice | IoU | ASSD mm | HD95 mm | vol err mL | rel vol err (median) | components/case | lesion count err |
 |---|---|---|---|---|---|---|---|---|
 | single 505 (fold 0, logit 8-flip) | 0.6425 | 0.5305 | 43.75 | 128.27 | -7.97 | -4.5% | 9.29 | +0.30 |
-| **M0 (5-fold ensemble)** | **0.6638** | **0.5511** | **33.54** | **120.69** | -16.17 | -5.8% | **8.09** | -0.90 |
+| M0 (5-fold ensemble) | 0.6638 | 0.5511 | 33.54 | 120.69 | -16.17 | -5.8% | 8.09 | -0.90 |
 | Swin f0 | 0.5860 | 0.4754 | 57.66 | 188.22 | -6.58 | -5.9% | **15.88** | **+6.89** |
+| **Phase V agent** (on M0) | **0.6705** | **0.5574** | **24.46** | **92.11** | -16.52 | -5.8% | 7.64 | -1.34 |
+| **final agent** (on M0) | 0.6690 | 0.5556 | 25.21 | 98.55 | -17.54 | -5.8% | 7.92 | -1.07 |
 
 **The connectivity columns say something about Swin that FP volume alone does
 not.** Swin predicts **15.88 components per case on test against M0's 8.09**,
@@ -409,10 +414,41 @@ behind its lower false-positive volume, and it costs nothing in Dice here, but
 it is worth stating plainly rather than describing the ensemble as uniformly
 better.
 
-**Still not executed at the time of writing:** the Phase V agent and final agent
-rows. `phase5_agent.py` now has `--save-masks` and those four runs (two
-configurations x validation and test) are queued; their rows will be appended
-here.
+### What the agent rows say that Dice does not
+
+**The agent's effect is an order of magnitude larger in distance terms than in
+overlap terms.** On test, against M0:
+
+| metric | M0 | Phase V agent | change |
+|---|---|---|---|
+| Dice | 0.6638 | 0.6705 | **+1.0%** |
+| IoU | 0.5511 | 0.5574 | +1.1% |
+| **ASSD** | **33.54 mm** | **24.46 mm** | **-27.1%** |
+| **HD95** | **120.69 mm** | **92.11 mm** | **-23.7%** |
+| components/case | 8.09 | 7.64 | -5.6% |
+
+A 1% Dice gain accompanies a **27% reduction in average surface distance**.
+That is exactly the signature of removing objects that are far from the tumour
+and contribute little volume: Dice is dominated by the large correctly-segmented
+lesion and barely notices, while ASSD and HD95 are dominated by the furthest
+spurious object and move sharply.
+
+**This is the single most under-reported result in the project.** Every phase
+has argued the agent's benefit over Dice, which is the metric least able to see
+it, and the thesis quotes +0.0067 as the headline. The same configuration
+reduces mean surface distance by 9 mm. For a reader deciding whether a
+diagnose-and-repair loop is worth running, the second number is far more
+persuasive, and it has never been reported.
+
+The ranking also changes. On Dice the Phase V agent and the final agent are
+within 0.0015 and effectively tied; on ASSD the Phase V agent is clearly ahead
+(24.46 against 25.21 on test, 17.65 against 18.46 on validation), consistent
+across both splits.
+
+Note the volume columns move the other way: the agent makes M0's existing
+under-prediction slightly worse (-16.17 -> -16.52 mL on test). It only removes;
+it never adds volume, so this is structural rather than a defect, but it means
+the agent should not be described as improving volumetric agreement.
 
 ---
 
@@ -686,6 +722,10 @@ relabelling (md5 `a17eff48`) and differs from the text at `8dc2fea`
    to test.
 7. **Add the R3 baseline comparison.** It is the strongest evidence that the
    agent is doing something a volume threshold cannot.
+7a. **Lead with ASSD, not Dice.** The agent reduces mean surface distance by
+   27% and HD95 by 24% on test while Dice moves 1%. Dice is the metric least
+   able to see what this system does, and every phase has argued the case on
+   it.
 8. **State the MAE pretraining exposure** in `phase6_swin.md`: both backbones
    were pretrained on a corpus including AutoPET (Liu et al. 2026,
    arXiv 2605.21835), so no model here was pretrained on data disjoint from the
