@@ -481,10 +481,56 @@ the old one hid - precision rises monotonically with experience, 88.3 to 95.1 -
 which the previous version could not show because it scored each size on a
 different population.
 
-**The per-size endpoints pre-registered in `final_eval_plan.md` §5 l.103-104 are
-not produced here.** They require an agent run per experience size per split;
-the four models are saved (`fe_av_*.pkl`) and the runs are about 75 minutes
-each. Reported as not executed rather than omitted silently.
+The per-size endpoints pre-registered in `final_eval_plan.md` §5 l.103-104 are
+in the next section.
+
+---
+
+## R7b. Per-experience-size endpoints (`final_eval_plan.md` §5)
+
+`scripts/audit_sizes.py` -> `audit_sizes.json`. Runs `af_oof_av*`, `af_val_av*`.
+The plan asked for the endpoints of the agent built on each experience size; the
+final evaluation never produced them. Out-of-fold is cross-fitted; test is not
+touched.
+
+| experience | dDice | 95% CI | tumour-free with FP | cleared | d lesion sens | actions/case |
+|---|---|---|---|---|---|---|
+| 10% (58 patients) | +0.0049 | [+0.0019, +0.0095] | 289 -> 253 | 36 | -0.0031 | 0.69 |
+| 25% (144) | +0.0031 | [+0.0018, +0.0047] | 289 -> 238 | 51 | -0.0031 | 0.78 |
+| 50% (289) | +0.0052 | [+0.0022, +0.0099] | 289 -> **235** | **54** | -0.0034 | 0.80 |
+| 100% (578) | +0.0052 | [+0.0022, +0.0099] | 289 -> 237 | 52 | -0.0035 | 0.77 |
+| *reference:* FINAL AGENT (fixed, Q-gated) | +0.0050 | [+0.0015, +0.0097] | 289 -> 239 | 50 | **-0.0006** | **0.27** |
+| *reference:* learned selector (Q-gated) | +0.0020 | [+0.0010, +0.0033] | 289 -> 245 | 44 | **-0.0006** | **0.24** |
+
+**The two reference rows are Q-gated and the four size rows are not**, which is
+why their action counts differ by a factor of three (0.24-0.27 against
+0.69-0.80). They are included for scale, not as a like-for-like comparison. The
+size rows are internally comparable to each other, which is what §5 asked for.
+
+**The curve plateaus by half the data.** 50% and 100% are identical on Dice to
+four decimals (+0.0052) and within two patients on clearance; 10% already
+reaches +0.0049. The 25% point is the odd one - lowest Dice (+0.0031) but 51
+patients cleared - which at 144 patients of experience is within the noise the
+intervals imply.
+
+This is the endpoint-level version of R7's finding, and it is stronger than the
+flat R(a) curve alone: **the selector learns essentially everything it will
+learn from the first 10-25% of the data**, and the remaining 400-plus patients
+of experience buy nothing measurable on either co-primary.
+
+It also reinforces R1(d). Without the Q gate the learned selector reaches
++0.0052 and clears 52-54 patients - better than the Q-gated final agent's
++0.0050 and 50 - but pays for it in sensitivity: **-0.0035 against -0.0006**,
+roughly six times the cost, and three times the actions. The Q gate is buying
+safety rather than accuracy, which is a more defensible description of it than
+either the thesis or the earlier part of this audit gives.
+
+Validation, same configurations:
+
+| experience | dDice | tumour-free with FP | cleared | d lesion sens |
+|---|---|---|---|---|
+| 10% (58 patients) | +0.0011 [+0.0001, +0.0030] | 22 -> 21 | 1 | -0.0014 |
+| 25% / 50% / 100% | *pending* | | | |
 
 ---
 
