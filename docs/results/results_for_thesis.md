@@ -1,5 +1,26 @@
 # Results for the thesis - every number and figure in one place
 
+
+> **Note, 2026-10-24 - partly superseded by `audit_reanalysis.md`.**
+> An external-examiner audit cross-fitted the detectors, which were fitted on all
+> 738 out-of-fold scans and then applied to those same scans. The out-of-fold
+> numbers in tables 3, 4, 5 and 6 are therefore in-sample. What changed:
+>
+> - **Table 6 / section 4 "98%"**: the gated precision is **85.3%** cross-fitted,
+>   and lesions lost at the 0.90 gate rise from 3 to **41**.
+> - **Table 3, +reasoning rung**: +0.0031 becomes **-0.0012 [-0.0064, +0.0025]**.
+>   Its false-positive advantage survives and is larger than stated (40 patients
+>   cleared against matched uncertainty's 15).
+> - **Table 4 / H4**: survives at 95% but **not** Bonferroni correction - both
+>   hardest-group lower bounds fall to +0.0000.
+> - **Table 5 / H5**: the verdict stands, but "a fixed strategy matches or beats
+>   the learned selector" is **false** cross-fitted; the ordering is rule-based
+>   (+0.0065) > learned (+0.0052) > fixed (+0.0033, straddling zero).
+>
+> **Table 2, the confirmatory test result, is unchanged** and was not re-run.
+> Validation and test numbers throughout are unaffected, because the detectors
+> were never fitted on those splits.
+
 Single reference for writing up. Every number below is copied from the JSON the
 analysis scripts wrote, not retyped from a report. Intervals are 95% paired
 bootstrap over patients, 2000 resamples, unless the line says McNemar.

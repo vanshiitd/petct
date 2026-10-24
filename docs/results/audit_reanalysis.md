@@ -452,6 +452,77 @@ the agent should not be described as improving volumetric agreement.
 
 ---
 
+## R4b. Intervals for the distance results - DESCRIPTIVE
+
+`scripts/thesis_distance_boot.py` -> `thesis_distance_boot.json`. Paired
+bootstrap over patients, 2000 resamples, seed 2026, from the per-case metrics
+already on disk. No agent was re-run.
+
+**These are secondary descriptive results. Dice was the pre-specified endpoint
+and remains the headline.** The section below exists because R4 quoted point
+estimates without intervals, and the intervals change how much weight they bear.
+
+### Test
+
+| comparison | metric | M0 | agent | delta [95%] |
+|---|---|---|---|---|
+| Phase V agent vs M0 | ASSD mm | 33.541 | 24.463 | **-9.078 [-22.665, -1.597]** |
+| | HD95 mm | 120.693 | 92.111 | **-28.582 [-63.923, -6.000]** |
+| | IoU | 0.551 | 0.557 | **+0.006 [+0.001, +0.016]** |
+| | components/case | 8.090 | 7.645 | **-0.445 [-0.570, -0.335]** |
+| final agent vs M0 | ASSD mm | 33.541 | 25.211 | **-8.330 [-21.978, -0.823]** |
+| | HD95 mm | 120.693 | 98.547 | **-22.146 [-56.215, -1.332]** |
+| | IoU | 0.551 | 0.556 | +0.004 [-0.001, +0.014] (straddles 0) |
+| | components/case | 8.090 | 7.915 | **-0.175 [-0.245, -0.110]** |
+| Swin f0 vs nnU-Net f0 | components/case | 9.290 | 15.880 | **+6.590 [+5.390, +7.940]** |
+| | lesion count error | 0.300 | 6.890 | **+6.590 [+5.389, +7.940]** |
+
+### Validation
+
+| comparison | metric | M0 | agent | delta [95%] |
+|---|---|---|---|---|
+| Phase V agent vs M0 | ASSD mm | 23.413 | 17.653 | **-5.760 [-15.320, -0.347]** |
+| | HD95 mm | 79.945 | 63.936 | -16.009 [-44.965, +1.263] (straddles 0) |
+| | IoU | 0.590 | 0.592 | +0.001 [-0.001, +0.005] (straddles 0) |
+| | components/case | 8.776 | 8.474 | **-0.303 [-0.447, -0.177]** |
+| final agent vs M0 | ASSD mm | 23.413 | 18.463 | -4.950 [-14.375, +0.172] (straddles 0) |
+| | HD95 mm | 79.945 | 65.112 | -14.833 [-43.597, +2.525] (straddles 0) |
+| | IoU | 0.590 | 0.591 | +0.001 [-0.002, +0.005] (straddles 0) |
+| | components/case | 8.776 | 8.658 | **-0.118 [-0.192, -0.051]** |
+| Swin f0 vs nnU-Net f0 | components/case | 10.171 | 16.145 | **+5.974 [+3.915, +8.162]** |
+| | lesion count error | 0.658 | 6.632 | **+5.974 [+3.915, +8.162]** |
+
+### Three things the intervals change
+
+**The distance results are far less precise than R4's point estimates suggest.**
+HD95 on test is -28.582 but its interval runs from -63.9 to -6.0: the effect is
+distinguishable from zero and its size is not. The same holds for ASSD,
+-9.078 [-22.665, -1.597]. These are long-tailed distance metrics on 110
+tumour-positive cases, and a handful of cases with a distant spurious object
+dominate both the mean and the resampling spread. **R4's "-27.1%" should be read
+as "a reduction, somewhere between 5% and 65%".**
+
+**On validation the final agent's distance results do not replicate.** Both ASSD
+(-4.950 [-14.375, +0.172]) and HD95 (-14.833 [-43.597, +2.525]) straddle zero,
+as does IoU. Only the Phase V agent's ASSD excludes zero there, and narrowly.
+With 38 tumour-positive cases validation cannot resolve effects of this size,
+but the honest statement is that **the distance improvement is established on
+test and not on validation**, which is the weaker of the two positions a
+descriptive result can be in.
+
+**The two Swin connectivity rows are algebraically the same number.** Components
+per case and lesion-count error differ by a constant - the ground-truth
+component count, which is identical for both models - so +6.590 appearing twice
+is one finding reported twice, not two. R4's table has the same redundancy and
+should be read accordingly.
+
+What survives firmly on both splits is the **component count**: both agents
+remove components with intervals excluding zero everywhere, and Swin predicts
+roughly six more per case than the single nnU-Net on both splits. Those are
+counts rather than distances, and they behave.
+
+---
+
 ## R5. Per-iteration curve
 
 `fig_audit_per_iteration.png`, `audit_per_iteration.json`. Final agent,
@@ -722,10 +793,15 @@ relabelling (md5 `a17eff48`) and differs from the text at `8dc2fea`
    to test.
 7. **Add the R3 baseline comparison.** It is the strongest evidence that the
    agent is doing something a volume threshold cannot.
-7a. **Lead with ASSD, not Dice.** The agent reduces mean surface distance by
-   27% and HD95 by 24% on test while Dice moves 1%. Dice is the metric least
-   able to see what this system does, and every phase has argued the case on
-   it.
+7a. **Report the distance metrics as descriptive secondary results.** The agent
+   reduces mean surface distance by 27% and HD95 by 24% on test while Dice moves
+   1%, and that contrast is worth reporting - but **not as a new headline**.
+   An earlier version of this recommendation said "lead with ASSD, not Dice";
+   that was wrong and is withdrawn (2026-10-24). Dice was the
+   pre-specified endpoint, and substituting a secondary metric after seeing
+   which one moved is precisely the post-hoc endpoint change this audit
+   criticises in section R10. Intervals for the distance results are in
+   `thesis_distance_boot.json`, labelled descriptive.
 8. **State the MAE pretraining exposure** in `phase6_swin.md`: both backbones
    were pretrained on a corpus including AutoPET (Liu et al. 2026,
    arXiv 2605.21835), so no model here was pretrained on data disjoint from the
