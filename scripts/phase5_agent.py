@@ -50,7 +50,8 @@ CPU_ONLY = [s for s in STRATEGIES if s != "roi_repredict"]
 class Phase5Agent:
     def __init__(self, av, qmodel, diagmodel, T, eps_hat, min_pfail,
                  split="oof", policy=None, with_roi=False, fixed=None,
-                 q_gate=False):
+                 q_gate=False, pfail_table=None, gate_classes=None,
+                 order_by_pfail=False, iter_trace=False, save_masks=None):
         self.av = av                      # None -> hand-built policy ordering
         self.Q = qmodel
         self.D = diagmodel
@@ -62,6 +63,22 @@ class Phase5Agent:
         self.with_roi = with_roi
         self.fixed = fixed                # always this strategy, if set
         self.q_gate = q_gate              # accept only if Delta-Q > 0
+        # Audit R1: {(case, component_id): [p per class]} replacing the
+        # detector's own call. The shipped detectors were fitted on all 738
+        # out-of-fold scans and then applied to those same scans, so their
+        # out-of-fold p_failure is in-sample; this lets the loop run on
+        # honestly cross-fitted probabilities without touching the detector.
+        self.pfail_table = pfail_table
+        self.rec_table = None
+        # Audit R2(3): gate only on these predicted classes, and order the
+        # queue by p_failure rather than by the str(key) tie-break.
+        self.gate_classes = set(gate_classes) if gate_classes else None
+        self.order_by_pfail = order_by_pfail
+        self.iter_trace = iter_trace
+        # Audit R4: write the final mask per case so Experiment 1 metrics
+        # (IoU, ASSD, volume error, connectivity) can be computed on the
+        # agent's own output rather than only on the base model's maps.
+        self.save_masks = save_masks
 
     # ---- scoring ---------------------------------------------------------
     def value(self, x_obs, pfail, pcls, strat) -> float:
@@ -101,15 +118,28 @@ class Phase5Agent:
         rids, Xr = observable_rows(obs_rec, case, Dr["feats"], Dr["median"])
 
         classes = list(Dp["models"].keys())
-        P = (np.column_stack([Dp["models"][c].predict_proba(X)[:, 1]
-                              for c in classes]) if ids else np.zeros((0, len(classes))))
+        if self.pfail_table is not None:
+            P = np.zeros((len(ids), len(classes)))
+            for i, cid in enumerate(ids):
+                row = self.pfail_table.get((case, int(cid)))
+                # a component with no cross-fitted row cannot be judged
+                # honestly, so it is simply never proposed
+                P[i] = row if row is not None else np.zeros(len(classes))
+        else:
+            P = (np.column_stack([Dp["models"][c].predict_proba(X)[:, 1]
+                                  for c in classes]) if ids
+                 else np.zeros((0, len(classes))))
         # A detector may carry no recovery head at all -- the uncertainty-only
         # detector of section 21 rung 2 does not, since removal by uncertainty
         # has nothing to say about sub-threshold blobs. Treat that as "no
         # recovery candidates" rather than crashing on a None estimator.
         rec_head = Dr["models"].get("missed")
-        Pr = (rec_head.predict_proba(Xr)[:, 1]
-              if (rids and rec_head is not None) else np.zeros(len(rids)))
+        if self.rec_table is not None:
+            Pr = np.array([self.rec_table.get((case, int(r)), 0.0)
+                           for r in rids], float)
+        else:
+            Pr = (rec_head.predict_proba(Xr)[:, 1]
+                  if (rids and rec_head is not None) else np.zeros(len(rids)))
 
         pool = ctx.recovery_candidates() if rids else {}
         base_feats = {c: ctx.features(ctx.comp_slice(c),
@@ -127,7 +157,17 @@ class Phase5Agent:
         # candidate pairs, fixed up front: one action per component
         cands = []
         for i, cid in enumerate(ids):
-            j = int(np.argmax(P[i]))
+            if self.gate_classes is not None:
+                # restrict the argmax to the admissible classes, so a
+                # component is proposed on the strength of the class that
+                # would justify the action rather than on any class at all
+                cand_j = [k for k, c in enumerate(classes)
+                          if c in self.gate_classes]
+                if not cand_j:
+                    continue
+                j = max(cand_j, key=lambda k: P[i, k])
+            else:
+                j = int(np.argmax(P[i]))
             pf, pcls = float(P[i, j]), classes[j]
             if pf < self.min_pfail:
                 continue
@@ -160,10 +200,17 @@ class Phase5Agent:
                           if c["strat"] in order else -1.0)
 
         base = self._truth(ctx)
+        n_gated = len({c["key"] for c in cands})
         q0 = self.q_of(case, base_feats, cinfo)
         trace = {"case": case, "q0": q0, "attempts": 0, "accepted": 0,
                  "iterations": 0, "stopped": ""}
         rows, used, cur, feats = [], set(), base, dict(base_feats)
+        if self.iter_trace:
+            trace["k0_dice"] = base["dice"]
+            trace["k0_n_fp_comp"] = base["n_fp_comp"]
+            trace["k0_fp_ml"] = base["fp_ml"]
+            trace["k0_n_hit"] = base["n_hit"]
+        trace["n_gated_candidates"] = n_gated
         t0 = time.time()
 
         for t in range(1, self.T + 1):
@@ -173,7 +220,12 @@ class Phase5Agent:
             if not live:
                 trace["stopped"] = trace["stopped"] or "no candidate"
                 break
-            best = max(live, key=lambda c: (c["v"], str(c["key"]), c["strat"]))
+            if self.order_by_pfail:
+                best = max(live, key=lambda c: (c["pfail"], c["v"],
+                                                str(c["key"]), c["strat"]))
+            else:
+                best = max(live, key=lambda c: (c["v"], str(c["key"]),
+                                                c["strat"]))
             trace["attempts"] += 1
 
             if best["rec"]:
@@ -233,7 +285,19 @@ class Phase5Agent:
             feats, cur = f2, tr
             used.add(best["key"])
             trace["iterations"] = t
+            if self.iter_trace:
+                # Audit R5: the state after exactly k accepted edits
+                trace[f"k{t}_dice"] = tr["dice"]
+                trace[f"k{t}_n_fp_comp"] = tr["n_fp_comp"]
+                trace[f"k{t}_fp_ml"] = tr["fp_ml"]
+                trace[f"k{t}_n_hit"] = tr["n_hit"]
 
+        if self.save_masks is not None:
+            import numpy as _np
+            self.save_masks.mkdir(parents=True, exist_ok=True)
+            _np.savez_compressed(self.save_masks / f"{case}.npz",
+                                 mask=ctx.mask().astype(_np.uint8),
+                                 spacing=_np.asarray(ctx.spacing, float))
         trace["seconds"] = time.time() - t0
         trace["q_final"] = self.q_of(case, feats, cinfo)
         return trace, rows, base, cur
@@ -263,6 +327,17 @@ def main() -> None:
     ap.add_argument("--eps-hat", type=float, default=0.0)
     ap.add_argument("--min-pfail", type=float, default=0.90)
     ap.add_argument("--with-roi", action="store_true")
+    ap.add_argument("--pfail-table", type=Path, default=None,
+                    help="audit R1: npz of cross-fitted class probabilities, "
+                         "used instead of the detector's own call")
+    ap.add_argument("--gate-classes", nargs="*", default=None,
+                    help="audit R2(3): gate only on these predicted classes")
+    ap.add_argument("--order-by-pfail", action="store_true",
+                    help="audit R2(3): order the queue by p_failure descending")
+    ap.add_argument("--save-masks", type=Path, default=None,
+                    help="audit R4: directory to write the final mask per case")
+    ap.add_argument("--iter-trace", action="store_true",
+                    help="audit R5: record metrics after each accepted edit")
     ap.add_argument("--q-gate", action="store_true",
                     help="accept an action only if Delta-Q > 0 (Phase IV "
                          "reflection gate); off by default, as in Phase V")
@@ -284,7 +359,24 @@ def main() -> None:
     agent = Phase5Agent(av, Q, D, args.T, args.eps_hat, args.min_pfail,
                         split=args.split, policy=policy,
                         with_roi=args.with_roi, fixed=args.fixed_strategy,
-                        q_gate=args.q_gate)
+                        q_gate=args.q_gate,
+                        gate_classes=args.gate_classes,
+                        order_by_pfail=args.order_by_pfail,
+                        iter_trace=args.iter_trace,
+                        save_masks=args.save_masks)
+    if args.pfail_table:
+        zz = np.load(args.pfail_table, allow_pickle=True)
+        agent.pfail_table = {
+            (str(c), int(i)): row for c, i, row in
+            zip(zz["keys_case"], zz["keys_cid"], zz["P_crossfit"])}
+        if "rec_keys_case" in zz.files:
+            agent.rec_table = {
+                (str(c), int(i)): float(v) for c, i, v in
+                zip(zz["rec_keys_case"], zz["rec_keys_cid"], zz["rec_crossfit"])}
+        print(f"cross-fitted probabilities for {len(agent.pfail_table)} "
+              f"components"
+              + (f" and {len(agent.rec_table)} recovery candidates"
+                 if agent.rec_table else ""), flush=True)
 
     pre = get_predictors = None
     if args.with_roi:
@@ -339,8 +431,12 @@ def main() -> None:
         if not rows:
             return
         f = args.out_prefix.with_name(args.out_prefix.name + f"_{name}.csv")
+        # The union, not the first row's keys: with --iter-trace a case that
+        # accepted k edits carries k0..kK columns, so the first case would
+        # otherwise fix a header too narrow for the rest.
+        cols = sorted({k for r in rows for k in r})
         with open(f, "w", newline="", encoding="utf-8") as fh:
-            w = csv.DictWriter(fh, fieldnames=sorted(rows[0]))
+            w = csv.DictWriter(fh, fieldnames=cols, restval="")
             w.writeheader()
             w.writerows(rows)
 
