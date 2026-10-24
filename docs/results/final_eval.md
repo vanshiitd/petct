@@ -1,5 +1,32 @@
 # Final evaluation - work plan sections 21 to 24
 
+
+> **Note, 2026-10-24 - partly superseded by `audit_reanalysis.md`.**
+> The out-of-fold columns of sections 1, 2 and 4 were computed with detectors
+> fitted on all 738 out-of-fold scans and then applied to those same scans, so
+> they are in-sample. Cross-fitted on the Phase IIIb folds 3-7:
+>
+> - **Section 4, "removing it is the right action 98% of the time"**: the figure
+>   is **85.3%**, and lesions lost at the 0.90 gate rise from 3 to **41**. As a
+>   per-action rule the honest threshold is >= 0.95; inside the loop, with the Q
+>   gate filtering marginal actions, 0.90 still wins at case level.
+> - **Section 1, + reasoning**: 0.6919 becomes 0.6876, **-0.0012
+>   [-0.0064, +0.0025]**. Its claim to match matched-rate uncertainty on Dice does
+>   not survive; its false-positive advantage does and is larger (40 patients
+>   cleared against 15).
+> - **Section 1, FINAL AGENT**: 0.6943 becomes **0.6938**, 240 becomes **239**.
+>   Essentially unchanged.
+> - **Section 2, H4**: survives at 95%, **fails Bonferroni** - both hardest-group
+>   lower bounds +0.0000. Read as directionally supported, magnitude not
+>   established.
+> - **Section 4, self-improvement**: the conclusion holds on a common held-out
+>   set with 20 repeats; the corrected analysis also shows monotone precision
+>   gain with experience (88.3 to 95.1%) that the mixed-population version hid.
+>
+> The validation and test columns are unaffected. Cross-fitted figures are
+> `fig_cf_ablation.png`, `fig_cf_difficult.png`, `fig_cf_selfimprove.png`,
+> `fig_cf_gate.png`.
+
 Branch `final-eval`. Configurations frozen in `reports/final_eval_plan.md`
 (commit `b64ed9d`) **before any number here was computed**.
 

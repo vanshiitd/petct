@@ -1,5 +1,26 @@
 # Phase V - learned action selection over the Phase IV loop
 
+
+> **Note, 2026-10-24 - section 6a partly superseded by
+> `audit_reanalysis.md`.** The attribution experiment in section 6a used a
+> detector fitted on all 738 out-of-fold scans and applied to those same scans.
+> Cross-fitted, the ordering reverses:
+>
+> | arm, T=10, p_failure >= 0.90 | section 6a (in-sample) | cross-fitted |
+> |---|---|---|
+> | (a) fixed `topology_remove` | +0.0079 | **+0.0033 [-0.0035, +0.0099]** |
+> | (b) rule-based policy | +0.0079 | **+0.0065 [+0.0025, +0.0118]** |
+> | (c) learned selector | +0.0057 | **+0.0052 [+0.0022, +0.0099]** |
+>
+> **H5's verdict is unchanged** - the learned selector still does not beat the
+> hand-built policy - but **the sentence "a fixed strategy with no selection at
+> all matches the rule-based policy and beats the learned selector" is false**
+> cross-fitted. The fixed arm is the weakest of the three and its interval
+> includes zero. The final agent's fixed-strategy design was justified by that
+> sentence.
+>
+> Section 7's confirmatory test pass is unchanged and was not re-run.
+
 Branch `phase5-memory`, from `phase4-agent`. Measured against
 `reports/phase5_analysis_plan.md`, committed at `8dc2fea` before any Phase V
 number was computed. Every criterion is reported as it fired.

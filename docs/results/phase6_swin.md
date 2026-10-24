@@ -73,6 +73,21 @@ against 20.8 h for 500 epochs - and peak memory rises 11.6 -> 17.0 GB, inside a
 32 GB card. Agreed with the user before launch and recorded in
 `final_eval_plan.md` section 7.
 
+### MAE pretraining exposure
+
+Both backbones in this comparison were initialised from MAE pretraining by
+**Liu et al. 2026 (arXiv 2605.21835)**, over roughly 5,000 scans, and **that
+corpus included AutoPET** (`midterm/training_runs.md` l.18, l.61-62). That
+applies to `swin_small_mae_best.pth` and equally to `nnunet_v2_mim_best.pth`,
+which is M0's ancestor.
+
+The exposure is **symmetric**, so the Swin-against-nnU-Net contrast below is not
+biased by it: both sides saw the same images during self-supervised pretraining,
+without labels. What it does mean is that **no model in this project was
+pretrained on a corpus disjoint from the evaluation data**, so the absolute test
+numbers anywhere in this project should not be described as performance on
+wholly unseen data.
+
 ## 2. Experiment 1 - Swin against the single nnU-Net
 
 The comparator is the **single nnU-Net fold-0 model**, not the 5-fold ensemble.

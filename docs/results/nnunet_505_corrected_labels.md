@@ -1,5 +1,19 @@
 # Dataset505 — the same model on corrected labels
 
+
+> **Note, 2026-10-24 - two numbers superseded by
+> `audit_reanalysis.md` R9(1).** The post-fix uptake medians on line 49-50
+> ("median lesion uptake is 6.14x the body median as stored against 1.46x
+> flipped") do not reproduce. Re-running the same test on the corrected v2
+> conversion gives **3.81x stored against 0.89x flipped**
+> (`scripts/audit_flip_recheck.py` -> `audit_flip_recheck.json`).
+>
+> The **pre-fix** pair on the same line (2.57x / 4.30x) reproduces exactly from
+> `mask_flip_scope.log`, so the measurement definition is not in doubt, and the
+> **direction and the flip-better count are confirmed**: flipping improves
+> uptake in **4 of 501** scans after the fix, against 308 of 501 before it.
+> Only the two post-fix median ratios are wrong.
+
 **Question.** Dataset503 fine-tuned our MAE-pretrained nnU-Net and reached test Dice
 0.2962, against ~0.65 in the published AutoPET work. A 50-case fit check then showed
 train Dice 0.2950 against test 0.2962 — the model was no better on data it had
