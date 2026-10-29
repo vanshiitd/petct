@@ -50,13 +50,28 @@ reference points from the audit:
 
 ## Endpoints
 
-Primary comparison metric, matching the audit's own framing: **mean d_qdice of
-the strategy the policy selects for a gated component**, cross-fitted,
-out-of-fold - this is the quantity "is the chosen action actually good"
-and is what rows (a)/(b)/(c) above are measured on.
+**Two distinct metrics, not one, and they must not be conflated** - an error
+made and caught in drafting this plan, recorded here rather than silently
+fixed:
 
-Secondary, case-level (same definitions as `phase5_eval.py` throughout the
-project): Dice over tumour-positive cases, tumour-free patients with any false
+- **Fast proxy (component-level):** mean `d_qdice` of the strategy selected for
+  each gated component, out-of-fold, cross-fitted. Cheap (no agent run, pure
+  table lookup), used to screen a candidate policy before spending compute on
+  a full run.
+- **Confirmatory (case-level):** mean Dice over tumour-positive cases, before
+  vs. after running the *actual* `phase5_agent.py` loop with the candidate
+  policy wired in via `--avpkl`, T=10, `min-pfail`=0.90, no Q gate - the exact
+  recipe `run_audit_oof.sh` used for rows (a)/(b)/(c) above, paired bootstrap
+  over patients. **This is the only metric directly comparable to
+  +0.0033 / +0.0065 / +0.0052**, and it is the one that decides whether a piece
+  passes or fails its falsification criterion.
+
+The fast proxy is informative but is not evaluated on the same quantity (it
+averages over every gated component, including those on tumour-free cases
+scored by the `d_qdice` convention) and must never be reported next to the
+case-level reference numbers as if directly comparable.
+
+Also tracked at case level throughout: tumour-free patients with any false
 positive (exact McNemar), lesion sensitivity (safety margin -0.01, binding).
 
 ## The five pieces, in the order they will be built
