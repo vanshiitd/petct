@@ -25,6 +25,8 @@ einops                 # tensor reshaping used inside MONAI's SwinUNETR attentio
 # --- numerics ---------------------------------------------------------------
 numpy
 scipy                  # resampling (ndimage.zoom) and connected-component analysis
+scikit-learn           # agent-side models (diagnosis, action-value, shrinkage policy)
+lightgbm               # phase7_ranking.py: lambdarank pairwise objective, grouped by component
 
 # --- medical image I/O ------------------------------------------------------
 SimpleITK              # reads DICOM and NIfTI; used by the converter and preprocessing
