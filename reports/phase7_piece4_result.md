@@ -7,13 +7,19 @@ regression score to decide both whether to act and which strategy.
 
 | policy (cross-fitted, OOF, T=10) | dDice | tumour-free FP cleared | lesion-sens delta |
 |---|---|---|---|
-| (a) fixed `topology_remove` | +0.0033 [-0.0035, +0.0099] | 230/385 | -- |
-| **(b) hand-built policy** | **+0.0065 [+0.0025, +0.0118]** | 231/385 | -- |
-| (c) learned action-value model | +0.0052 [+0.0022, +0.0099] | 237/385 | -- |
+| (a) fixed `topology_remove` | +0.0033 [-0.0035, +0.0099] | 59/385 | -- |
+| **(b) hand-built policy** | **+0.0065 [+0.0025, +0.0118]** | 58/385 | -- |
+| (c) learned action-value model | +0.0052 [+0.0022, +0.0099] | 52/385 | -- |
 | (d) shrinkage policy (piece 1) | +0.0029 [+0.0015, +0.0048] | 50/385 | -- |
 | (e) pairwise ranking (piece 2) | +0.0033 [-0.0035, +0.0099] | 59/385 | -0.0031 |
 | (f) class-balanced ranking (piece 3) | +0.0033 [-0.0035, +0.0100] | 59/385 | -0.0035 |
 | (g) **joint scorer (piece 4)** | **-0.0027 [-0.0052, -0.0003]** | **24/385** | **-0.0144** |
+
+*(FP-cleared column corrected; see `reports/phase7_fp_cleared_correction.md`.
+Piece 4's 24/385 against the true 58/385 is still a real decline -- about
+2.4x fewer patients cleared -- not the ~10x gap the uncorrected numbers
+implied, but the dDice interval excluding zero on the harmful side is the
+decisive finding regardless and is unaffected by this correction.)*
 
 Validation: n=38, dDice **-0.0090 [-0.0241, -0.0002]**, FP cleared 0/38,
 lesion-sens delta -0.0152 -- same direction, same failure.

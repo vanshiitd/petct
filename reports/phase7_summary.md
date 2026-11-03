@@ -8,14 +8,22 @@ built and evaluated in order, each cross-fitted on the Phase IIIb folds
 
 | # | piece | reason addressed | case-level dDice, OOF | tumour-free FP cleared | own verdict |
 |---|---|---|---|---|---|
-| -- | (a) fixed `topology_remove` | -- | +0.0033 [-0.0035, +0.0099] | 230/385 | audit reference |
-| -- | **(b) hand-built policy** | -- | **+0.0065 [+0.0025, +0.0118]** | 231/385 | the bar |
-| -- | (c) learned action-value model | -- | +0.0052 [+0.0022, +0.0099] | 237/385 | audit reference |
+| -- | (a) fixed `topology_remove` | -- | +0.0033 [-0.0035, +0.0099] | 59/385 | audit reference |
+| -- | **(b) hand-built policy** | -- | **+0.0065 [+0.0025, +0.0118]** | 58/385 | the bar |
+| -- | (c) learned action-value model | -- | +0.0052 [+0.0022, +0.0099] | 52/385 | audit reference |
 | 1 | hierarchical shrinkage | 4 (hand-built near-optimal) | +0.0029 [+0.0015, +0.0048] | 50/385 | **falsified** |
 | 2 | pairwise ranking | 1-2 (signal/noise) | +0.0033 [-0.0035, +0.0099] | 59/385 | not falsified by own criterion; collapses to one action |
 | 3 | class-balanced weighting | 3 (action collapse) | +0.0033 [-0.0035, +0.0100] | 59/385 | **falsified in practice** (identical to piece 2) |
 | 4 | joint diagnosis+selection | 6 (gate removes decision surface) | **-0.0027 [-0.0052, -0.0003]** | 24/385 | **falsified, harmful** |
 | 5 | active learning | 5 (flat self-improvement) | n/a (fast proxy only; converges to piece 3's result) | n/a | not falsified; modest, does not raise the ceiling |
+
+*(FP-cleared column corrected after all five pieces were first written up --
+see `reports/phase7_fp_cleared_correction.md`. The original 230/231/237 for
+(a)/(b)/(c) was the audit's `negFP` remaining-count column, mislabelled as a
+cleared count; dDice, the primary endpoint and every pass/fail verdict
+above, is unaffected. Pieces 2 and 3 tie row (a) and mildly beat (b)/(c) on
+the corrected FP-clearance number -- their shortfall against the
+phase-level bar is on dDice alone.)*
 
 ## Phase-level verdict: not successful
 
@@ -35,7 +43,7 @@ actually deployed as agents.
    concrete: partial pooling toward a population mean dominated by
    `recover` (do nothing) erased the hand-built policy's per-class override
    exactly where it matters (boundary, fragmentation, under-segmentation),
-   collapsing FP clearance from 231/385 to 50/385.
+   dropping FP clearance from 58/385 to 50/385.
 2. **Fixing the regression/ranking signal-to-noise problem does not fix
    training-distribution imbalance.** Piece 2 improved cross-fitted Spearman
    from 0.31 to 0.40 -- a real, measured gain -- and still collapsed onto

@@ -7,10 +7,14 @@ resamples, same `boot_dice`/`mcnemar_fp`/`lesion_sens` functions the audit used.
 
 | policy (cross-fitted, OOF, T=10, p_failure>=0.90) | dDice | tumour-free FP cleared |
 |---|---|---|
-| (a) fixed `topology_remove` | +0.0033 [-0.0035, +0.0099] | 230/385 |
-| **(b) hand-built policy** | **+0.0065 [+0.0025, +0.0118]** | 231/385 |
-| (c) learned action-value model | +0.0052 [+0.0022, +0.0099] | 237/385 |
+| (a) fixed `topology_remove` | +0.0033 [-0.0035, +0.0099] | 59/385 |
+| **(b) hand-built policy** | **+0.0065 [+0.0025, +0.0118]** | 58/385 |
+| (c) learned action-value model | +0.0052 [+0.0022, +0.0099] | 52/385 |
 | (d) **hierarchical shrinkage policy (piece 1)** | **+0.0029 [+0.0015, +0.0048]** | **50/385** |
+
+*(FP-cleared column corrected; see `reports/phase7_fp_cleared_correction.md`
+-- the original 230/231/237 was the audit's `negFP` remaining-count column,
+mislabelled.)*
 
 Validation (check only, not the deciding split): n=38 tumour-positive cases,
 dDice +0.0012 [-0.0000, +0.0032], p=0.064 -- straddles zero, consistent with
@@ -35,7 +39,7 @@ population-safe action on many components the hand-built policy would have
 corrected. That raises selection precision (the proxy) because "do nothing"
 is rarely wrong, but it collapses the operational effect -- 604 accepted
 actions / 738 cases (0.82/case) here vs. a much higher action rate under (b),
-and tumour-free FP clearance drops from 231/385 to 50/385. A policy that acts
+and tumour-free FP clearance drops from 58/385 to 50/385. A policy that acts
 less often cannot clear as many false positives, regardless of how accurate
 its proxy score is on the actions it does take.
 

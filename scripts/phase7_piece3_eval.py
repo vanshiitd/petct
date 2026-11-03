@@ -15,13 +15,14 @@ from phase5_eval import read, paired_dice, mcnemar_fp, lesion_sens
 
 R = Path(r"D:\data\reports")
 
+# fp_cleared corrected -- see reports/phase7_fp_cleared_correction.md.
 REFERENCE = {
     "(a) fixed topology_remove": {"delta": 0.0033, "lo": -0.0035, "hi": 0.0099,
-                                   "fp_cleared": "230/385"},
+                                   "fp_cleared": "59/385"},
     "(b) hand-built policy": {"delta": 0.0065, "lo": 0.0025, "hi": 0.0118,
-                               "fp_cleared": "231/385"},
+                               "fp_cleared": "58/385"},
     "(c) learned action-value model": {"delta": 0.0052, "lo": 0.0022, "hi": 0.0099,
-                                        "fp_cleared": "237/385"},
+                                        "fp_cleared": "52/385"},
     "(d) shrinkage policy (piece 1, falsified)": {"delta": 0.0029, "lo": 0.0015,
                                                     "hi": 0.0048, "fp_cleared": "50/385"},
     "(e) pairwise ranking (piece 2)": {"delta": 0.0033, "lo": -0.0035, "hi": 0.0099,
