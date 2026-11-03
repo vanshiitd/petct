@@ -5,12 +5,14 @@ Confirmatory case-level evaluation, `scripts/phase7_piece3_eval.py` ->
 
 | policy (cross-fitted, OOF, T=10, p_failure>=0.90) | dDice | tumour-free FP cleared |
 |---|---|---|
-| (a) fixed `topology_remove` | +0.0033 [-0.0035, +0.0099] | 230/385 |
-| **(b) hand-built policy** | **+0.0065 [+0.0025, +0.0118]** | 231/385 |
-| (c) learned action-value model | +0.0052 [+0.0022, +0.0099] | 237/385 |
+| (a) fixed `topology_remove` | +0.0033 [-0.0035, +0.0099] | 59/385 |
+| **(b) hand-built policy** | **+0.0065 [+0.0025, +0.0118]** | 58/385 |
+| (c) learned action-value model | +0.0052 [+0.0022, +0.0099] | 52/385 |
 | (d) shrinkage policy (piece 1, falsified) | +0.0029 [+0.0015, +0.0048] | 50/385 |
 | (e) pairwise ranking (piece 2) | +0.0033 [-0.0035, +0.0099] | 59/385 |
 | (f) **class-balanced ranking (piece 3)** | +0.0033 [-0.0035, +0.0100] | **59/385** |
+
+*(FP-cleared column corrected; see `reports/phase7_fp_cleared_correction.md`.)*
 
 Validation: n=38, dDice +0.0008 [-0.0010, +0.0030] -- identical to piece 2
 to four decimal places.

@@ -17,13 +17,17 @@ from phase5_eval import read, paired_dice, mcnemar_fp, lesion_sens
 
 R = Path(r"D:\data\reports")
 
+# fp_cleared corrected -- see reports/phase7_fp_cleared_correction.md. These
+# were originally the audit's own `negFP` column (remaining FP count, lower
+# better) mislabelled as a cleared count; recomputed here the same way every
+# later piece's own number is computed (mcnemar_fp's b - a).
 REFERENCE = {
     "(a) fixed topology_remove": {"delta": 0.0033, "lo": -0.0035, "hi": 0.0099,
-                                   "fp_cleared": "230/385"},
+                                   "fp_cleared": "59/385"},
     "(b) hand-built policy": {"delta": 0.0065, "lo": 0.0025, "hi": 0.0118,
-                               "fp_cleared": "231/385"},
+                               "fp_cleared": "58/385"},
     "(c) learned action-value model": {"delta": 0.0052, "lo": 0.0022, "hi": 0.0099,
-                                        "fp_cleared": "237/385"},
+                                        "fp_cleared": "52/385"},
 }
 
 

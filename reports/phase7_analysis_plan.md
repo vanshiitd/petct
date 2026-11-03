@@ -27,9 +27,20 @@ reference points from the audit:
 
 | reference (cross-fitted, OOF, T=10, p_failure>=0.90) | dDice | tumour-free FP cleared |
 |---|---|---|
-| (a) fixed `topology_remove` | +0.0033 [-0.0035, +0.0099] | 230/385 |
-| (b) hand-built policy | **+0.0065 [+0.0025, +0.0118]** | 231/385 |
-| (c) learned action-value model | +0.0052 [+0.0022, +0.0099] | 237/385 |
+| (a) fixed `topology_remove` | +0.0033 [-0.0035, +0.0099] | 59/385 |
+| (b) hand-built policy | **+0.0065 [+0.0025, +0.0118]** | 58/385 |
+| (c) learned action-value model | +0.0052 [+0.0022, +0.0099] | 52/385 |
+
+**Correction, caught after all five pieces were written up (see
+`reports/phase7_fp_cleared_correction.md`): the "tumour-free FP cleared"
+column above originally copied the audit's own `negFP` column (230/231/237)
+-- the *remaining* FP-positive patient count out of 289, lower is better --
+and labelled it as if it were a cleared count, higher-is-better, the way
+every later piece's own number was actually computed
+(`mcnemar_fp(final, base)`'s `b - a`, i.e. 289 minus whatever remains). The
+corrected values above (59/58/52) are that same, consistent "cleared"
+statistic for all three reference rows, and are what every piece's result
+in this phase should be read against.**
 
 (b) is the bar every new policy must clear to be worth adopting.
 
