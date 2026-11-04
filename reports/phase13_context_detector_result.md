@@ -80,10 +80,10 @@ The Dice loss is concentrated. Five patients account for -0.0074 of the
 | patient | Dice change | lesion hits | M0 Dice |
 |---|---|---|---|
 | PETCT_b510436d83_20031114 | -0.91 | -1 (its only lesion) | 0.91 |
-| PETCT_245182006a | -0.60 | -1 (its only lesion) | |
-| PETCT_a7b323b3fd | -0.48 | -1 (its only lesion) | |
-| PETCT_22d07bdc49 | -0.41 | 0 | |
-| PETCT_f2f28337ba | -0.23 | -1 | |
+| PETCT_245182006a | -0.60 | -1 (its only lesion) | 0.60 |
+| PETCT_a7b323b3fd | -0.48 | -1 (its only lesion) | 0.44 |
+| PETCT_22d07bdc49 | -0.41 | 0 | 0.34 |
+| PETCT_f2f28337ba | -0.23 | -1 | 0.23 |
 
 In each, a true lesion was rated spurious at p >= 0.90 and deleted. The new
 detector is better at telling false positives apart, but it is
