@@ -76,7 +76,7 @@ There is no tuning:
 - same eight class heads;
 - same labels (`diag_oof.pkl`);
 - same HistGBT parameters (`CLF`);
-- features are the current set plus the 22 above.
+- features are the current set plus the 21 above.
 
 - **Out-of-fold:** each of Phase IIIb folds 3-7 is scored by heads fitted on
   the other four. This is exactly how `audit_crossfit.npz` was made. The script
