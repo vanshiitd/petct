@@ -7,7 +7,8 @@ does not fit on this machine's free space, but the converted output does
 (~65 MB per study, ~39 GB in all). Each worker therefore:
 
     download CT/PT/SEG zips (download_tcia.py)  ->  convert with the organisers'
-    pipeline (convert_official.py)  ->  verify  ->  delete the zips
+    pipeline (convert_official.py)  ->  rebuild the mask by frame position
+    (`seg_on_pet_grid`; PSMA SEGs are sparse)  ->  verify  ->  delete the zips
 
 so at most `--jobs` studies of DICOM are on disk at once. A free-space guard
 stops new studies before the disk fills; rerunning resumes where it stopped.
@@ -49,6 +50,51 @@ def free_gb(path: Path) -> float:
     return shutil.disk_usage(path).free / 1e9
 
 
+def seg_on_pet_grid(seg_zip: Path, pet_nii: Path):
+    """Binary lesion mask on the PET grid, placing every SEG frame by its own position.
+
+    The organisers' `dcm2nii_mask` stacks the SEG frames and stamps the PET
+    affine on them. That is right for FDG, whose SEG holds one frame per PET
+    slice, but PSMA's SEG holds only the frames that contain lesion, so the
+    stack comes out truncated and shifted. Here each frame goes to the PET
+    slice nearest its ImagePositionPatient; in-plane handling (transpose,
+    flip when ImageOrientationPatient[4] == 1) is the organisers' own.
+    Returns (mask, info) with the checks the caller records.
+    """
+    import io
+    import zipfile
+    import nibabel as nib
+    import numpy as np
+    import pydicom
+
+    with zipfile.ZipFile(seg_zip) as z:
+        name = next(m for m in z.namelist() if m.lower().endswith(".dcm"))
+        ds = pydicom.dcmread(io.BytesIO(z.read(name)))
+    frames = ds.pixel_array
+    if frames.ndim == 2:
+        frames = frames[None]
+    pet = nib.load(str(pet_nii))
+    inv = np.linalg.inv(pet.affine)
+    flip = ds.SharedFunctionalGroupsSequence[0].PlaneOrientationSequence[0] \
+        .ImageOrientationPatient[4] == 1
+    mask = np.zeros(pet.shape, np.uint8)
+    off = []
+    for f, fg in enumerate(ds.PerFrameFunctionalGroupsSequence):
+        x, y, zz = (float(v) for v in fg.PlanePositionSequence[0].ImagePositionPatient)
+        k = inv @ np.array([-x, -y, zz, 1.0])          # DICOM LPS -> NIfTI RAS -> voxel
+        kz = int(round(k[2]))
+        off.append(abs(k[2] - kz))
+        if not 0 <= kz < pet.shape[2]:
+            raise ValueError(f"SEG frame {f} maps to slice {kz}, outside 0..{pet.shape[2] - 1}")
+        sl = frames[f].T
+        if flip:
+            sl = sl[:, ::-1]
+        mask[:, :, kz] |= (sl > 0).astype(np.uint8)
+    info = {"seg_frames": int(len(frames)), "seg_vox": int((frames > 0).sum()),
+            "mask_vox": int(mask.sum()), "max_slice_offset": float(max(off, default=0.0))}
+    return nib.Nifti1Image(mask, pet.affine), info
+
+
 def study_job(job) -> dict:
     case_id, rows, out_root, tmp_root, retries, min_free, proxy = job
     out_root, tmp_root = Path(out_root), Path(tmp_root)
@@ -72,6 +118,21 @@ def study_job(job) -> dict:
         mb = sum(f.stat().st_size for f in raw.glob("*.zip")) / 1e6
         r = convert_one((case_id, str(raw), case_id, str(out_root), str(tmp_root), False))
         r.update(dicom_mb=round(mb), total_s=round(time.time() - t0, 1))
+        if r["status"] != "ok":
+            return r
+        import nibabel as nib
+        out = out_root / case_id
+        mask, info = seg_on_pet_grid(raw / "SEG.zip", out / "PET.nii.gz")
+        r.update(info)
+        # overlapping segments may merge voxels; nothing else may change the count
+        if info["max_slice_offset"] > 0.01 or info["mask_vox"] > info["seg_vox"] \
+                or (info["seg_vox"] > 0 and info["mask_vox"] == 0):
+            for f in out.glob("*.nii.gz"):
+                f.unlink()
+            r["status"] = "seg_check_failed"
+            return r
+        nib.save(mask, str(out / "tumorSeg.nii.gz"))
+        r["lesion_voxels"] = info["mask_vox"]
         return r
     finally:
         # DICOM is never kept: a failed study is simply downloaded again on rerun
