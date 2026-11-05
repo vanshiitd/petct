@@ -50,7 +50,7 @@ that anchor.
   n >= ln(α_r / 8) / ln(1 - δ).
 
 δ = 0.01 is not run here. A round certifies on at most 378 patients, which
-is below the k = 0 requirement of 517 at α_1/8. That figure is arithmetic,
+is below the k = 0 requirement of 574 at α_1/8. That figure is arithmetic,
 not data.
 
 ## 2. Validity check (empirical coverage of the guarantee)
@@ -70,7 +70,8 @@ heads and calibrators are cross-fit.
 **Comparator:** a naive selector with the largest summed `d_qdice` on the
 calibration half and no safety test.
 
-**Reported for δ ∈ {0.02, 0.03, 0.05}** (δ = 0.01 needs n >= 517 for k = 0):
+**Reported for δ ∈ {0.02, 0.03, 0.05}** (δ = 0.01 needs n >= 505 for k = 0 at
+α/8):
 - violation frequency, P(evaluation harm rate > δ), certified vs naive;
 - mean evaluation harm rate and mean evaluation benefit;
 - the rollback frequency.
@@ -82,3 +83,7 @@ P(R > δ). This is stated with the result.
 ## Deviations
 
 Any departure is recorded with its date and reason, and with what it changed.
+
+- 2026-11-05, before any XVII-b number: corrected the k = 0 sample sizes
+  (517 -> 574 for round 1, 505 for the validity check). This was an
+  arithmetic slip; no design choice changed.
