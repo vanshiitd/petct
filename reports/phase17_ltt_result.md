@@ -52,6 +52,26 @@ Benefit grows about 6× from δ = 0.01 to δ = 0.05, and patients harmed go
 from 0 to 18. The tolerance is now an explicit, certified dial instead of
 an ad hoc count.
 
+**Out-of-fold agent run** (`p17_oof_ltt` vs `au_oof_attr_policy`; descriptive
+under plan section "Status and disclosure"):
+
+| criterion | result | |
+|---|---|---|
+| 1 FP superiority | **69 vs 58** cleared; discordant **11 vs 0**; McNemar p = 0.001 | pass |
+| 2 Dice superiority | **+0.0013 [+0.0001, +0.0037]**, p = 0.009 | pass |
+| 3 Dice NI | lower bound +0.0001 | pass |
+| 4 lesion NI | +0 [+0, +0] | pass |
+| 5 beats the hand-built policy | | **yes (descriptive)** |
+
+This is the first out-of-fold run in Phases VII-XVII that passes every
+endpoint. The certified update never did worse than the hand-built policy
+on any tumour-free scan (0 discordant against), and no lesion hit was lost.
+
+It is not confirmatory: δ was fixed after Phase XVI had been read, and the
+same out-of-fold data certified the update. The test result in section 3
+is the confirmation. There, the direction holds but the effect is too
+small to reach significance with 90 tumour-free scans.
+
 ## 2. Validation safety check: pass
 
 - Production adds 1 component.
