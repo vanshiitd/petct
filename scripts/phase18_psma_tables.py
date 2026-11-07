@@ -14,6 +14,7 @@ Writes phase18_psma_{hb,ltt}.npz and phase18_psma_tables.json.
 from __future__ import annotations
 
 import collections
+import csv
 import json
 import pickle
 import sys
@@ -34,6 +35,13 @@ from phase16_combined import union
 
 CAND = R / "cand_psma_pos.csv"
 CTX = R / "cand_psma_ctx.csv"
+
+
+def rows_of(path: Path, kind: str) -> list[dict]:
+    """PSMA rows of one kind. `exp3_detect.load` also groups by FDG patient,
+    which PSMA cases do not have and nothing here uses."""
+    return [r for r in csv.DictReader(open(path, newline="", encoding="utf-8"))
+            if r["kind"] == kind]
 
 
 def main() -> None:
@@ -58,7 +66,7 @@ def main() -> None:
 
     D = pickle.load(open(R / "phase4_diag_model.pkl", "rb"))
     Dp, Dr = D["pred"], D["recover"]
-    rs, _, _, _ = load(CTX, "pred")
+    rs = rows_of(CTX, "pred")
     ks = [(r["case"], int(r["component_id"])) for r in rs]
     Xd, _, _ = matrix(rs, Dp["feats"], Dp["median"])
     Ps = np.column_stack([Dp["models"][c].predict_proba(Xd)[:, 1] for c in PRED_CLASSES])
@@ -68,7 +76,7 @@ def main() -> None:
     print(f"route check: max |P_pickled - P_refit| = {dev:.2e}")
     assert dev < 1e-9
 
-    rr, _, _, _ = load(CAND, "recover")
+    rr = rows_of(CAND, "recover")
     rk = [(r["case"], int(r["component_id"])) for r in rr]
     Xr, _, _ = matrix(rr, Dr["feats"], Dr["median"])
     prs = Dr["models"]["missed"].predict_proba(Xr)[:, 1] if rr else np.zeros(0)
