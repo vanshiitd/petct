@@ -56,3 +56,19 @@ by the table builder.
 
 Nothing selected, fitted or thresholded changed. The route check (exact
 equality with the pickled detector) passed afterwards.
+
+## Deviation after the lock: aborted first attempt (2026-11-07)
+
+The first execution of both agent commands stopped with the same error before
+writing any output. `phase5_agent.py` labels each step-log row with
+`patient_of(case)`, which raises for cases missing from the FDG split file.
+
+- No `p18_psma_*` file was created.
+- No outcome was computed or seen.
+- Both evaluation scripts failed on the missing files.
+
+**Fix (commit after this lock).** For `PSMA_*` cases the label is the PSMA
+patient id; FDG behaviour is unchanged. The label is not read by any decision.
+
+**After the fix.** The locked tables are unchanged (SHA-256 re-verified before
+the rerun) and the commands are unchanged. Each arm is then run once.

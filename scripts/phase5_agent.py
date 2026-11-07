@@ -270,7 +270,10 @@ class Phase5Agent:
                 continue
             tr = self._truth(ctx)
             rows.append({
-                "case": case, "patient": patient_of(case), "iteration": t,
+                "case": case, "iteration": t,
+                # log label only; PSMA cases are not in the FDG split file
+                "patient": (case.rsplit("_", 2)[0] if case.startswith("PSMA_")
+                            else patient_of(case)),
                 "component_id": best["key"][1] if best["rec"] else best["key"],
                 "failure": best["cls"], "p_failure": best["pfail"],
                 "action": best["strat"], "v_pred": best["v"],
