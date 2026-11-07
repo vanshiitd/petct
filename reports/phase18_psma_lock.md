@@ -72,3 +72,14 @@ patient id; FDG behaviour is unchanged. The label is not read by any decision.
 
 **After the fix.** The locked tables are unchanged (SHA-256 re-verified before
 the rerun) and the commands are unchanged. Each arm is then run once.
+
+**Second aborted attempt (same day).** The label fix was not enough, so the
+rerun failed identically before writing any output. `observable_index` in
+`phase4_agent.py` also reaches `patient_of`, through `exp3_detect.load`.
+
+The fix now lives in `exp3_detect.patient_of` itself:
+- `PSMA_<patient>_<date>_<uid>` resolves to `PSMA_<patient>`;
+- every other unknown case still raises, so the FDG leak guard is intact;
+- the step-log edit was reverted as redundant.
+
+No outcome had been computed. The tables were re-verified before the run.

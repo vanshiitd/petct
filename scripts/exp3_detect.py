@@ -69,7 +69,11 @@ def patient_of(case: str) -> str:
 
     A case absent from the split file is an error rather than its own group: the
     fallback would quietly restore the leak for exactly the cases it applies to.
+    The one exception is the external PSMA cohort (Phase XVIII), whose ids
+    `PSMA_<patient>_<date>_<uid>` carry their own patient and never meet FDG.
     """
+    if case.startswith("PSMA_"):
+        return case.rsplit("_", 2)[0]
     global _PATIENT
     if _PATIENT is None:
         sp = json.loads(SPLIT_JSON.read_text())
