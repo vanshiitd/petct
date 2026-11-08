@@ -112,3 +112,61 @@ Naive selection breaks a 5% promise in 98.5% of splits.
 
 Swin and nnuf0 (the generality family, §6). Their PSMA maps are running; each
 gets its own lock before its C runs.
+
+---
+
+# Generality family: Swin and nnuf0 (plan §6)
+
+Lock: `reports/phase19_lock_secondary.md` (e9a8acd). HB and P19 were each run
+once on the same C patients.
+
+| segmenter | P19 config (from B) | harmed / 125 (UB) | S19 p | dDice vs HB [95% CI], p | dFP mL/case [95% CI] | lesion hits vs HB |
+|---|---|---|---|---|---|---|
+| nnU-Net ensemble (primary) | new_cal 0.97 agree+solo | 0 (0.024) | 0.0016 | +0.0068 [+0.0022, +0.0126], 0.0005 | -126.7 [-185.8, -74.4] | +0 |
+| Swin | new_cal 0.98 agree+solo | 2 (0.050) | 0.0477 | +0.0055 [+0.0011, +0.0123], 0.0005 | -163.3 [-238.1, -93.9] | -2 |
+| nnuf0 | ens 0.96 agree+solo | 2 (0.050) | 0.0477 | +0.0012 [+0.0003, +0.0026], 0.0005 | -67.8 [-115.2, -28.5] | -2 |
+
+**Holm over the two secondary segmenters (pre-registered).**
+
+- **B19 (benefit): met for both.** Each p = 0.0005, below the thresholds
+  0.0125 and 0.025.
+- **S19 (safety): not met for either.** Each p = 0.0477, above the first
+  Holm threshold of 0.025, so Holm stops and neither is rejected.
+  - Uncorrected, each would pass (k = 2 <= 2).
+  - The observed harm rate is 1.6% (2/125) for each, below δ = 5%, but this
+    family does not *confirm* it at the corrected level.
+
+**Validity on B ∪ C** (1000 splits; violation rate, LTT vs NAIVE):
+
+| segmenter | δ = 0.05 | δ = 0.10 |
+|---|---|---|
+| Swin | 0.005 vs 0.991 | 0.007 vs 0.415 |
+| nnuf0 | 0.002 vs 0.996 | 0.003 vs 0.516 |
+
+**Curves.** At δ = 0.05, the realised harm on C is 0.016 for both
+segmenters. At larger δ, realised harm on C sometimes exceeds the nominal δ
+(Swin δ 0.10: 0.032; δ 0.15: 0.096; nnuf0 δ 0.15: 0.112 against 0.15). Every
+value is within the binomial noise of a 125-patient set, but the curve is
+**not uniformly below δ** off the primary segmenter. Full rows are in
+`phase19_eval_{swin,nnuf0}_psma.json`.
+
+**Reading.**
+
+- The certified update gives a significant Dice gain and an FP-volume cut on
+  **all three segmenters**.
+- Its safety holds at the point estimate on all three (0, 2 and 2 harmed of
+  125).
+- Safety is confirmed at the pre-registered corrected level only for the
+  primary segmenter.
+- On Swin and nnuf0 the update loses 2 lesion hits each.
+
+So the paper's generality claim is **"benefit generalises; the safety bound
+is confirmed for the primary and consistent, but not separately confirmed,
+for the other two"**.
+
+Harmed patients:
+- Swin: PSMA_b361fb9c2455deb9, PSMA_ce956153f9464e26
+- nnuf0: PSMA_f304b05dd35252f1, PSMA_f46740fcc3f44f10
+
+FP-volume CIs: case bootstrap, 5000 resamples, seed 0, computed ad hoc, as
+for the primary.
