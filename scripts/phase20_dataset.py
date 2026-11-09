@@ -50,6 +50,7 @@ def main() -> None:
     (RAW / "dataset.json").write_text(json.dumps(ds, indent=1))
 
     PRE.mkdir(parents=True, exist_ok=True)
+    (PRE / "dataset.json").write_text(json.dumps(ds, indent=1))  # preprocess reads it here
     plans = json.loads((SRC_PRE / "nnUNetPlans_MAE.json").read_text())
     plans["dataset_name"] = NAME
     (PRE / "nnUNetPlans_MAE.json").write_text(json.dumps(plans, indent=1))
