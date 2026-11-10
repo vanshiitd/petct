@@ -46,12 +46,12 @@ CV_FOLDS = (3, 4, 5, 6, 7)
 FLIPS = [()] + [c for i in range(3) for c in itertools.combinations((0, 1, 2), i + 1)]
 
 
-def build_predictor(fold: int, trainer: str | None = None):
+def build_predictor(fold: int, trainer: str | None = None, results: Path = RESULTS):
     from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
     p = nnUNetPredictor(tile_step_size=0.5, use_gaussian=True, use_mirroring=False,
                         device=torch.device("cuda"), verbose=False,
                         verbose_preprocessing=False, allow_tqdm=False)
-    p.initialize_from_trained_model_folder(str(RESULTS / (trainer or TRAINER)),
+    p.initialize_from_trained_model_folder(str(results / (trainer or TRAINER)),
                                            use_folds=(fold,),
                                            checkpoint_name="checkpoint_final.pth")
     return p
@@ -104,6 +104,11 @@ def main() -> None:
     ap.add_argument("--folds", type=int, nargs="+", default=None,
                     help="folds to combine; defaults to the 5 CV folds. Pass a "
                          "single fold for a single-model map")
+    ap.add_argument("--results", type=Path, default=RESULTS,
+                    help="dataset results folder; Phase XX passes the PSMA "
+                         "fine-tuned Dataset507 here")
+    ap.add_argument("--splits", type=Path, default=SPLITS,
+                    help="splits_final.json that decides out-of-fold ownership")
     args = ap.parse_args()
 
     os.environ.setdefault("nnUNet_raw", r"C:\nnunet_raw")
@@ -111,10 +116,10 @@ def main() -> None:
     os.environ.setdefault("nnUNet_results", str(RESULTS.parent))
     from nnunetv2.preprocessing.preprocessors.default_preprocessor import DefaultPreprocessor
 
-    folds = json.loads(SPLITS.read_text())
+    folds = json.loads(args.splits.read_text())
     if args.mode == "oof":
         owner = {}
-        for k in CV_FOLDS:
+        for k in (tuple(args.folds) if args.folds else CV_FOLDS):
             for s in folds[k]["val"]:
                 if s in owner:
                     raise SystemExit(f"{s} held out by folds {owner[s]} and {k}")
@@ -143,7 +148,7 @@ def main() -> None:
         use = [owner[case]] if owner else list(use_folds)
         for k in use:
             if k not in predictors:
-                predictors[k] = build_predictor(k, args.trainer)
+                predictors[k] = build_predictor(k, args.trainer, args.results)
                 first = first or predictors[k]
         data, _, props = pre.run_case(case_files(case), None, first.plans_manager,
                                       first.configuration_manager, first.dataset_json)

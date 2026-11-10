@@ -99,6 +99,10 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", required=True, help="psma | swin_psma | nnuf0_psma")
     ap.add_argument("--arms", nargs="+", default=["hb", "p19", "naive", "pseudo", "uncal"])
+    ap.add_argument("--b-tables", action="store_true",
+                    help="Phase XX: instead of the C tables, write the hb/p19 tables for "
+                         "B as phase20_{T}_{arm}_B.npz, and nothing else, so the locked "
+                         "Phase XIX outputs are never rewritten")
     args = ap.parse_args()
     T = args.tag
     sp = json.loads(SPLIT.read_text())
@@ -184,6 +188,17 @@ def main() -> None:
         print(f"  {name:6s} -> {cf or 'rollback'}"
               + (f"  B: n={c['n']} sum={c['sum']:+.2f} lcb={c['lcb']:+.4f} k={c['k']} "
                  f"lost={c['lost']:.0f}" if c else ""))
+
+    if args.b_tables:
+        rr = rows_of(R / f"cand_{T}_pos.csv", "recover", B)
+        rk = [(r["case"], int(r["component_id"])) for r in rr]
+        Xr = matrix(rr, Dr["feats"], Dr["median"])[0]
+        prs = Dr["models"]["missed"].predict_proba(Xr)[:, 1] if rr else np.zeros(0)
+        for a, cf in (("hb", None), ("p19", cfg)):
+            P, act, added = union(cf, pb["Po"], pb["Po_cal"], pb["Pn_cal"], pb["solo"], pb["ind"])
+            write_table(R / f"phase20_{T}_{a}_B.npz", pb["keys"], P, act, rk, prs)
+            print(f"  B {a}: acted {int(act.sum())} added {int(added.sum())}")
+        return
 
     # ---- C tables (actions only; no C outcome is read) -------------------
     rr = rows_of(R / f"cand_{T}_pos.csv", "recover", C)
