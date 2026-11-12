@@ -1,0 +1,64 @@
+% CVPR 2027 submission -- SUPPLEMENTARY MATERIAL ONLY.
+% Built on the official author kit (github.com/cvpr-org/author-kit).
+% Body: sec/X_suppl.tex (shared with main.tex). The main paper is main_paper.tex.
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+%%%%%%%%% PAPER TYPE
+\usepackage[review]{cvpr}      % REVIEW version (anonymous, line numbers)
+% \usepackage{cvpr}            % camera-ready
+
+\input{preamble}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{pifont}
+\usepackage{amsthm}
+
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+
+\def\confName{CVPR}
+\def\confYear{2027}
+
+% ---- macros (identical to main_paper.tex) --------------------------------
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\B}{\mathcal{B}}
+\newcommand{\C}{\mathcal{C}}
+\newcommand{\Lam}{\Lambda}
+\newcommand{\ours}{CSI\xspace}               % Certified Self-Improvement
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+\newcommand{\CHECK}[1]{\textcolor{red}{[CHECK: #1]}}  % to be verified before submission
+\newcommand{\para}[1]{\vspace{2pt}\noindent\textbf{#1}\hspace{0.4em}}
+
+% ---- references into the main paper --------------------------------------
+% Labels that live in main_paper.tex, with their numbers there, so
+% \cref{tab:main} prints "Tab. 1" etc. Keep in sync with the main paper.
+\makeatletter
+\newcommand{\extlabel}[3]{%
+  \newlabel{#1}{{#3}{}{}{}{}}%
+  \newlabel{#1@cref}{{[#2][1][]#3}{[1][1][]1}}}
+\makeatother
+\AtBeginDocument{%
+  \extlabel{thm:ltt}{theorem}{1}%
+  \extlabel{tab:main}{table}{1}%
+  \extlabel{fig:validity}{figure}{3}%
+}
+
+%%%%%%%%% TITLE (\maketitlesupplementary prints it with "Supplementary Material")
+\title{First, Do No Harm: Certified Self-Improvement for\\Medical Image Segmentation Under Domain Shift}
+
+\author{Anonymous CVPR submission}
+
+\begin{document}
+
+\input{sec/X_suppl}
+
+{
+    \small
+    \bibliographystyle{ieeenat_fullname}
+    \bibliography{main}
+}
+
+\end{document}

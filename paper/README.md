@@ -5,15 +5,22 @@ Built on the official CVPR 2027 author kit (`cvpr.sty`, `ieeenat_fullname.bst`,
 
 ## Build
 
-Overleaf: upload this folder and compile `main.tex` with pdfLaTeX.
-Locally: `latexmk -pdf main.tex`.
+Three entry points, all pdfLaTeX, all sharing `sec/`, `fig/` and `main.bib`:
 
-`main.tex` builds the paper with the supplement appended, as the author kit
-recommends. Before submitting:
-- for the **main paper PDF**, set `\withsupplfalse` in `main.tex`, or delete
-  the supplementary pages from the PDF;
-- for the **supplementary PDF**, keep `\withsuppltrue` and keep only the pages
-  after the references.
+| file | builds |
+|---|---|
+| `main_paper.tex` | **main paper only**: upload as the paper PDF |
+| `supplementary.tex` | **supplement only**: upload as the supplementary PDF |
+| `main.tex` | paper and supplement in one PDF (`\withsupplfalse` drops the supplement) |
+
+Overleaf: upload this folder. Then, under Menu → Main document, choose
+`main_paper.tex` and compile; switch to `supplementary.tex` and compile again.
+Locally: `latexmk -pdf main_paper.tex` and `latexmk -pdf supplementary.tex`.
+
+Cross-references between the two PDFs ("Sec. S1", "Tab. 1") are hard-coded
+with `\extlabel` in each preamble. If you add, remove or reorder a
+supplementary section, or a figure, table or theorem that the supplement cites,
+update those lines.
 
 ## Figures
 
