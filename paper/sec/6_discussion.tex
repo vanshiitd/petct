@@ -12,6 +12,13 @@ Self-improvement of the refinement agent was safe but worth $+0.009$ Dice; self-
 An agent that edits a segmentation can remove what is wrong but cannot supply what is missing.
 We consider this a useful negative result for the growing literature on self-refining systems: under a large domain shift, refinement is no substitute for adapting the model, and a certificate is what makes adapting the model deployable.
 
+\para{Using the protocol at a new site.}
+(i) Fix the harm event with clinicians, per patient and relative to what is deployed, before labelling.
+(ii) Size the certification set from the tolerance to be promised (\cref{fig:power}), not the other way round.
+(iii) Spend the adaptation set on the model, not only on its post-processing: the same 126 patients bought about fifty times the Level-1 gain at Level 2.
+(iv) Report the dial, so the choice of $\delta$ is visible and auditable.
+(v) Re-certify on fresh patients when the population or the system changes.
+
 \para{Limitations.}
 \textbf{(1) Primary endpoint at Level 2.} The pre-registered $\delta=0.05$ switch was not certified; the Level-2 gain is certified at $\delta=0.10$, a pre-registered dial setting, and we report it as such.
 \textbf{(2) Test reuse.} $\C$ was read for Level 1 before Level 2 was planned. No Level-2 decision used $\C$, but a fresh test set would be stronger.

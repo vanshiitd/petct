@@ -48,8 +48,31 @@ Selection by benefit happens only \emph{among} certified candidates, so it canno
 
 \para{Power.} With $k=0$ harms, $H_\lambda$ is rejected only if $(1-\delta)^n\le\alpha/m$.
 The smallest certifiable tolerance is therefore $\delta_{\min}=1-(\alpha/m)^{1/n}$: for $n=126$ and $m=8$ chains, $\delta_{\min}=0.040$.
-The certificate is honest about sample size: a 1\% guarantee needs several hundred certification patients.
+The certificate is honest about sample size: a 1\% guarantee needs several hundred certification patients (\cref{fig:power}a).
 Because $\delta$ is a free parameter, sweeping it gives a \emph{risk--benefit dial}: for each tolerance, the best certified update and its benefit.
+
+\para{Why a test, and why per patient.}
+Comparing mean Dice on $\B$ (``validate and pick the best'') asks whether an update is better \emph{on average}, so a lost lesion in one patient is outweighed by small gains in many; bounding an expected per-patient loss~\cite{angelopoulos2024crc} allows the same trade.
+Our risk is the probability of an \emph{event} that no gain elsewhere offsets, and the rule bounds the probability that this risk exceeds $\delta$ (alternatives in \cref{sec:supp_faq}).
+\Cref{alg:csi} summarises the procedure.
+
+\begin{algorithm}[t]
+\caption{Certified Self-Improvement (one round)}
+\label{alg:csi}
+\small
+\begin{algorithmic}[1]
+\Require deployed $f_0$; disjoint $\A$, $\B$ ($|\B|=n$); tolerance $\delta$; level $\alpha$; harm rule (Eq.~\ref{eq:harm})
+\State Build candidates $\Lam$ on $\A$ only; order them into $m$ chains, conservative first
+\For{each chain $c=1,\dots,m$}
+  \For{$\lambda$ in chain $c$, in order}
+    \State $k_\lambda\gets\sum_{i\in\B}H_i(\lambda)$ \Comment{harm relative to $f_0$}
+    \State $p_\lambda\gets\Pr[\mathrm{Bin}(n,\delta)\le k_\lambda]$
+    \If{$p_\lambda\le\alpha/m$} add $\lambda$ to $\hat\Lam$ \Else{} \textbf{break} \EndIf
+  \EndFor
+\EndFor
+\State \Return $\arg\max_{\lambda\in\hat\Lam}\mathrm{benefit}_\B(\lambda)$ if $\hat\Lam\neq\emptyset$, else $f_0$ (rollback)
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Two levels of self-improvement}
 \label{sec:levels}

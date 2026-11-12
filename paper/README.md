@@ -24,9 +24,25 @@ update those lines.
 
 ## Figures
 
-`python paper/make_figures.py` (petct venv) regenerates every figure in `fig/`
-from the locked result files in `D:\data\reports`. No plotted value is
-retyped.
+`python paper/make_figures.py` (petct venv) regenerates fig_overview, fig_qual,
+fig_dial and fig_validity. `python paper/make_posthoc.py` regenerates
+fig_patients, fig_power, fig_dial_all and fig_l2_B, and writes
+`posthoc_stats.json`, the source of every per-patient and subgroup number.
+That script first checks that the per-patient tables reproduce the locked
+aggregates. Both scripts read only the locked result files in `D:\data\reports`.
+No plotted value is retyped. The post-hoc analyses are labelled as such in the
+paper (Sec. 4 and deviation 10 in the supplement).
+
+## Page budget (main_paper.tex)
+
+Target: 8 pages of content, then the LLM-usage statement and the references
+(pages 9–10). If the compiled content runs past page 8, trim in this order:
+1. Move `fig:power` (Sec. 5.5) to supplement S1 and cite it as Fig. S3.
+2. Shorten the "Using the protocol at a new site" paragraph (Sec. 6).
+3. Move `alg:csi` to the supplement.
+4. Reduce `fig_patients` to panels (a) and (b).
+If it ends well short of page 8, the first candidate to bring back is the
+subgroup table: copy a compact version of Table S10.
 
 ## Before submission
 

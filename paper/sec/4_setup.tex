@@ -14,6 +14,7 @@ The 377 patients are split once (seed fixed in advance, stratified by radionucli
 Before $\C$ was read, a lock commit recorded the SHA-256 of every input table and the exact commands; each arm was then run once.
 The certification tolerance was $\delta=0.05$, $\alpha=0.05$ for both levels; the dial values $\delta\in\{0.03,\dots,0.20\}$ were pre-registered as secondary.
 All deviations are listed in \cref{sec:supp_deviations}.
+The per-patient and subgroup analyses of \cref{sec:patients} were not pre-registered; they re-read the locked per-patient outputs, are descriptive, and change no decision.
 One is material and we state it here: $\C$ was read for the Level-1 arms before the Level-2 plan was written. No Level-2 choice used $\C$---the fine-tuning recipe was fixed in the plan and certification used $\B$---but $\C$ is not virgin for Level 2.
 
 \para{Baselines} (all on the same split, each locked and run once):
@@ -23,3 +24,7 @@ One is material and we state it here: $\C$ was read for the Level-1 arms before 
 
 \para{Metrics.} Dice is averaged over tumour-positive patients; false-positive (FP) and false-negative volumes over all patients; lesion detection counts ground-truth lesions touched by the prediction; HD95 over tumour-positive patients.
 Paired differences use a patient bootstrap (2,000 resamples, 95\% percentile intervals); harm rates use exact binomial tests and Clopper--Pearson upper bounds (UB)~\cite{clopper1934use}.
+
+\para{Implementation.} The primary and the fine-tuned segmenters are 5-fold ensembles with flip test-time augmentation, run on a single 32\,GB GPU; Level-2 fine-tuning takes about 9\,GPU-hours in total.
+Detectors are gradient-boosted trees (depth 3, 200 iterations) with isotonic calibration fitted on cross-fitted predictions; certification, the agent and all statistics run on CPU (the agent takes 7--10\,s per scan).
+Full recipes are in \cref{sec:supp_agent,sec:supp_level2,sec:supp_repro}.

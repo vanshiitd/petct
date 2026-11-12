@@ -74,6 +74,32 @@ The harm definition is strict by design, and we keep it.
   \label{fig:qual}
 \end{figure*}
 
+\subsection{Patient by patient}
+\label{sec:patients}
+Means hide what the certificate is about, so we look at every test patient (\cref{fig:patients}; descriptive, \cref{sec:setup}).
+
+\para{Harm is invisible to the average.}
+Naive self-improvement improves 49 patients by more than 0.01 Dice, worsens one, and still harms 11 (\cref{fig:patients}a).
+All 11 lose lesions, and in 7 of them Dice \emph{rises} (by up to $+0.44$): removing a false-positive region that overlapped a lesion raises Dice and deletes the detection, and a mean-Dice criterion rewards exactly that.
+Certified \ours improves 10 patients and harms none.
+
+\para{Level 2 helps almost everyone.}
+After certified fine-tuning (\cref{fig:patients}b,c) the median patient's Dice is 0.63, and 77 of 119 tumour-positive patients exceed 0.5 (5 before).
+Lesion-level sensitivity rises from 46\% to 79\%: 1,460 detections are gained and 7 lost, all in the three harmed patients.
+Two patients keep more than 100\,mL of false-positive volume (104 before).
+By radionuclide, scanner vendor and tumour burden (\cref{tab:supp_sub}), the gain ranges from $+0.36$ to $+0.49$ Dice with every interval above zero, and no subgroup has more than 2 harmed patients.
+Two of the three harmed patients have one or two lesions, where a single lost lesion is the patient's whole disease.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/fig_patients.pdf}
+  \caption{\textbf{Every locked test patient.}
+  (a) Level 1: per-patient Dice change relative to the deployed agent, sorted; $\times$ marks harmed patients. Naive selection harms 11 patients, all by lost lesions, 7 of them while \emph{raising} their Dice; certified \ours harms none.
+  (b) Level 2: per-patient Dice of the Level-1 system and of the certified fine-tuned segmenter ($^{18}$F filled, $^{68}$Ga open; red $\times$: the three harmed patients).
+  (c) Level 2: per-patient false-positive volume (log scale).}
+  \label{fig:patients}
+\end{figure*}
+
 \subsection{Does the certificate keep its promise?}
 \label{sec:validity}
 A single test set is one draw.
@@ -97,6 +123,18 @@ Naive selection is not merely riskier; its stated risk is wrong.
 At $\delta=0.03$ nothing is certifiable at $n=126$ (\cref{sec:ltt}) and the system rolls back; from $\delta=0.05$ to $0.20$ the summed benefit grows from $+0.79$ to $+4.63$ Dice-points, approaching naive selection ($+5.63$) while the realised harm rate stays below $\delta$ at every setting.
 At Level 2 the dial is a step: rollback at $\delta=0.05$, the fine-tuned segmenter from $\delta=0.10$ on.
 The dial does not tell a site which tolerance to choose; it tells it, before deployment, what each tolerance buys.
+
+\para{The price of a guarantee.}
+With 4 harmed of 126, the Level-2 switch is certifiable for any $\delta\ge0.080$ (\cref{fig:power}b).
+The same 4 harms would certify $\delta=0.05$ among 202 certification patients; a 1\% guarantee needs at least 368 patients even if none is harmed (\cref{fig:power}a, \cref{tab:supp_n}).
+A site can compute this cost before it labels a single case.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/fig_power.pdf}
+  \caption{\textbf{The price of a guarantee.} (a) Smallest certifiable tolerance with zero observed harms, $1-(\alpha/m)^{1/n}$, against the number of certification patients, for $m$ chains ($\alpha=0.05$). (b) Level-2 $p$-value on $\B$ (4 of 126 patients harmed) against $\delta$; the switch is certified where $p\le\alpha/2$ (shaded).}
+  \label{fig:power}
+\end{figure}
 
 \begin{figure}[t]
   \centering
