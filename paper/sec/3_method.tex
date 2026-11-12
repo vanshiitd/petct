@@ -1,0 +1,97 @@
+\section{Certified Self-Improvement}
+\label{sec:method}
+
+\subsection{Setting and patient-level harm}
+\label{sec:harm}
+
+A system $f_0$ is deployed on a new domain.
+Patients $i$ are drawn i.i.d.\ from the new domain, and labelled patients are split once into an adaptation set $\A$, a certification set $\B$ ($|\B|=n$) and a locked test set $\C$.
+From $\A$ alone we build a finite family $\Lam$ of candidate updates; candidate $\lambda$ produces the system $f_\lambda$.
+
+\begin{definition}[Patient harm]
+For patient $i$ with ground-truth lesions $G_i$, let $\mathrm{hit}_i(f)$ be the number of lesions in $G_i$ touched by the prediction of $f$, and $\mathrm{Dice}_i(f)$ its Dice score.
+Update $\lambda$ \emph{harms} patient $i$, $H_i(\lambda)=1$, if
+\begin{equation}
+\mathrm{hit}_i(f_\lambda)<\mathrm{hit}_i(f_0)\;\;\lor\;\;\big(G_i\neq\emptyset\,\land\,\mathrm{Dice}_i(f_\lambda)<\mathrm{Dice}_i(f_0)-\varepsilon\big),
+\label{eq:harm}
+\end{equation}
+with $\varepsilon=0.01$. The risk of $\lambda$ is $R(\lambda)=\Pr[H(\lambda)=1]$.
+\end{definition}
+
+Three choices are deliberate.
+The unit is the \emph{patient}, the unit of clinical consequence, not the voxel or the lesion.
+Harm is \emph{relative to $f_0$}: the question at deployment is whether replacing the current system hurts anyone, not whether the new one is perfect.
+And harm is \emph{asymmetric}: a large Dice gain in one patient does not offset a lost lesion in another, so an update with excellent mean Dice can have a high risk.
+The rollback $\lambda_0\!:=\!f_0$ has $R(\lambda_0)=0$ by definition.
+
+\subsection{Certification by Learn-then-Test}
+\label{sec:ltt}
+
+For each $\lambda\in\Lam$ we test $H_\lambda: R(\lambda)>\delta$ on $\B$.
+With $k_\lambda=\sum_{i\in\B}H_i(\lambda)$, the exact binomial p-value
+\begin{equation}
+p_\lambda=\Pr\big[\mathrm{Bin}(n,\delta)\le k_\lambda\big]
+\label{eq:pval}
+\end{equation}
+is super-uniform under $H_\lambda$~\cite{angelopoulos2021ltt}.
+Candidates are organised into $m$ \emph{chains}, each ordered from conservative to aggressive (\eg, an action gate lowered step by step); within a chain we use fixed-sequence testing, stopping at the first non-rejection, and each chain is tested at level $\alpha/m$~\cite{bretz2010multiple}.
+Let $\hat\Lam\subseteq\Lam$ be the rejected (certified) set.
+The deployed update is the certified candidate with the largest measured benefit on $\B$ (subject to a minimum support), or the rollback if $\hat\Lam=\emptyset$.
+
+\begin{theorem}[Single-round guarantee]
+If patients in $\B$ and future patients are exchangeable, and $\Lam$ is constructed without $\B$, then the deployed $\hat\lambda$ satisfies
+$\Pr\big[R(\hat\lambda)>\delta\big]\le\alpha$.
+\label{thm:ltt}
+\end{theorem}
+\noindent\emph{Proof sketch.} Every $p_\lambda$ is super-uniform under $H_\lambda$; fixed-sequence testing within chains and Bonferroni across them control the family-wise error at $\alpha$; $\hat\lambda$ is either certified or the zero-risk rollback.
+Selection by benefit happens only \emph{among} certified candidates, so it cannot inflate the error (\cref{sec:supp_proof}). \hfill$\square$
+
+\para{Power.} With $k=0$ harms, $H_\lambda$ is rejected only if $(1-\delta)^n\le\alpha/m$.
+The smallest certifiable tolerance is therefore $\delta_{\min}=1-(\alpha/m)^{1/n}$: for $n=126$ and $m=8$ chains, $\delta_{\min}=0.040$.
+The certificate is honest about sample size: a 1\% guarantee needs several hundred certification patients (\cref{fig:power}a).
+Because $\delta$ is a free parameter, sweeping it gives a \emph{risk--benefit dial}: for each tolerance, the best certified update and its benefit.
+
+\para{Why a test, and why per patient.}
+Comparing mean Dice on $\B$ (``validate and pick the best'') asks whether an update is better \emph{on average}, so a lost lesion in one patient is outweighed by small gains in many; bounding an expected per-patient loss~\cite{angelopoulos2024crc} allows the same trade.
+Our risk is the probability of an \emph{event} that no gain elsewhere offsets, and the rule bounds the probability that this risk exceeds $\delta$ (alternatives in \cref{sec:supp_faq}).
+\Cref{alg:csi} summarises the procedure.
+
+\begin{algorithm}[t]
+\caption{Certified Self-Improvement (one round)}
+\label{alg:csi}
+\small
+\begin{algorithmic}[1]
+\Require deployed $f_0$; disjoint $\A$, $\B$ ($|\B|=n$); tolerance $\delta$; level $\alpha$; harm rule (Eq.~\ref{eq:harm})
+\State Build candidates $\Lam$ on $\A$ only; order them into $m$ chains, conservative first
+\For{each chain $c=1,\dots,m$}
+  \For{$\lambda$ in chain $c$, in order}
+    \State $k_\lambda\gets\sum_{i\in\B}H_i(\lambda)$ \Comment{harm relative to $f_0$}
+    \State $p_\lambda\gets\Pr[\mathrm{Bin}(n,\delta)\le k_\lambda]$
+    \If{$p_\lambda\le\alpha/m$} add $\lambda$ to $\hat\Lam$ \Else{} \textbf{break} \EndIf
+  \EndFor
+\EndFor
+\State \Return $\arg\max_{\lambda\in\hat\Lam}\mathrm{benefit}_\B(\lambda)$ if $\hat\Lam\neq\emptyset$, else $f_0$ (rollback)
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Two levels of self-improvement}
+\label{sec:levels}
+
+\para{Level 1: the refinement agent.}
+On top of the segmenter runs an agent that diagnoses and repairs its output (details in \cref{sec:supp_agent}).
+Each connected component of the prediction is described by 26 image and model features plus 21 context features (local tumour-to-background ratio, CT texture, anatomical neighbourhood, left--right symmetry, predicted-probability profile).
+Gradient-boosted detectors estimate, per component, the probability of eight failure classes (\eg, physiological false positive, under-segmentation); a hand-built policy maps the predicted class to a repair action (removal, regrowth, threshold refinement), applied when the detector's confidence exceeds a gate.
+This hand-built agent is the deployed $f_0$ in the new domain.
+A candidate update \emph{adds} actions to it but never removes one (an anchored, one-sided trust region), using detectors refitted on $\A$ with isotonic calibration~\cite{guo2017calibration} on cross-fitted predictions, an out-of-distribution fence on the number of components per scan, and optional guards (agreement of old and new detectors; never act on a scan's only component).
+The family is
+$\Lam_{\text{agent}}=\{\text{detector}\}\times\{\text{guard}\}\times\{\text{gate}\}$, with 2 detectors, 4 guards and 11 gates ($0.99\to0.85$), \ie, $m=8$ chains and 88 candidates.
+Per-patient harm on $\B$ is computed from the measured outcome of every action on every component.
+
+\para{Level 2: the segmenter.}
+The segmenter is fine-tuned on $\A$ (5 folds; each fold initialised from the corresponding source-domain model, all weights including the head; 100 epochs; nnU-Net defaults otherwise~\cite{isensee2021nnunet}).
+The 5-fold ensemble gives the candidate FT, and FT followed by the hand-built agent gives FT+agent; $\Lam_{\text{seg}}=\{\text{FT},\text{FT+agent}\}$, each tested at $\alpha/2$ against the system deployed after Level 1.
+Out-of-fold predictions on $\A$ let the Level-1 machinery be re-run on top of FT.
+
+\para{Sequential deployment.}
+Each round certifies against the system deployed by the previous round, so the chain of promises reads $f_0\to f_1\to f_2$.
+Each round's guarantee holds at $\alpha$; a union bound gives a joint guarantee at $2\alpha$ for both rounds.

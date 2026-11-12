@@ -1,0 +1,449 @@
+\clearpage
+\setcounter{page}{1}
+\setcounter{section}{0}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\setcounter{table}{0}
+\setcounter{figure}{0}
+\renewcommand{\thealgorithm}{S\arabic{algorithm}}
+\setcounter{algorithm}{0}
+\maketitlesupplementary
+
+\noindent This supplement contains the guarantee's proof and power analysis (\cref{sec:supp_proof}), the refinement agent (\cref{sec:supp_agent}), the full Level-1 (\cref{sec:supp_level1}) and Level-2 (\cref{sec:supp_level2}) results, zero-shot transfer and subgroups (\cref{sec:supp_zeroshot}), source-domain development and its negative results (\cref{sec:supp_fdg}), the pre-registration ledger and every deviation (\cref{sec:supp_deviations}), reproducibility details (\cref{sec:supp_repro}), and notation with the reasons behind each design choice (\cref{sec:supp_faq}). New figures and tables here are numbered with an ``S'' prefix; unprefixed numbers refer to the main paper.
+
+%----------------------------------------------------------------------------
+\section{Guarantee and power}
+\label{sec:supp_proof}
+
+\para{Proof of \cref{thm:ltt}.}
+Fix $\lambda$ with $R(\lambda)>\delta$. The harms $H_i(\lambda)$, $i\in\B$, are i.i.d.\ Bernoulli($R(\lambda)$) because $\Lam$ is built without $\B$ and patients are exchangeable; hence $k_\lambda$ is stochastically larger than $\mathrm{Bin}(n,\delta)$ and $\Pr[p_\lambda\le u]\le u$ for all $u\in[0,1]$.
+Within a chain $\lambda_{1}\prec\lambda_{2}\prec\dots$ (fixed before $\B$ is seen), fixed-sequence testing at level $\alpha/m$ rejects $\lambda_j$ only if $p_{\lambda_1},\dots,p_{\lambda_j}\le\alpha/m$; the first true null in the sequence is rejected with probability at most $\alpha/m$, and no later hypothesis is tested unless it is, so the chain's family-wise error is at most $\alpha/m$~\cite{bretz2010multiple}.
+A union bound over $m$ chains gives $\Pr[\exists\lambda\in\hat\Lam: R(\lambda)>\delta]\le\alpha$.
+The deployed $\hat\lambda$ is an element of $\hat\Lam$ or the rollback ($R=0$); choosing among $\hat\Lam$ by any data-dependent benefit cannot leave the event above, so $\Pr[R(\hat\lambda)>\delta]\le\alpha$. \hfill$\square$
+
+\para{What the assumptions mean here.}
+(i) Level-1 candidates are fitted on $\A$ (detectors and isotonic calibrators by 5-fold cross-fitting within $\A$; the out-of-distribution fence from $\A$'s component counts) and on source-domain data; Level-2 candidates are trained on $\A$ only. $\B$ is used for nothing but the test and the benefit-based choice among certified candidates.
+(ii) Exchangeability holds by construction for $\B$ and $\C$ (one random split, stratified by radionuclide $\times$ tumour status); for future patients it is an assumption.
+(iii) At Level 1, $H_i$ on $\B$ is computed from the \emph{measured} outcome of each added action on each component (a lesion lost or a tumour-positive Dice drop $>0.01$), and a patient counts as harmed if any added component is harmful. The deployed agent applies actions sequentially, so the test-set harm in \cref{tab:main} is measured on the actual agent output, not on this component-wise proxy; both agree on $\C$ (0 harmed).
+
+\para{Power.} With zero observed harms, $H_\lambda$ is rejected iff $(1-\delta)^n\le\alpha/m$.
+\Cref{tab:supp_power} lists the smallest certifiable tolerance.
+
+\begin{table}[h]
+\centering
+\caption{Smallest certifiable tolerance $\delta_{\min}=1-(\alpha/m)^{1/n}$ at $\alpha=0.05$.}
+\label{tab:supp_power}
+\small
+\begin{tabular}{@{}rccc@{}}
+\toprule
+$n$ & $m=1$ & $m=2$ (Level 2) & $m=8$ (Level 1) \\
+\midrule
+126 & 0.024 & 0.029 & 0.040 \\
+250 & 0.012 & 0.015 & 0.020 \\
+500 & 0.006 & 0.007 & 0.010 \\
+1000 & 0.003 & 0.004 & 0.005 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{Sample-size planning.} \Cref{tab:supp_n} inverts the test: the number of certification patients at which a given number of harmed patients still certifies a tolerance (one candidate at level $\alpha/2=0.025$, the Level-2 setting). A site can read off its labelling budget before it starts. With $k=4$, as observed for the fine-tuned segmenter, $\delta=0.05$ needs 202 patients instead of 126.
+
+\begin{table}[h]
+\centering
+\caption{Smallest $n$ with $\Pr[\mathrm{Bin}(n,\delta)\le k]\le0.025$.}
+\label{tab:supp_n}
+\small
+\begin{tabular}{@{}rccc@{}}
+\toprule
+& $\delta=0.01$ & $\delta=0.02$ & $\delta=0.05$ \\
+\midrule
+$k=0$ harmed & 368 & 183 & 72 \\
+$k=4$ harmed & 1022 & 509 & 202 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{Two rounds.} Round 1 (Level 1) certifies $f_1$ against $f_0$ and round 2 (Level 2) certifies $f_2$ against $f_1$, each at $\alpha$. With probability at least $1-2\alpha$ both promises hold, $R_{f_0}(f_1)\le\delta_1$ and $R_{f_1}(f_2)\le\delta_2$. Harm is not transitive, so this does \emph{not} imply $R_{f_0}(f_2)\le\delta_1+\delta_2$ in general; a site that needs a promise relative to the original system can certify $f_2$ against $f_0$ directly, at the cost of one more test. On our data the direct comparison gives the same picture: the fine-tuned segmenter harms 3 of 125 test patients relative to the Level-1 system (\cref{tab:main}).
+
+%----------------------------------------------------------------------------
+\section{The refinement agent}
+\label{sec:supp_agent}
+
+\para{Candidates and features.}
+The segmenter's probability map $P$ is thresholded at 0.5; each connected component is a candidate for repair, and components of $P>0.1$ not touching the mask are candidates for recovery.
+Each component is described by 26 observable features (volume, SUV statistics, shape, position, predicted-probability and uncertainty statistics from the ensemble, distance to organs) and, for the context detector, 21 more: local contrast (shell SUV mean, tumour-to-background ratios), edge sharpness, uptake texture, CT texture and air/bone fractions, the fraction of the shell in physiological-uptake organs and liver, model-probability profile in the shell, and left--right mirror SUV ratio. No feature uses ground truth.
+
+\para{Failure classes and detectors.}
+Eight classes are predicted per component: spurious (physiological / liver--spleen / other), merging, under-segmentation, over-segmentation, boundary error and fragmentation; a separate head predicts missed lesions for recovery candidates.
+Labels come from matching components to ground truth.
+Each class head is a gradient-boosted classifier (scikit-learn \texttt{HistGradientBoostingClassifier}, depth 3, learning rate 0.08, 200 iterations).
+``Old'' uses the 26 features; ``new'' adds the 21 context features; ``ens'' averages the calibrated old and new probabilities.
+Calibration is isotonic regression fitted on cross-fitted predictions only.
+
+\para{Actions and the hand-built policy.}
+For the predicted (argmax) class, the policy applies the first applicable action of a fixed list (\cref{tab:supp_policy}). Actions: \emph{remove} (delete the component), \emph{fill} (fill holes), \emph{merge} (close a gap of 2 voxels to a neighbour), \emph{boundary} (re-threshold $P$ at 0.5 in a 2-voxel shell), \emph{SUV41} (re-threshold at 41\% of the component's SUV$_{\max}$), \emph{PERCIST} (re-threshold at the liver-referenced PERCIST level), \emph{grow} (dilate into $P>0.3$), \emph{shrink} (keep $P>0.7$), \emph{recover} (add a recovery candidate).
+The agent acts once per component, up to $T=10$ iterations per scan, and only when the detector's max-class probability passes the gate (0.90 for the hand-built agent). \Cref{alg:supp_agent} gives the loop.
+
+\begin{algorithm}[h]
+\caption{Refinement agent (one scan)}
+\label{alg:supp_agent}
+\small
+\begin{algorithmic}[1]
+\Require probability map $P$, PET/CT volume, detectors $d$, policy $\pi$, gate $t$, budget $T$
+\State $M\gets[P\ge0.5]$; $\mathcal{D}\gets\emptyset$ \Comment{components already acted on}
+\For{$\tau=1,\dots,T$}
+  \State components $\gets$ connected components of $M$, plus recovery candidates ($P>0.1$, outside $M$)
+  \State $(\hat y_j,\hat q_j)\gets$ argmax class and calibrated probability of $d$ for each component $j\notin\mathcal{D}$
+  \State $j^\ast\gets\arg\max_j \hat q_j$ over components with $\hat q_j\ge t$ (and guards, fence)
+  \If{no such $j^\ast$} \textbf{break} \EndIf
+  \State $M\gets$ first applicable action of $\pi(\hat y_{j^\ast})$ applied to $j^\ast$; $\mathcal{D}\gets\mathcal{D}\cup\{j^\ast\}$
+\EndFor
+\State \Return $M$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{table}[h]
+\centering
+\caption{Hand-built policy: ordered actions per predicted class.}
+\label{tab:supp_policy}
+\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+class & actions (first applicable is used) \\
+\midrule
+spurious, physiological & PERCIST, SUV41, remove, shrink \\
+spurious, liver/spleen & remove, PERCIST, SUV41, shrink \\
+spurious, other & remove, PERCIST, shrink \\
+under-segmentation & grow, merge, SUV41, boundary \\
+over-segmentation & fill \\
+fragmentation & grow, merge, boundary \\
+merging & fill \\
+boundary & grow, boundary, fill \\
+missed & recover \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{Anchored updates and guards.}
+A Level-1 update keeps every hand-built action and may add actions on components the hand-built agent leaves alone (one-sided trust region). An addition requires the chosen detector's calibrated max-class probability $\ge t$, the component's scan to be inside the out-of-distribution fence (component count $\le Q_3+3\,\mathrm{IQR}$ on $\A$; 52 for the primary segmenter), and the chosen guard: \emph{agree} (old and new argmax classes agree and the old calibrated max-class probability is $\ge0.5$), \emph{solo} (never act on a scan's only component), both, or none.
+Benefit for selection among certified candidates is the summed measured Dice change of the added actions; a candidate also needs $\ge20$ additions and a positive patient-clustered lower confidence bound on mean benefit.
+
+%----------------------------------------------------------------------------
+\section{Level 1: full results}
+\label{sec:supp_level1}
+
+\para{Certification on $\B$.} \Cref{tab:supp_chains} gives the number of harmed $\B$ patients for every candidate. At $\alpha/8$ only $k=0$ rejects; 22 candidates are certified. The selected update is the calibrated new detector at gate 0.97 with both guards (64 additions, summed benefit $+0.28$ on $\B$). Naive selection picks the most aggressive candidate (new detector, gate 0.85, no guard): 13 harmed patients and 22 lost lesions on $\B$.
+
+\begin{table*}[t]
+\centering
+\caption{Harmed patients on $\B$ ($n=126$) per Level-1 candidate (primary segmenter). $\ast$: certified at $\delta=0.05$, $\alpha/8$.}
+\label{tab:supp_chains}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+detector & guard & 0.99 & 0.98 & 0.97 & 0.96 & 0.95 & 0.94 & 0.93 & 0.92 & 0.91 & 0.90 & 0.85 \\
+\midrule
+new, cal. & none & 1 & 2 & 2 & 2 & 2 & 5 & 5 & 7 & 7 & 7 & 13 \\
+new, cal. & solo & 1 & 2 & 2 & 2 & 2 & 5 & 5 & 7 & 7 & 7 & 13 \\
+new, cal. & agree & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 3 & 3 & 5 & 5 & 5 & 5 \\
+new, cal. & agree+solo & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 3 & 3 & 5 & 5 & 5 & 5 \\
+ens & any of 4 & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 1 & 1 & 1 & 1 & 3 & 3 & 3 & 3 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\para{Dial on $\C$ for all backbones.} \Cref{tab:supp_dial} lists, per tolerance, the update certified on $\B$ and its outcome on $\C$. On the primary segmenter the realised rate never exceeds $\delta$. On the secondary segmenters it does at some settings (Swin, $\delta=0.15$: 0.096; nnU-Net single, $\delta=0.15$: 0.112), within the binomial noise of 125 patients but not uniformly below $\delta$.
+
+\begin{table}[h]
+\centering
+\caption{Level-1 dial: certified on $\B$, measured on $\C$ ($n=125$). Benefit: summed Dice change of added actions; $k$: harmed patients.}
+\label{tab:supp_dial}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+& \multicolumn{2}{c}{nnU-Net ens.} & \multicolumn{2}{c}{Swin} & \multicolumn{2}{c}{nnU-Net single} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+$\delta$ & benefit & $k$ & benefit & $k$ & benefit & $k$ \\
+\midrule
+0.03 & rollback & 0 & rollback & 0 & rollback & 0 \\
+0.05 & $+0.79$ & 0 & $+0.32$ & 2 & $+0.14$ & 2 \\
+0.10 & $+2.22$ & 2 & $+2.01$ & 4 & $+0.62$ & 4 \\
+0.15 & $+4.29$ & 7 & $+4.48$ & 12 & $+3.39$ & 14 \\
+0.20 & $+4.63$ & 10 & $+4.53$ & 14 & $+3.57$ & 15 \\
+naive & $+5.63$ & 10 & $+4.53$ & 14 & $+3.57$ & 15 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{Validity at both tolerances.} \Cref{tab:supp_validity} adds mean realised risk and benefit to \cref{fig:validity}.
+
+\begin{table}[h]
+\centering
+\caption{Validity over 1,000 random halves of $\B\cup\C$: violation rate $\Pr[\hat R>\delta]$, mean realised risk and mean summed benefit, certified (LTT) / naive.}
+\label{tab:supp_validity}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+backbone & $\delta$ & violation & mean risk & mean benefit \\
+\midrule
+nnU-Net ens. & 0.05 & 0.005 / 0.985 & 0.010 / 0.092 & $+0.83$ / $+5.95$ \\
+ & 0.10 & 0.004 / 0.350 & 0.031 / 0.092 & $+3.50$ / $+5.95$ \\
+Swin & 0.05 & 0.005 / 0.991 & 0.011 / 0.095 & $+0.61$ / $+5.61$ \\
+ & 0.10 & 0.007 / 0.415 & 0.037 / 0.095 & $+2.63$ / $+5.61$ \\
+nnU-Net single & 0.05 & 0.002 / 0.996 & 0.004 / 0.100 & $+0.38$ / $+4.19$ \\
+ & 0.10 & 0.003 / 0.516 & 0.041 / 0.100 & $+1.40$ / $+4.19$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/fig_dial_all.pdf}
+  \caption{\textbf{Level-1 dial for all three segmenters} (certified on $\B$, measured on locked $\C$). Left: summed Dice benefit; the isolated markers at the right are naive selection. Right: realised harm rate with 95\% upper bound against $y=\delta$.}
+  \label{fig:supp_dial_all}
+\end{figure*}
+
+\para{Per-patient view of the Level-1 arms.} \Cref{tab:supp_l1patients} counts, for every arm, the tumour-positive test patients whose Dice moved by more than 0.01 in either direction, and the harmed patients and lost lesions (\cref{fig:patients}a). The three failure modes of uncertified self-improvement are visible: naive selection buys its Dice by losing lesions; pseudo-labelling changes 50 patients and helps none; uncalibrated certification is more aggressive and stays within its promise.
+
+\begin{table}[h]
+\centering
+\caption{Level-1 arms on $\C$ relative to the deployed agent: patients with Dice change $>+0.01$ / $<-0.01$ / any (of 119 tumour-positive), harmed patients (of 125) and lost lesion detections.}
+\label{tab:supp_l1patients}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+arm & helped & hurt & changed & harmed & lost lesions \\
+\midrule
+naive & 49 & 1 & 72 & 11 & 20 \\
+pseudo-label & 0 & 3 & 50 & 4 & 1 \\
+\ours, uncalibrated & 20 & 0 & 43 & 1 & 1 \\
+\ours & 10 & 0 & 29 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{The 11 patients harmed by naive selection} (\cref{tab:supp_naiveharm}). Every one loses at least one detection; seven \emph{gain} Dice, by up to $+0.44$. In several, a large false-positive region that overlapped a lesion was removed (\eg, FP 971$\to$13\,mL, hits 2$\to$1), which a Dice-based criterion scores as a success.
+
+\begin{table}[h]
+\centering
+\caption{Test patients harmed by naive self-improvement, relative to the deployed agent (sorted by Dice change).}
+\label{tab:supp_naiveharm}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}rccc@{}}
+\toprule
+$\Delta$Dice & lesions (GT) & hits & FP mL \\
+\midrule
+$-0.010$ & 2 & 2$\to$0 & 136$\to$48 \\
+$-0.007$ & 1 & 1$\to$0 & 167$\to$0 \\
+$-0.000$ & 25 & 1$\to$0 & 1250$\to$1250 \\
+$-0.000$ & 2 & 1$\to$0 & 1143$\to$221 \\
+$+0.004$ & 131 & 38$\to$37 & 267$\to$267 \\
+$+0.068$ & 171 & 36$\to$32 & 16$\to$17 \\
+$+0.110$ & 3 & 2$\to$1 & 971$\to$13 \\
+$+0.134$ & 45 & 32$\to$29 & 500$\to$498 \\
+$+0.274$ & 50 & 22$\to$20 & 505$\to$25 \\
+$+0.301$ & 94 & 39$\to$36 & 27$\to$24 \\
+$+0.440$ & 7 & 6$\to$5 & 257$\to$0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{Additional Level-1 outcomes on $\C$ (primary).} Against the deployed agent: HD95 198.0$\to$194.0\,mm; 46 of 125 scans changed; tumour-free scans cleared of all FP 0 vs.\ 0 of 6 (the pre-registered clearance endpoint had no power with 6 tumour-free patients). FP-volume intervals for all arms: certified $-126.7$ [$-185.8$, $-74.4$], uncalibrated $-214.0$ [$-284.4$, $-150.3$], naive $-523.1$ [$-631.6$, $-420.3$], pseudo-label $+20.8$ [$+13.0$, $+28.7$] mL per scan (case bootstrap, 5,000 resamples).
+
+%----------------------------------------------------------------------------
+\section{Level 2: full results}
+\label{sec:supp_level2}
+
+\para{Recipe (fixed in the plan, not tuned).} nnU-Net v2, 3D full resolution, plans and network of the source model (patch $192\times96\times128$, spacing $3\times2.04\times2.04$\,mm, batch 2, plain convolutional U-Net with 6 stages). Five folds over $\A$ (101/25 patients); each fold starts from a different one of the five source models, with all weights including the segmentation head; SGD with nnU-Net's poly schedule from learning rate $3\times10^{-3}$, 100 epochs of 250 iterations, final checkpoint. Out-of-fold validation Dice on $\A$ per fold: 0.489, 0.436, 0.582, 0.434, 0.422 (not used for any decision). $\B$ and $\C$ are predicted by the 5-fold ensemble with 8-fold flip averaging, exactly as the source model.
+
+\para{Certification on $\B$.} \Cref{tab:supp_l2b}. The four harmed $\B$ patients: hits 12$\to$6 (Dice 0.18$\to$0.08); hits 3$\to$2 (Dice 0.01$\to$0.59); hits 16$\to$9 (Dice 0.69$\to$0.46); Dice 0.50$\to$0.06 with hits unchanged.
+
+\begin{table}[h]
+\centering
+\caption{Level 2 on $\B$ ($n=126$), reference: the Level-1 system. Each candidate tested at $\alpha/2$.}
+\label{tab:supp_l2b}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & Dice & harmed & $p_{\delta=.05}$ & $p_{\delta=.10}$ & $p_{\delta=.15}$ & deployed at \\
+\midrule
+Level-1 system & 0.122 & -- & -- & -- & -- & $\delta=0.05$ \\
+FT & 0.571 & 4 & 0.240 & 0.004 & $<10^{-4}$ & $\delta\ge0.10$ \\
+FT+agent & 0.570 & 4 & 0.240 & 0.004 & $<10^{-4}$ & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/fig_l2_B.pdf}
+  \caption{\textbf{Level 2 on the certification set $\B$} (126 patients), relative to the Level-1 system. Left: per-patient Dice. Right: detected lesions (log scale, $+1$). The four harmed patients (red) decide the certificate: three lose detections, one loses Dice with detections unchanged.}
+  \label{fig:supp_l2B}
+\end{figure*}
+
+\para{Extended subgroups on $\C$} (\cref{tab:supp_sub}; post hoc, descriptive). It splits the locked test set by radionuclide (the stratification variable of the split), scanner vendor and tumour burden. The gain is large in every subgroup, with every interval above zero; the starting point is worst for vendor 1 (Level-1 Dice 0.06) and for patients with 1--2 lesions (0.01), and both reach about 0.5. Harm does not concentrate: at most 2 harmed patients per subgroup. The fine-tuned segmenter cuts false-positive volume in every subgroup (by 93--99.7\%); the residual is concentrated in the highest-burden patients (39\,mL per scan), where tumour and physiological uptake are hardest to separate.
+
+\begin{table*}[t]
+\centering
+\caption{Level 2 by subgroup on locked $\C$. Dice over tumour-positive patients (zero-shot / Level-1 system / fine-tuned); $\Delta$: fine-tuned $-$ Level-1 with 95\% bootstrap interval; FP mL per scan (zero-shot $\to$ fine-tuned); lesion detection rate (zero-shot $\to$ fine-tuned); harmed: fine-tuned vs.\ Level-1 system. Vendors are numbered by cohort size. Burden tertiles over tumour-positive test patients.}
+\label{tab:supp_sub}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+subgroup & $n$ (pos.) & lesions & Dice & $\Delta$ {\scriptsize[95\% CI]} & FP mL & det. & harmed \\
+\midrule
+all & 125 (119) & 4518 & 0.107 / 0.116 / 0.547 & $+0.431$ {\scriptsize[$+0.388$, $+0.475$]} & 734$\to$14.5 & 0.46$\to$0.79 & 3 \\
+$^{18}$F & 71 (69) & 3110 & 0.117 / 0.125 / 0.551 & $+0.426$ {\scriptsize[$+0.376$, $+0.479$]} & 918$\to$19.6 & 0.43$\to$0.77 & 1 \\
+$^{68}$Ga & 54 (50) & 1408 & 0.094 / 0.103 / 0.541 & $+0.438$ {\scriptsize[$+0.361$, $+0.507$]} & 492$\to$7.8 & 0.55$\to$0.82 & 2 \\
+vendor 1 & 55 (53) & 637 & 0.050 / 0.061 / 0.521 & $+0.460$ {\scriptsize[$+0.380$, $+0.532$]} & 868$\to$4.3 & 0.52$\to$0.75 & 2 \\
+vendor 2 & 70 (66) & 3881 & 0.153 / 0.160 / 0.568 & $+0.408$ {\scriptsize[$+0.357$, $+0.455$]} & 628$\to$22.5 & 0.45$\to$0.79 & 1 \\
+1--2 lesions & 41 (41) & 55 & 0.004 / 0.011 / 0.453 & $+0.442$ {\scriptsize[$+0.348$, $+0.537$]} & 851$\to$2.4 & 0.40$\to$0.73 & 2 \\
+3--24 lesions & 38 (38) & 314 & 0.035 / 0.049 / 0.543 & $+0.493$ {\scriptsize[$+0.434$, $+0.548$]} & 837$\to$3.6 & 0.46$\to$0.84 & 0 \\
+$\ge$25 lesions & 40 (40) & 4149 & 0.282 / 0.286 / 0.647 & $+0.361$ {\scriptsize[$+0.305$, $+0.416$]} & 542$\to$39.3 & 0.46$\to$0.78 & 1 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\para{Distribution on $\C$.} Relative to the Level-1 system, 110 of 119 tumour-positive patients gain more than 0.01 Dice and 2 lose more than 0.01; relative to the zero-shot segmenter, 110 gain and 1 loses. Median Dice is 0.63 (Level-1 system 0.016; zero-shot 0.009); 77 patients exceed 0.5 (5 before). Lesion detections: 1,460 gained and 7 lost, all 7 in the three harmed patients. False-positive volume: 104 patients above 100\,mL before, 2 after; 32 patients with none.
+
+\para{Agent on top of the fine-tuned segmenter.} Re-running Level-1 certification on the fine-tuned maps (detectors adapted on out-of-fold $\A$ predictions) certified no addition; the system rolls back to the hand-built agent on top of FT, whose test table is byte-identical to FT+agent in \cref{tab:main}. FT+agent clears 3 of 6 tumour-free test patients of all false positives, FT alone 1.
+
+\para{Harmed test patients} (FT vs.\ Level-1 system): (i) 1 lesion, hit 1$\to$0, Dice 0.011$\to$0.000, FP 10$\to$2\,mL; (ii) 2 lesions, hits 2$\to$0, Dice 0.011$\to$0.000, FP 94$\to$0\,mL; (iii) 120 lesions, hits 106$\to$102, Dice 0.271$\to$0.603, FP 314$\to$3\,mL. In (i) and (ii) the Level-1 system overlapped the lesions only as part of large false-positive regions.
+
+%----------------------------------------------------------------------------
+\section{Zero-shot transfer and subgroups}
+\label{sec:supp_zeroshot}
+
+Before any adaptation, the frozen source agent and its source-certified update (certified at $\delta=0.01$ on 630 FDG patients) were run on all 377 PSMA patients under a pre-registered lock. Primary endpoints: harmed 0/377 ($p=0.023$ against $R>0.01$; UB 0.79\%), Dice and lesion non-inferiority met. Benefit was nil: the update changed 7 scans; both arms improved Dice over the bare segmenter by $+0.0013$ [$+0.0006$, $+0.0022$]. The certified update abstained (out-of-fence) on 67 scans. \Cref{tab:supp_subgroups} shows that harm was zero in every subgroup and that the largest disparity is in the base segmenter, not the agent.
+
+\begin{table}[h]
+\centering
+\caption{Zero-shot transfer by subgroup (all 377 PSMA patients). Harmed patients: 0 in every subgroup.}
+\label{tab:supp_subgroups}
+\footnotesize
+\begin{tabular}{@{}lccc@{}}
+\toprule
+subgroup & $n$ & segmenter Dice & agent $-$ segmenter \\
+\midrule
+$^{18}$F & 213 & 0.111 & $+0.0002$ \\
+$^{68}$Ga & 164 & 0.109 & $+0.0027$ \\
+vendor 1 & 157 & 0.056 & $+0.0012$ \\
+vendor 2 & 220 & 0.147 & $+0.0014$ \\
+age, lowest tertile & 133 & 0.100 & $+0.0020$ \\
+age, middle & 135 & 0.102 & $+0.0006$ \\
+age, highest & 109 & 0.131 & $+0.0012$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%----------------------------------------------------------------------------
+\section{Source-domain development and negative results}
+\label{sec:supp_fdg}
+
+The agent was developed over many pre-registered phases on FDG data. We report the ledger because the negative results shaped the design and because a reader should know how many things were tried.
+
+\para{Confirmatory source result.} The iterative, confidence-gated agent improved test Dice over the 5-fold segmenter by $+0.0067$ [$+0.0012$, $+0.0164$] (200 test patients, single pre-registered test pass), cleared 6 of 90 tumour-free patients of false positives and degraded none.
+
+\para{Negative and mixed results} (all pre-registered):
+(1) A learned quality critic (predicted Dice) adjudicated single actions at 37.1\% precision, below its 60\% threshold; a loop gated by it accepted no action.
+(2) Learned strategy selection did not beat the fixed hand-built strategy at matched budget; experience-based self-improvement curves were flat.
+(3) Learned action gates, class-specific gates, an experience-trained harm model, KL-anchored policy improvement, a context detector, calibration with guards, and out-of-distribution abstention each failed to beat the hand-built policy on its pre-registered criteria; the first update to pass every out-of-fold endpoint (descriptively) was the LTT-certified anchored union used here.
+(4) Gains concentrate, narrowly, in the hardest cases.
+
+\para{LTT in the source domain.} Certifying on 630 out-of-fold patients ($\delta=0.01$, $\alpha=0.05$) certified 36 of 88 candidates; the deployed update added 48 actions with 0 harmed patients. Source dial (out-of-fold, descriptive): $\delta=0.01$: $+4.47$ summed benefit, 0 harmed; $0.02$: $+13.63$, 4; $0.03$: $+16.77$, 6; $0.05$: $+25.38$, 18. On the locked source test set (200 patients) the update changed 5 scans and harmed none (UB 1.5\%); its gain was too small to be significant. Validity on 1,000 halves: violation 0.008 vs.\ 0.766 (naive) at $\delta=0.02$; 0.010 vs.\ 0.402 at $0.03$; 0.007 vs.\ 0.007 at $0.05$.
+
+%----------------------------------------------------------------------------
+\section{Pre-registration, locks and deviations}
+\label{sec:supp_deviations}
+
+\para{Ledger.} Each phase had a committed plan (candidates, $\delta$, $\alpha$, endpoints, failure criteria) before its numbers were computed, and a lock (SHA-256 of every test input and the exact commands) before its test set was read. The PSMA phases are: zero-shot transfer (one lock), Level 1 (one lock for the primary segmenter, one for the two secondary segmenters), Level 2 (one lock). Plans and locks will be released with timestamps.
+
+\para{Deviations and corrections.}
+\begin{enumerate}[nosep,leftmargin=*]
+\item \textbf{Level-2 primary not met.} The switch was not certified at $\delta=0.05$ and the pre-registered rule rolled back; the reported gain is the pre-registered $\delta=0.10$ dial setting.
+\item \textbf{Test reuse.} $\C$ was read for the Level-1 arms before the Level-2 plan was written; no Level-2 decision used $\C$.
+\item \textbf{Per-segmenter locks.} The Level-1 plan described one lock; the secondary segmenters' predictions were not ready, so each segmenter was locked separately before its own test run.
+\item \textbf{Zero-shot run restarts.} Two runs aborted on a patient-identifier lookup before writing any output; input hashes were re-verified before the run that counts.
+\item \textbf{File collision.} Two evaluation scripts wrote the same file name; the overwritten, deterministic evaluation was re-run and gave identical numbers.
+\item \textbf{FP-volume intervals} were computed after the lock with a case bootstrap, because the evaluation script printed only means.
+\item \textbf{Subgroup artefact.} One evaluation flagged a ``mid-difficulty'' subgroup defined by source-domain tertiles; on PSMA it contains one patient whose Dice change is exactly zero.
+\item \textbf{Erratum.} A Level-1 lock note stated that 40 of 88 candidates were certified; the certification output (and this paper) has 22. The deployed configuration, computed by code, is unaffected.
+\item \textbf{$p$-values.} Bootstrap $p$ for Dice differences is two-sided (conservative for the one-sided endpoints) with a floor of $1/2000$.
+\item \textbf{Post-hoc analyses.} The per-patient and subgroup analyses (\cref{fig:patients}, \cref{tab:supp_l1patients,tab:supp_naiveharm,tab:supp_sub}, \cref{fig:supp_l2B}) were added after all locks, while writing the paper. They re-read the locked per-patient result tables (whose aggregates the analysis script checks against the locked evaluation before computing anything), run no model and change no decision. Vendor and burden subgroups were not pre-specified for Level 2; radionuclide was the stratification variable of the split.
+\end{enumerate}
+
+%----------------------------------------------------------------------------
+\section{Reproducibility}
+\label{sec:supp_repro}
+
+\para{Data.} AutoPET FDG PET/CT and PSMA-PET-CT-Lesions are public on TCIA under their data-usage policies; PSMA-PET-CT-Lesions is CC BY 4.0. Two PSMA studies failed conversion and were excluded before any analysis. No new human-subject data were collected.
+
+\para{Compute.} One NVIDIA RTX 5000 Ada (32\,GB). Level-2 fine-tuning: about 1.8\,h per fold, 9\,h in total; ensemble inference on 251 patients: about 3\,h. Detectors, certification and the agent run on CPU (about 7--10\,s per scan for the agent).
+
+\para{Release.} Code, pre-registration plans, lock files and per-patient result tables will be released upon publication.
+
+\para{Figures and tables.} Every plotted or tabulated value is produced by two scripts from the locked result files; no number is retyped into a figure. Post-hoc statistics are written to a JSON file that ships with the code.
+
+%----------------------------------------------------------------------------
+\section{Notation, design choices and alternatives}
+\label{sec:supp_faq}
+
+\begin{table}[h]
+\centering
+\caption{Notation.}
+\label{tab:supp_notation}
+\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+symbol & meaning \\
+\midrule
+$f_0$, $f_\lambda$ & deployed system; system after update $\lambda$ \\
+$\A$, $\B$, $\C$ & adaptation, certification, locked test sets \\
+$n=|\B|$ & certification patients (126) \\
+$\Lam$, $\hat\Lam$ & candidate updates; certified subset \\
+$H_i(\lambda)$ & 1 if $\lambda$ harms patient $i$ (Eq.~\ref{eq:harm}) \\
+$R(\lambda)$ & harm risk $\Pr[H(\lambda)=1]$ \\
+$\varepsilon$ & Dice tolerance in the harm rule (0.01) \\
+$\delta$, $\alpha$ & risk tolerance; error level (0.05) \\
+$m$ & number of chains (Bonferroni) \\
+$k_\lambda$, $p_\lambda$ & harmed patients on $\B$; binomial $p$-value \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We collect the questions a careful reader is likely to ask, with the reasons for each choice.
+
+\para{Why a harm \emph{probability} and not an expected loss?}
+Conformal risk control~\cite{angelopoulos2024crc} bounds $\mathbb{E}[L]$ for a bounded loss $L$. With $L=H$ the two coincide in expectation, but our guarantee is of the high-probability form $\Pr[R(\hat\lambda)>\delta]\le\alpha$, which is what LTT provides~\cite{angelopoulos2021ltt} and what a deployment decision needs: a statement about \emph{this} update, not about the average over draws of $\B$. With a continuous loss (\eg, Dice drop) gains in one patient would offset losses in another, which is exactly what we want to rule out.
+
+\para{Why relative to the deployed system?}
+An absolute criterion (``Dice $\ge0.5$'') would declare most zero-shot outputs harmful and certify nothing, or certify an update that worsens a patient who was already above the bar. The deployment question is whether replacing $f_0$ hurts anyone; a relative harm answers it and makes the rollback trivially safe.
+
+\para{Why $\varepsilon=0.01$ and any-overlap detection?}
+Both were fixed before any PSMA number was computed and kept unchanged in every PSMA plan. $\varepsilon$ ignores numerical noise but counts any clinically visible drop. Any-overlap detection is lenient for the deployed system: a large false positive that grazes a lesion ``detects'' it, and an update that removes the false positive is counted as harmful (\cref{fig:qual}d). This makes our harm counts conservative for the update: two of the three harmed test patients at Level 2 are of this kind. A minimum-overlap rule would be clinically more faithful, but it would change the counts in both directions and was not pre-registered; we kept the pre-registered rule.
+
+\para{Why fixed-sequence chains and Bonferroni?}
+Ordering candidates from conservative to aggressive within a chain lets the test spend its whole budget $\alpha/m$ on each step until the first failure, which is much more powerful than Bonferroni over all 88 candidates ($\alpha/88$); with $n=126$ and $k=0$, $\alpha/88$ could not certify any $\delta$ below $0.058$, against $0.040$ with eight chains. More powerful procedures that pass $\alpha$ between chains exist~\cite{bretz2010multiple}; we chose the simplest valid one.
+
+\para{Why not certify on $\A\cup\B$ with cross-fitting?}
+Cross-fitted harm estimates are not independent of the candidate set, and the binomial test would no longer be exact. A disjoint $\B$ costs labels but keeps the guarantee finite-sample and assumption-light.
+
+\para{Why is selection by benefit on $\B$ allowed?}
+The guarantee is about every certified candidate simultaneously: on the event (probability $\ge1-\alpha$) that no candidate with $R>\delta$ is certified, \emph{any} choice among $\hat\Lam$, however data-dependent, has $R\le\delta$.
+
+\para{Why does Level 1 gain so little?}
+The agent edits components of the segmenter's mask: it can remove, trim or grow, and recover from the probability map, but it cannot create a lesion the segmenter did not see. Zero-shot, half the lesions are missed and over 700\,mL of physiological uptake is segmented per scan; removing false positives safely is worth $+0.009$ Dice, and the remaining error is in the segmenter. Level 2 confirms it: the agent adds $+0.002$ on top of the fine-tuned segmenter.
+
+\para{Is the guarantee meaningful with 125 test patients?}
+The guarantee is established on $\B$, not on $\C$; $\C$ checks it. The validity study (\cref{fig:validity}) is the direct check of the frequency claim over 1,000 splits. A single test set can only fail to contradict it, which it does in every arm.
+
+\para{What would a site do with $\delta=0.10$?}
+It would accept that, with probability at least 95\%, at most one in ten future patients is harmed in our strict sense, in exchange for the mean gain. Whether that is acceptable is a clinical decision; the dial makes it explicit and the sample-size table (\cref{tab:supp_n}) shows how to buy a stricter promise.

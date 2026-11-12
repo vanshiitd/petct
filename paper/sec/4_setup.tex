@@ -1,0 +1,30 @@
+\section{Experimental Protocol}
+\label{sec:setup}
+
+\para{Source domain.} The source system was built on the AutoPET FDG PET/CT data~\cite{gatidis2022autopet} (1,014 studies; whole-body PET/CT with manually annotated lesions), with a patient-grouped split into 738 cross-validation, 76 validation and 200 test scans.
+The segmenter is nnU-Net~\cite{isensee2021nnunet} (3D full resolution, plain convolutional U-Net) initialised from a masked-autoencoder PET/CT model~\cite{he2022mae,liu2026petctmae}, trained as a 5-fold ensemble (source test Dice $0.664$).
+The refinement agent and its detectors were developed on source cross-validation data only (\cref{sec:supp_fdg}).
+
+\para{Target domain.} PSMA-PET-CT-Lesions~\cite{psma2025tcia} from TCIA~\cite{clark2013tcia}: 597 studies of 377 patients with prostate cancer, two radionuclides ($^{18}$F, 213 patients; $^{68}$Ga, 164) and two scanner vendors.
+We use one study per patient (the earliest), resampled to the source grid, so patients are independent.
+PSMA differs sharply from FDG: intense physiological uptake in salivary glands, kidneys, bowel and bladder, and many small bone and nodal lesions.
+The 377 patients are split once (seed fixed in advance, stratified by radionuclide $\times$ tumour status) into $\A/\B/\C$ $=126/126/125$; $\C$ holds 119 tumour-positive patients with 4,518 lesions.
+
+\para{Pre-registration and locks.} For every phase, a plan fixing candidates, $\delta$, $\alpha$, endpoints and failure criteria was committed before any number it governs was computed.
+Before $\C$ was read, a lock commit recorded the SHA-256 of every input table and the exact commands; each arm was then run once.
+The certification tolerance was $\delta=0.05$, $\alpha=0.05$ for both levels; the dial values $\delta\in\{0.03,\dots,0.20\}$ were pre-registered as secondary.
+All deviations are listed in \cref{sec:supp_deviations}.
+The per-patient and subgroup analyses of \cref{sec:patients} were not pre-registered; they re-read the locked per-patient outputs, are descriptive, and change no decision.
+One is material and we state it here: $\C$ was read for the Level-1 arms before the Level-2 plan was written. No Level-2 choice used $\C$---the fine-tuning recipe was fixed in the plan and certification used $\B$---but $\C$ is not virgin for Level 2.
+
+\para{Baselines} (all on the same split, each locked and run once):
+\textbf{Naive self-improvement} deploys the candidate with the largest mean benefit on $\B$, with no harm test---the standard ``validate and pick the best'' practice.
+\textbf{Pseudo-label self-training}~\cite{lee2013pseudo} refits the detectors on $\A$ using the deployed detector's own predictions as labels (no target labels).
+\textbf{Uncalibrated \ours} runs the full certificate on raw detector probabilities, isolating the role of calibration.
+
+\para{Metrics.} Dice is averaged over tumour-positive patients; false-positive (FP) and false-negative volumes over all patients; lesion detection counts ground-truth lesions touched by the prediction; HD95 over tumour-positive patients.
+Paired differences use a patient bootstrap (2,000 resamples, 95\% percentile intervals); harm rates use exact binomial tests and Clopper--Pearson upper bounds (UB)~\cite{clopper1934use}.
+
+\para{Implementation.} The primary and the fine-tuned segmenters are 5-fold ensembles with flip test-time augmentation, run on a single 32\,GB GPU; Level-2 fine-tuning takes about 9\,GPU-hours in total.
+Detectors are gradient-boosted trees (depth 3, 200 iterations) with isotonic calibration fitted on cross-fitted predictions; certification, the agent and all statistics run on CPU (the agent takes 7--10\,s per scan).
+Full recipes are in \cref{sec:supp_agent,sec:supp_level2,sec:supp_repro}.

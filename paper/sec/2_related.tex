@@ -1,0 +1,23 @@
+\section{Related Work}
+\label{sec:related}
+
+\para{Distribution-free risk control.}
+Conformal prediction~\cite{vovk2005alrw,angelopoulos2021gentle} and its risk-control descendants~\cite{bates2021rcps,angelopoulos2024crc,angelopoulos2022image2image} calibrate a \emph{prediction} so that an expected loss is bounded.
+Learn-then-Test (LTT)~\cite{angelopoulos2021ltt} recasts the choice of hyper-parameters as multiple hypothesis testing, which allows non-monotone risks and arbitrary families.
+We use LTT for a different object: not the output of one model, but the \emph{decision to replace} a deployed model by another, with a risk defined per patient and relative to what is deployed.
+We are not aware of a prior locked, pre-registered evaluation of certified model updates under a real clinical domain shift.
+
+\para{Adaptation under domain shift.}
+Unsupervised and test-time adaptation~\cite{ganin2016dann,sun2020ttt,wang2021tent} and their medical variants~\cite{karani2021tta} improve average accuracy without target labels; self-training~\cite{lee2013pseudo,xie2020noisy} uses the model's own predictions as labels.
+Fine-tuning with a few target labels is the strongest practical option.
+All of these optimise or select by an average, and none states how many patients an update may harm; we show (\cref{sec:main}) that average-driven selection harms patients that a certificate protects.
+Continual learning~\cite{kirkpatrick2017ewc} protects the \emph{source} task; we protect \emph{individual target patients}.
+
+\para{Uncertainty, quality control and refinement.}
+Segmentation uncertainty~\cite{kendall2017uncertainties,lakshminarayanan2017ensembles,jungo2019reliability} and calibration~\cite{guo2017calibration,mehrtash2020calibration} underpin automatic quality control~\cite{kohlberger2012evaluating,robinson2019automated} and selective prediction~\cite{geifman2017selective}.
+Interactive and automatic refinement~\cite{wang2019deepigeos} and self-refining agents~\cite{madaan2023selfrefine,shinn2023reflexion} edit an output after the fact.
+Our refinement agent belongs to this line; our contribution is the rule that decides when such an agent, or the model beneath it, may change.
+
+\para{Safe deployment and pre-registration.}
+Proposals for monitoring and updating clinical AI~\cite{feng2022monitoring} and regulatory change-control plans~\cite{fda2023pccp} ask for pre-specified update protocols.
+Pre-registration~\cite{nosek2018preregistration} guards against analytic flexibility; we pre-register every decision rule and lock every test arm by hash before the test set is read.

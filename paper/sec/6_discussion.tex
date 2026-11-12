@@ -1,0 +1,34 @@
+\section{Discussion and Limitations}
+\label{sec:discussion}
+
+\para{What the certificate does, and does not, do.}
+The certificate does not make an update better; it makes its risk \emph{known and bounded} before deployment.
+In our data that distinction decided every outcome.
+Naive selection always looked best on average and always broke its promise; certified selection was sometimes less ambitious and kept it.
+Where benefit was large (Level 2), the certificate did not stand in the way of it; it priced it, in units a clinician can reason about: ``5\% is not supported by 126 patients; 10\% is.''
+
+\para{Where the gain comes from.}
+Self-improvement of the refinement agent was safe but worth $+0.009$ Dice; self-improvement of the segmenter on the same 126 patients was worth $+0.44$.
+An agent that edits a segmentation can remove what is wrong but cannot supply what is missing.
+We consider this a useful negative result for the growing literature on self-refining systems: under a large domain shift, refinement is no substitute for adapting the model, and a certificate is what makes adapting the model deployable.
+
+\para{Using the protocol at a new site.}
+(i) Fix the harm event with clinicians, per patient and relative to what is deployed, before labelling.
+(ii) Size the certification set from the tolerance to be promised (\cref{fig:power}), not the other way round.
+(iii) Spend the adaptation set on the model, not only on its post-processing: the same 126 patients bought about fifty times the Level-1 gain at Level 2.
+(iv) Report the dial, so the choice of $\delta$ is visible and auditable.
+(v) Re-certify on fresh patients when the population or the system changes.
+
+\para{Limitations.}
+\textbf{(1) Primary endpoint at Level 2.} The pre-registered $\delta=0.05$ switch was not certified; the Level-2 gain is certified at $\delta=0.10$, a pre-registered dial setting, and we report it as such.
+\textbf{(2) Test reuse.} $\C$ was read for Level 1 before Level 2 was planned. No Level-2 decision used $\C$, but a fresh test set would be stronger.
+\textbf{(3) Sample size.} With 126 certification patients the smallest certifiable tolerance is about 4\%; clinical tolerances near 1\% need several hundred patients per site.
+\textbf{(4) Harm definition.} Harm is relative to the deployed system and counts a lesion as detected on any overlap, so a system with large false-positive regions ``detects'' lesions by accident (\cref{fig:qual}d). We kept the pre-registered definition; a minimum-overlap criterion would be clinically more faithful.
+\textbf{(5) Generality.} Safety on the two secondary backbones is consistent with, but not confirmed at, the corrected level, and both lose two lesion detections.
+\textbf{(6) Scope.} One shift (FDG$\to$PSMA), one disease, retrospective data; exchangeability between certification and future patients is assumed and would fail under further drift, which calls for re-certification.
+\textbf{(7) Absolute accuracy.} A fine-tuned Dice of 0.55 on 126 patients is below models trained on the full PSMA cohort; our contribution is the update protocol, not a new state of the art.
+
+\para{Conclusion.}
+Self-improvement need not be a leap of faith.
+Stating, in advance, how many patients an update may harm, testing that statement on held-out patients, and rolling back when the evidence is insufficient turned an FDG segmentation system into a PSMA one with a five-fold Dice gain and a bounded, verified risk---and exposed exactly why the obvious alternatives are unsafe.
+We will release code, pre-registration documents and lock files.
