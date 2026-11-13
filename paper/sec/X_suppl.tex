@@ -158,7 +158,7 @@ ens & any of 4 & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 1 & 1 & 1 & 1 & 3 & 3 & 3 & 3 
 
 \begin{table}[h]
 \centering
-\caption{Level-1 dial: certified on $\B$, measured on $\C$ ($n=125$). Benefit: summed Dice change of added actions; $k$: harmed patients.}
+\caption{Level-1 dial: certified on $\B$, measured on $\C$ ($n=125$). Benefit: summed Dice change of added actions; $k$: harmed patients. The dial is computed from the per-action outcomes of each configuration, not from an end-to-end agent run; the naive configuration therefore harms 10 patients here and 11 in the locked end-to-end arm of \cref{tab:main} (19 against 20 lost lesions).}
 \label{tab:supp_dial}
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
@@ -262,14 +262,14 @@ $+0.440$ & 7 & 6$\to$5 & 257$\to$0 \\
 
 \para{Recipe (fixed in the plan, not tuned).} nnU-Net v2, 3D full resolution, plans and network of the source model (patch $192\times96\times128$, spacing $3\times2.04\times2.04$\,mm, batch 2, plain convolutional U-Net with 6 stages). Five folds over $\A$ (101/25 patients); each fold starts from a different one of the five source models, with all weights including the segmentation head; SGD with nnU-Net's poly schedule from learning rate $3\times10^{-3}$, 100 epochs of 250 iterations, final checkpoint. Out-of-fold validation Dice on $\A$ per fold: 0.489, 0.436, 0.582, 0.434, 0.422 (not used for any decision). $\B$ and $\C$ are predicted by the 5-fold ensemble with 8-fold flip averaging, exactly as the source model.
 
-\para{Certification on $\B$.} \Cref{tab:supp_l2b}. The four harmed $\B$ patients: hits 12$\to$6 (Dice 0.18$\to$0.08); hits 3$\to$2 (Dice 0.01$\to$0.59); hits 16$\to$9 (Dice 0.69$\to$0.46); Dice 0.50$\to$0.06 with hits unchanged.
+\para{Certification on $\B$.} \Cref{tab:supp_l2b} and \cref{fig:l2B}. The four harmed $\B$ patients: hits 12$\to$6 (Dice 0.18$\to$0.08); hits 3$\to$2 (Dice 0.01$\to$0.59); hits 16$\to$9 (Dice 0.69$\to$0.46); Dice 0.50$\to$0.06 with hits unchanged.
 
 \begin{table}[h]
 \centering
 \caption{Level 2 on $\B$ ($n=126$), reference: the Level-1 system. Each candidate tested at $\alpha/2$.}
 \label{tab:supp_l2b}
 \footnotesize
-\setlength{\tabcolsep}{3.5pt}
+\setlength{\tabcolsep}{2.4pt}
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
  & Dice & harmed & $p_{\delta=.05}$ & $p_{\delta=.10}$ & $p_{\delta=.15}$ & deployed at \\
@@ -280,13 +280,6 @@ FT+agent & 0.570 & 4 & 0.240 & 0.004 & $<10^{-4}$ & -- \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{fig/fig_l2_B.pdf}
-  \caption{\textbf{Level 2 on the certification set $\B$} (126 patients), relative to the Level-1 system. Left: per-patient Dice. Right: detected lesions (log scale, $+1$). The four harmed patients (red) decide the certificate: three lose detections, one loses Dice with detections unchanged.}
-  \label{fig:supp_l2B}
-\end{figure*}
 
 \para{Extended subgroups on $\C$} (\cref{tab:supp_sub}; post hoc, descriptive). It splits the locked test set by radionuclide (the stratification variable of the split), scanner vendor and tumour burden. The gain is large in every subgroup, with every interval above zero; the starting point is worst for vendor 1 (Level-1 Dice 0.06) and for patients with 1--2 lesions (0.01), and both reach about 0.5. Harm does not concentrate: at most 2 harmed patients per subgroup. The fine-tuned segmenter cuts false-positive volume in every subgroup (by 93--99.7\%); the residual is concentrated in the highest-burden patients (39\,mL per scan), where tumour and physiological uptake are hardest to separate.
 
@@ -317,6 +310,31 @@ $\ge$25 lesions & 40 (40) & 4149 & 0.282 / 0.286 / 0.647 & $+0.361$ {\scriptsize
 \para{Agent on top of the fine-tuned segmenter.} Re-running Level-1 certification on the fine-tuned maps (detectors adapted on out-of-fold $\A$ predictions) certified no addition; the system rolls back to the hand-built agent on top of FT, whose test table is byte-identical to FT+agent in \cref{tab:main}. FT+agent clears 3 of 6 tumour-free test patients of all false positives, FT alone 1.
 
 \para{Harmed test patients} (FT vs.\ Level-1 system): (i) 1 lesion, hit 1$\to$0, Dice 0.011$\to$0.000, FP 10$\to$2\,mL; (ii) 2 lesions, hits 2$\to$0, Dice 0.011$\to$0.000, FP 94$\to$0\,mL; (iii) 120 lesions, hits 106$\to$102, Dice 0.271$\to$0.603, FP 314$\to$3\,mL. In (i) and (ii) the Level-1 system overlapped the lesions only as part of large false-positive regions.
+
+\para{Harm under alternative definitions} (\cref{tab:supp_harmdef}; post hoc, descriptive; summarised in \cref{sec:harmdef}). We recount harm for every locked arm under six alternatives to the pre-registered rule, from the same per-patient tables. The definitions vary the two ingredients of \cref{eq:harm}: the Dice tolerance ($\varepsilon\in\{0,0.01,0.05\}$, or no Dice term) and the lesion criterion (any lost detection, two or more, more than 10\% of the reference's detections, or no lesion term). Certified \ours harms nobody under any of them, and the Level-2 decision (refuse at $\delta=0.05$, certify at $\delta=0.10$) is the same under all. The $\varepsilon=0$ row shows why a tolerance is needed: 35 of pseudo-labelling's 39 ``harms'' are Dice drops smaller than 0.01, the size of resampling noise. The Dice-only row shows why the lesion term is needed: it would record 1 of naive selection's 11 harms. These counts evaluate the locked decisions; they cannot show which Level-1 updates a different definition would have certified on $\B$, because only the deployed arms' outputs are stored for $\C$.
+
+\begin{table*}[t]
+\centering
+\caption{\textbf{Harm under alternative definitions} (post hoc). Level-1 arms: harmed patients on locked $\C$ ($n=125$) relative to the deployed agent $f_0$. Level 2: harmed patients of the fine-tuned segmenter relative to the Level-1 system on $\B$ ($n=126$), with the exact binomial $p$-value of $H_0\!:R>\delta$ (certified if $p\le\alpha/2=0.025$), and on $\C$. Bold: the pre-registered rule.}
+\label{tab:supp_harmdef}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+ & \multicolumn{4}{c}{Level 1 on $\C$} & \multicolumn{4}{c}{Level 2 (fine-tuned segmenter)} \\
+\cmidrule(lr){2-5}\cmidrule(l){6-9}
+harm if \ldots & naive & pseudo-label & \ours uncal. & \ours & harmed on $\B$ & $p_{\delta=.05}$ & $p_{\delta=.10}$ & harmed on $\C$ \\
+\midrule
+\textbf{lost $\ge$1 lesion or $\Delta$Dice ${<}{-}0.01$} & 11 & 4 & 1 & 0 & 4 & 0.240 & 0.0036 & 3 \\
+lost $\ge$1 lesion & 11 & 1 & 1 & 0 & 3 & 0.120 & 0.0010 & 3 \\
+$\Delta$Dice ${<}{-}0.01$ & 1 & 3 & 0 & 0 & 3 & 0.120 & 0.0010 & 2 \\
+lost $\ge$1 lesion or $\Delta$Dice ${<}0$ & 11 & 39 & 1 & 0 & 4 & 0.240 & 0.0036 & 3 \\
+lost $\ge$1 lesion or $\Delta$Dice ${<}{-}0.05$ & 11 & 1 & 1 & 0 & 4 & 0.240 & 0.0036 & 3 \\
+lost $\ge$2 lesions or $\Delta$Dice ${<}{-}0.01$ & 5 & 3 & 0 & 0 & 3 & 0.120 & 0.0010 & 3 \\
+lost ${>}10\%$ of lesions or $\Delta$Dice ${<}{-}0.01$ & 7 & 3 & 1 & 0 & 4 & 0.240 & 0.0036 & 2 \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 %----------------------------------------------------------------------------
 \section{Zero-shot transfer and subgroups}
@@ -377,7 +395,7 @@ The agent was developed over many pre-registered phases on FDG data. We report t
 \item \textbf{Subgroup artefact.} One evaluation flagged a ``mid-difficulty'' subgroup defined by source-domain tertiles; on PSMA it contains one patient whose Dice change is exactly zero.
 \item \textbf{Erratum.} A Level-1 lock note stated that 40 of 88 candidates were certified; the certification output (and this paper) has 22. The deployed configuration, computed by code, is unaffected.
 \item \textbf{$p$-values.} Bootstrap $p$ for Dice differences is two-sided (conservative for the one-sided endpoints) with a floor of $1/2000$.
-\item \textbf{Post-hoc analyses.} The per-patient and subgroup analyses (\cref{fig:patients}, \cref{tab:supp_l1patients,tab:supp_naiveharm,tab:supp_sub}, \cref{fig:supp_l2B}) were added after all locks, while writing the paper. They re-read the locked per-patient result tables (whose aggregates the analysis script checks against the locked evaluation before computing anything), run no model and change no decision. Vendor and burden subgroups were not pre-specified for Level 2; radionuclide was the stratification variable of the split.
+\item \textbf{Post-hoc analyses.} The per-patient and subgroup analyses (\cref{fig:patients}, \cref{sec:harmdef}, \cref{tab:supp_l1patients,tab:supp_naiveharm,tab:supp_sub,tab:supp_harmdef}, \cref{fig:l2B}) were added after all locks, while writing the paper. They re-read the locked per-patient result tables (whose aggregates the analysis script checks against the locked evaluation before computing anything), run no model and change no decision. Vendor and burden subgroups were not pre-specified for Level 2; radionuclide was the stratification variable of the split.
 \end{enumerate}
 
 %----------------------------------------------------------------------------
@@ -428,7 +446,7 @@ Conformal risk control~\cite{angelopoulos2024crc} bounds $\mathbb{E}[L]$ for a b
 An absolute criterion (``Dice $\ge0.5$'') would declare most zero-shot outputs harmful and certify nothing, or certify an update that worsens a patient who was already above the bar. The deployment question is whether replacing $f_0$ hurts anyone; a relative harm answers it and makes the rollback trivially safe.
 
 \para{Why $\varepsilon=0.01$ and any-overlap detection?}
-Both were fixed before any PSMA number was computed and kept unchanged in every PSMA plan. $\varepsilon$ ignores numerical noise but counts any clinically visible drop. Any-overlap detection is lenient for the deployed system: a large false positive that grazes a lesion ``detects'' it, and an update that removes the false positive is counted as harmful (\cref{fig:qual}d). This makes our harm counts conservative for the update: two of the three harmed test patients at Level 2 are of this kind. A minimum-overlap rule would be clinically more faithful, but it would change the counts in both directions and was not pre-registered; we kept the pre-registered rule.
+Both were fixed before any PSMA number was computed and kept unchanged in every PSMA plan. $\varepsilon$ ignores numerical noise but counts any clinically visible drop. Any-overlap detection is lenient for the deployed system: a large false positive that grazes a lesion ``detects'' it, and an update that removes the false positive is counted as harmful (\cref{fig:qual}d). This makes our harm counts conservative for the update: two of the three harmed test patients at Level 2 are of this kind. A minimum-overlap rule would be clinically more faithful, but it would change the counts in both directions and was not pre-registered; we kept the pre-registered rule. \Cref{tab:supp_harmdef} recounts harm under six alternatives that the stored tables do allow; no conclusion changes.
 
 \para{Why fixed-sequence chains and Bonferroni?}
 Ordering candidates from conservative to aggressive within a chain lets the test spend its whole budget $\alpha/m$ on each step until the first failure, which is much more powerful than Bonferroni over all 88 candidates ($\alpha/88$); with $n=126$ and $k=0$, $\alpha/88$ could not certify any $\delta$ below $0.058$, against $0.040$ with eight chains. More powerful procedures that pass $\alpha$ between chains exist~\cite{bretz2010multiple}; we chose the simplest valid one.
