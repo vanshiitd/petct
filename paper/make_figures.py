@@ -62,7 +62,7 @@ def fig_dial():
     b.plot([0, 0.21], [0, 0.21], color=C_REF, lw=0.7, ls=":", label=r"$y=\delta$")
     b.errorbar(d, rate, yerr=[np.zeros_like(rate), ubs - rate], fmt="o", color=C_CERT,
                ms=3, lw=0.9, capsize=1.5, label="realised (95% UB)")
-    b.axhline(naive["C_k"] / nC, color=C_NAIVE, ls="--", lw=0.9)
+    b.axhline(naive["C_k"] / nC, color=C_NAIVE, ls="--", lw=0.9, label="naive")
     b.set_xlim(0.0, 0.21)
     b.set_ylim(0.0, 0.21)
     b.set_xlabel(r"tolerance $\delta$")
@@ -90,8 +90,7 @@ def fig_validity():
     nv = [r[2] for r in rows]
     a.bar(x - w / 2, lt, w, color=C_CERT, label="certified (LTT)")
     a.bar(x + w / 2, nv, w, color=C_NAIVE, label="naive selection")
-    a.axhline(0.05, color="k", lw=0.7, ls="--")
-    a.text(0.5, 0.075, r"$\alpha=0.05$", fontsize=6.5, ha="center")
+    a.axhline(0.05, color="k", lw=0.7, ls="--", label=r"$\alpha=0.05$")
     for i, (l, n) in enumerate(zip(lt, nv)):
         a.text(i - w / 2, 0.11, f"{l:.3f}", ha="center", fontsize=6, color=C_CERT)
         a.text(i + w / 2, n + 0.02, f"{n:.3f}", ha="center", fontsize=6)
@@ -99,7 +98,7 @@ def fig_validity():
     a.set_xticklabels([r[0] for r in rows])
     a.set_ylim(0, 1.12)
     a.set_ylabel(r"P(realised harm $>\delta$)")
-    a.legend(frameon=False, fontsize=6.5, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2)
+    a.legend(frameon=False, fontsize=6.5, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3)
     a.spines[["top", "right"]].set_visible(False)
     save(fig, "fig_validity")
 
@@ -177,7 +176,7 @@ def fig_overview():
     e20 = json.loads((R / "phase20_eval.json").read_text())["arms"]
     fig = plt.figure(figsize=(6.9, 1.75))
     a = fig.add_axes([0, 0, 1, 1])
-    a.set_xlim(0, 1); a.set_ylim(0, 1); a.axis("off")
+    a.set_xlim(-0.015, 1.015); a.set_ylim(0, 1); a.axis("off")  # room for box padding
     box(a, 0.005, 0.56, 0.15, 0.36, "Deployed system\n$f_0$ (source: FDG)\nsegmenter + agent", "#e8eef6")
     box(a, 0.005, 0.08, 0.15, 0.36, "New domain (PSMA)\n377 patients, split\n"
         r"$\mathcal{A}|\mathcal{B}|\mathcal{C}$ = 126|126|125", "#f3efe6")
