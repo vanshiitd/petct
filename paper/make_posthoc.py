@@ -179,7 +179,41 @@ for d in (0.01, 0.02, 0.05):
         need[f"delta={d},k={k}"] = n
 power = {"level2_k": 4, "level2_n": 126, "delta_star_alpha_half": d_star, "n_needed_alpha_half": need}
 
+# ------------------------------------------- harm-definition sensitivity --
+# Re-count harm of the LOCKED arms under alternative harm definitions. No
+# candidate is re-selected: at Level 1 a different definition would change which
+# updates certify, which these tables cannot show (only deployed arms are stored).
+def lost(new, ref):
+    return ref["n_hit"] - new["n_hit"]
+
+
+def dice_drop(new, ref, eps):
+    return ref["n_gt"] > 0 and new["dice"] < ref["dice"] - eps
+
+
+DEFS = {
+    "primary":         lambda n, r: lost(n, r) >= 1 or dice_drop(n, r, 0.01),
+    "lesion_only":     lambda n, r: lost(n, r) >= 1,
+    "dice_only":       lambda n, r: dice_drop(n, r, 0.01),
+    "eps0":            lambda n, r: lost(n, r) >= 1 or dice_drop(n, r, 0.0),
+    "eps0.05":         lambda n, r: lost(n, r) >= 1 or dice_drop(n, r, 0.05),
+    "lost2":           lambda n, r: lost(n, r) >= 2 or dice_drop(n, r, 0.01),
+    "lost10pct":       lambda n, r: lost(n, r) > 0.10 * r["n_hit"] or dice_drop(n, r, 0.01),
+}
+assert DEFS["primary"](T["FT"][C[0]], T["P19"][C[0]]) == harmed(T["FT"][C[0]], T["P19"][C[0]])
+sens = {}
+for name, h in DEFS.items():
+    row = {arm: int(sum(h(T[arm][c], T["HB"][c]) for c in C)) for arm in ("NAIVE", "PSEUDO", "UNCAL", "P19")}
+    kB = int(sum(h(TB["FT"][c], TB["P19"][c]) for c in TB["FT"]))
+    row.update({"FT_B": kB, "FT_B_p05": p_val(kB, len(TB["FT"]), 0.05),
+                "FT_B_p10": p_val(kB, len(TB["FT"]), 0.10),
+                "FT_C": int(sum(h(T["FT"][c], T["P19"][c]) for c in C))})
+    sens[name] = row
+assert sens["primary"]["NAIVE"] == l1["NAIVE"]["harmed"] and sens["primary"]["FT_B"] == 4
+assert sens["primary"]["FT_C"] == ev["FT"]["harmed_vs_P19"]
+
 json.dump({"subgroups_C": sub, "distribution_C": dist, "level1_vs_f0_C": l1, "power": power,
+           "harm_definition_sensitivity": sens,
            "vendor_map_note": "vendor 1/2 ordered by cohort size; names withheld",
            "burden_tertiles": [float(q1), float(q2)]},
           open(Path(__file__).resolve().parent / "posthoc_stats.json", "w"), indent=1)
@@ -301,9 +335,9 @@ def fig_dial_all():
 
 
 def fig_l2_B():
-    """Supplement: Level 2 on the certification set B, per patient."""
+    """Main paper (single column): Level 2 on the certification set B, per patient."""
     B = split["B"]
-    fig, ax = plt.subplots(1, 2, figsize=(6.9, 1.9), gridspec_kw={"wspace": 0.3})
+    fig, ax = plt.subplots(1, 2, figsize=(3.4, 1.65), gridspec_kw={"wspace": 0.5})
     hh = [c for c in B if harmed(TB["FT"][c], TB["P19"][c])]
     pos = [c for c in B if TB["FT"][c]["n_gt"] > 0 and c not in hh]
     ax[0].scatter([TB["P19"][c]["dice"] for c in pos], [TB["FT"][c]["dice"] for c in pos], s=7,
@@ -311,9 +345,9 @@ def fig_l2_B():
     ax[0].scatter([TB["P19"][c]["dice"] for c in hh], [TB["FT"][c]["dice"] for c in hh], marker="x",
                   s=24, color=C_NAIVE, lw=1.0, label=f"harmed ({len(hh)})")
     ax[0].plot([0, 1], [0, 1], color=C_REF, lw=0.7, ls=":")
-    ax[0].set_xlabel("Dice, Level-1 system ($\\mathcal{B}$)")
-    ax[0].set_ylabel("Dice, fine-tuned ($\\mathcal{B}$)")
-    ax[0].legend(frameon=False, fontsize=6.5, loc="lower right")
+    ax[0].set_xlabel("Dice, Level 1")
+    ax[0].set_ylabel("Dice, fine-tuned")
+    ax[0].legend(frameon=False, fontsize=6.5, loc="lower left", bbox_to_anchor=(-0.05, 0.98), ncol=2, handletextpad=0.2, columnspacing=0.8)
     x = np.array([TB["P19"][c]["n_hit"] for c in B])
     y = np.array([TB["FT"][c]["n_hit"] for c in B])
     ax[1].scatter(x + 1, y + 1, s=7, color=C_CERT, lw=0)
@@ -321,8 +355,8 @@ def fig_l2_B():
                   marker="x", s=24, color=C_NAIVE, lw=1.0)
     ax[1].plot([1, 300], [1, 300], color=C_REF, lw=0.7, ls=":")
     ax[1].set_xscale("log"); ax[1].set_yscale("log")
-    ax[1].set_xlabel("lesions detected + 1, Level-1 system")
-    ax[1].set_ylabel("lesions detected + 1, fine-tuned")
+    ax[1].set_xlabel("detected + 1, Level 1")
+    ax[1].set_ylabel("detected + 1, fine-tuned")
     for s in ax:
         s.spines[["top", "right"]].set_visible(False)
     save(fig, "fig_l2_B")

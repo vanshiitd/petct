@@ -203,6 +203,78 @@
    "delta=0.05,k=4": 202
   }
  },
+ "harm_definition_sensitivity": {
+  "primary": {
+   "NAIVE": 11,
+   "PSEUDO": 4,
+   "UNCAL": 1,
+   "P19": 0,
+   "FT_B": 4,
+   "FT_B_p05": 0.23980801044656985,
+   "FT_B_p10": 0.0035769328496277264,
+   "FT_C": 3
+  },
+  "lesion_only": {
+   "NAIVE": 11,
+   "PSEUDO": 1,
+   "UNCAL": 1,
+   "P19": 0,
+   "FT_B": 3,
+   "FT_B_p05": 0.11998065474508415,
+   "FT_B_p10": 0.0009588567585858355,
+   "FT_C": 3
+  },
+  "dice_only": {
+   "NAIVE": 1,
+   "PSEUDO": 3,
+   "UNCAL": 0,
+   "P19": 0,
+   "FT_B": 3,
+   "FT_B_p05": 0.11998065474508415,
+   "FT_B_p10": 0.0009588567585858355,
+   "FT_C": 2
+  },
+  "eps0": {
+   "NAIVE": 11,
+   "PSEUDO": 39,
+   "UNCAL": 1,
+   "P19": 0,
+   "FT_B": 4,
+   "FT_B_p05": 0.23980801044656985,
+   "FT_B_p10": 0.0035769328496277264,
+   "FT_C": 3
+  },
+  "eps0.05": {
+   "NAIVE": 11,
+   "PSEUDO": 1,
+   "UNCAL": 1,
+   "P19": 0,
+   "FT_B": 4,
+   "FT_B_p05": 0.23980801044656985,
+   "FT_B_p10": 0.0035769328496277264,
+   "FT_C": 3
+  },
+  "lost2": {
+   "NAIVE": 5,
+   "PSEUDO": 3,
+   "UNCAL": 0,
+   "P19": 0,
+   "FT_B": 3,
+   "FT_B_p05": 0.11998065474508415,
+   "FT_B_p10": 0.0009588567585858355,
+   "FT_C": 3
+  },
+  "lost10pct": {
+   "NAIVE": 7,
+   "PSEUDO": 3,
+   "UNCAL": 1,
+   "P19": 0,
+   "FT_B": 4,
+   "FT_B_p05": 0.23980801044656985,
+   "FT_B_p10": 0.0035769328496277264,
+   "FT_C": 2
+  }
+ },
  "vendor_map_note": "vendor 1/2 ordered by cohort size; names withheld",
  "burden_tertiles": [
   2.0,
