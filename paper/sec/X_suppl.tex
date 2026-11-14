@@ -66,6 +66,13 @@ $k=4$ harmed & 1022 & 509 & 202 \\
 
 \para{Two rounds.} Round 1 (Level 1) certifies $f_1$ against $f_0$ and round 2 (Level 2) certifies $f_2$ against $f_1$, each at $\alpha$. With probability at least $1-2\alpha$ both promises hold, $R_{f_0}(f_1)\le\delta_1$ and $R_{f_1}(f_2)\le\delta_2$. Harm is not transitive, so this does \emph{not} imply $R_{f_0}(f_2)\le\delta_1+\delta_2$ in general; a site that needs a promise relative to the original system can certify $f_2$ against $f_0$ directly, at the cost of one more test. On our data the direct comparison gives the same picture: the fine-tuned segmenter harms 3 of 125 test patients relative to the Level-1 system (\cref{tab:main}).
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{fig/fig_power.pdf}
+  \caption{\textbf{The price of a guarantee.} (a) Smallest certifiable tolerance with zero observed harms, $1-(\alpha/m)^{1/n}$, against the number of certification patients, for $m$ chains ($\alpha=0.05$). (b) Level-2 $p$-value on $\B$ (4 of 126 patients harmed) against $\delta$; the switch is certified where $p\le\alpha/2$ (shaded).}
+  \label{fig:power}
+\end{figure}
+
 %----------------------------------------------------------------------------
 \section{The refinement agent}
 \label{sec:supp_agent}
@@ -200,6 +207,42 @@ nnU-Net single & 0.05 & 0.002 / 0.996 & 0.004 / 0.100 & $+0.38$ / $+4.19$ \\
 \end{tabular}
 \end{table}
 
+\para{Other selection rules (post hoc).} \Cref{tab:supp_rules} extends \cref{tab:rules} to five tolerances. All rules see the same 1,000 splits (125 patients select, 126 evaluate) and, where several candidates qualify, take the one with the largest benefit on the selection half. \emph{Naive}: any candidate. \emph{Plug-in}: observed harm rate at most $\delta$. \emph{Zero}: no observed harm. \emph{Uncorrected}: $p_\lambda\le\alpha$ for that candidate alone. \emph{Conformal risk control}~\cite{angelopoulos2024crc}: within each chain the most permissive gate with $(k+1)/(n+1)\le\delta$, then the best chain; the harm indicator is monotone along every chain (no reversal in 20,080 steps), as the method requires. \emph{Bonferroni}: $p_\lambda\le\alpha/88$. Conformal risk control bounds the mean harm rate and does so (3.9\% at $\delta=0.05$, 7.7\% at $0.10$; at most 3.9\% and 7.7\% when applied to one chain), but its realised rate exceeds $\delta$ in 25--35\% of splits. Stated before the analysis was run: a rule that stays within $\alpha$ with more benefit than \ours would be reported as dominating it. The uncorrected test does so at $\delta=0.10$ (1.7\%, $+4.52$ against $+3.50$); it exceeds $\alpha$ at $\delta=0.05$ and $0.03$, so it holds no level across tolerances.
+
+\begin{table}[h]
+\centering
+\caption{Selection rules over 1,000 random halves of $\B\cup\C$ (nnU-Net ensemble; post hoc). Violation in \% of splits with a 95\% Clopper--Pearson interval for Monte-Carlo error; mean and 95th percentile of the realised harm rate in \%; mean summed benefit; rollback in \% of splits.}
+\label{tab:supp_rules}
+\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+rule & violation [95\% CI] & mean & p95 & benefit & rollback \\
+\midrule
+\tabinput{sec/gen_rules_supp.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{Certification under a known shift (post hoc).} For each of four directions we draw 1,000 random halves of the source group for selection; the other half is an exchangeable control and the whole target group is the shifted deployment set (\cref{tab:supp_shift}, $\delta=0.10$). At $\delta=0.05$ the selection halves (51--74 patients) are too small to certify and \ours always rolls back. The shift is asymmetric: $^{68}$Ga and vendor-2 patients are harder, so rules that look acceptable on the easier group fail on the harder one. The update certified by \ours stayed within $\delta$ in at least 99.1\% of draws in every direction. Nothing guarantees this; \cref{thm:ltt} covers only the control column.
+
+\begin{table}[h]
+\centering
+\caption{Violation rate (\% of 1,000 draws with realised harm above $\delta=0.10$) when selecting on half of the source group: on the other half (ctrl.) and on the unseen target group (shift). $n$: selection / target patients. Post hoc.}
+\label{tab:supp_shift}
+\scriptsize
+\setlength{\tabcolsep}{1.8pt}
+\begin{tabular}{@{}lccccccccc@{}}
+\toprule
+ & & \multicolumn{2}{c}{naive} & \multicolumn{2}{c}{conf.\ risk c.} & \multicolumn{2}{c}{uncorrected} & \multicolumn{2}{c}{\ours} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(l){9-10}
+source $\to$ target & $n$ & ctrl. & shift & ctrl. & shift & ctrl. & shift & ctrl. & shift \\
+\midrule
+\tabinput{sec/gen_shift_supp.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{fig/fig_dial_all.pdf}
@@ -277,6 +320,25 @@ $+0.440$ & 7 & 6$\to$5 & 257$\to$0 \\
 Level-1 system & 0.122 & -- & -- & -- & -- & $\delta=0.05$ \\
 FT & 0.571 & 4 & 0.240 & 0.004 & $<10^{-4}$ & $\delta\ge0.10$ \\
 FT+agent & 0.570 & 4 & 0.240 & 0.004 & $<10^{-4}$ & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{A safeguarded switch: a negative result (post hoc).} Three of the four harms on $\B$ are lost lesions, which suggests keeping the deployed output where the new model is unsure. We tested $S_\tau=\{p_{\mathrm{FT}}>0.5\}\cup(\text{deployed}\cap\{p_{\mathrm{FT}}\ge\tau\})$: the fine-tuned model needs less evidence where the deployed system already fired. $S_{0.5}$ is the fine-tuned output and $S_0$ its union with the deployed one. The family, the selection rule (fixed sequence from $\tau=0$ upward on $\B$, then the largest mean Dice among those that pass) and the order of work were written down before any $S_\tau$ was computed, and the $\B$ table was locked before $\C$ was opened; the design nevertheless followed from the known $\B$ harms, so nothing here is a certificate. \Cref{tab:supp_safeswitch} shows that the safeguard fails. No $\tau>0$ removes any harm on $\B$: the fine-tuned model assigns the lesions it loses a probability below 0.01, so it is confidently wrong there, not unsure. Only the full union is harm-free, and it keeps the deployed false positives (Dice 0.16). On $\C$ the selected settings harm 1 of 125 at Dice 0.164, or 3 of 125 exactly as the plain switch. Confidence cannot stand in for a harm test.
+
+\begin{table}[h]
+\centering
+\caption{Safeguarded switch $S_\tau$ against the Level-1 system (post hoc). $\star$: selected on $\B$ ($\tau=0$ at $\delta=0.05$; $\tau=0.2$ at $\delta\ge0.10$). Harmed on $\C$ with exact 95\% upper bound.}
+\label{tab:supp_safeswitch}
+\scriptsize
+\setlength{\tabcolsep}{2.4pt}
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+ & \multicolumn{3}{c}{$\B$ ($n=126$)} & \multicolumn{4}{c}{$\C$ ($n=125$)} \\
+\cmidrule(lr){2-4}\cmidrule(l){5-8}
+$\tau$ & harmed & Dice & FP mL & harmed & Dice & FP mL & hits \\
+\midrule
+\tabinput{sec/gen_safeswitch_supp.tex}
 \bottomrule
 \end{tabular}
 \end{table}
@@ -396,6 +458,7 @@ The agent was developed over many pre-registered phases on FDG data. We report t
 \item \textbf{Erratum.} A Level-1 lock note stated that 40 of 88 candidates were certified; the certification output (and this paper) has 22. The deployed configuration, computed by code, is unaffected.
 \item \textbf{$p$-values.} Bootstrap $p$ for Dice differences is two-sided (conservative for the one-sided endpoints) with a floor of $1/2000$.
 \item \textbf{Post-hoc analyses.} The per-patient and subgroup analyses (\cref{fig:patients}, \cref{sec:harmdef}, \cref{tab:supp_l1patients,tab:supp_naiveharm,tab:supp_sub,tab:supp_harmdef}, \cref{fig:l2B}) were added after all locks, while writing the paper. They re-read the locked per-patient result tables (whose aggregates the analysis script checks against the locked evaluation before computing anything), run no model and change no decision. Vendor and burden subgroups were not pre-specified for Level 2; radionuclide was the stratification variable of the split.
+\item \textbf{Post-hoc method comparisons.} The comparison of selection rules, the shift stress test (\cref{tab:rules,tab:supp_rules,tab:supp_shift}) and the safeguarded switch (\cref{tab:supp_safeswitch}) were planned and run after every test set had been read. Their plan, with expectations and the criterion that would count against our method, was committed before any of their numbers was computed, and the results are reported against it, including the two that qualify our method and the negative result.
 \end{enumerate}
 
 %----------------------------------------------------------------------------

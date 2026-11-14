@@ -126,37 +126,15 @@ $\ge$25 lesions & 40 & 0.286$\to$0.647 & $+0.361$ {\scriptsize[$+0.305$, $+0.416
 \subsection{Does the conclusion depend on the harm definition?}
 \label{sec:harmdef}
 The harm event (\cref{eq:harm}) is a choice, fixed before any PSMA number was computed.
-To see whether our conclusions rest on it, we recount harm for every locked arm under six alternatives (\cref{tab:harmdef}; post hoc, descriptive).
+To see whether our conclusions rest on it, we recount harm for every locked arm under six alternatives (\cref{tab:supp_harmdef}; post hoc, descriptive).
 Two things hold under all of them.
 Certified \ours harms no test patient.
 And the Level-2 decision is unchanged: the fine-tuned segmenter harms 3 or 4 of the 126 certification patients, so it is refused at $\delta=0.05$ ($p\ge0.12>\alpha/2$) and certified at $\delta=0.10$ ($p\le0.004$).
 Naive selection harms 11 patients whenever a single lost lesion counts, and still 5--7 when only larger losses do.
 
-The instructive row is the Dice-only definition.
+The instructive case is the Dice-only definition.
 Under it naive selection harms a \emph{single} patient: a safety check based on segmentation overlap alone would see almost none of its harm, because it is lesion loss hidden inside a Dice gain (\cref{sec:patients}).
-The opposite extreme, $\varepsilon=0$, counts numerical noise as harm: pseudo-labelling then ``harms'' 39 patients through Dice changes below 0.01.
-One caveat: at Level 1 a different definition would also change \emph{which} updates certify on $\B$; the stored outputs of the locked arms cannot show that, so \cref{tab:harmdef} evaluates the decisions we made, not the decisions we would have made.
-
-\begin{table}[t]
-\centering
-\caption{\textbf{Harm under alternative definitions} (post hoc). Harmed patients of each locked arm on $\C$ ($n=125$, Level-1 arms relative to $f_0$) and of the fine-tuned segmenter (FT) on $\B$ ($n=126$, with the Level-2 $p$-value at $\delta=0.05$; every definition gives $p\le0.004$ at $\delta=0.10$) and on $\C$, relative to the Level-1 system. ``Lost'': fewer ground-truth lesions detected than the reference.}
-\label{tab:harmdef}
-\footnotesize
-\setlength{\tabcolsep}{2.6pt}
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-harm if \ldots & naive & pseudo & \ours & FT, $\B$ ($p$) & FT, $\C$ \\
-\midrule
-\textbf{lost $\ge$1 or $\Delta$Dice${<}{-}0.01$} & 11 & 4 & 0 & 4 (0.24) & 3 \\
-lost $\ge$1 & 11 & 1 & 0 & 3 (0.12) & 3 \\
-$\Delta$Dice${<}{-}0.01$ & 1 & 3 & 0 & 3 (0.12) & 2 \\
-lost $\ge$1 or $\Delta$Dice${<}0$ & 11 & 39 & 0 & 4 (0.24) & 3 \\
-lost $\ge$1 or $\Delta$Dice${<}{-}0.05$ & 11 & 1 & 0 & 4 (0.24) & 3 \\
-lost $\ge$2 or $\Delta$Dice${<}{-}0.01$ & 5 & 3 & 0 & 3 (0.12) & 3 \\
-lost ${>}10\%$ or $\Delta$Dice${<}{-}0.01$ & 7 & 3 & 0 & 4 (0.24) & 2 \\
-\bottomrule
-\end{tabular}
-\end{table}
+One caveat: at Level 1 another definition would also change \emph{which} updates certify on $\B$, which the stored outputs cannot show; we evaluate the decisions we made.
 
 \begin{figure*}[t]
   \centering
@@ -178,6 +156,36 @@ At $\delta=0.10$ the rates are 0.3--0.7\% against 35--52\%.
 The same holds in the source domain: on 630 FDG patients, naive selection breaks a 2\% promise in 76.6\% of splits and certified selection in 0.8\%.
 Naive selection is not merely riskier; its stated risk is wrong.
 
+\para{Against other selection rules.}
+\Cref{tab:rules} runs five further rules on the same splits (post hoc).
+Every rule that ignores multiplicity exceeds the 5\% error budget at $\delta=0.05$.
+Conformal risk control~\cite{angelopoulos2024crc} keeps its own promise, a mean harm rate of 3.9\%, yet one split in four exceeds $\delta$: a bound on the average is not a bound for a site.
+Bonferroni over all 88 candidates is valid but rolls back at $\delta=0.05$ and yields less benefit at $0.10$.
+Two results qualify ours.
+Requiring zero observed harms selects exactly as \ours at $\delta=0.05$, where only harm-free candidates certify, but it cannot use a looser tolerance and violates in 13.6\% of splits at $\delta=0.03$, where \ours rolls back.
+The uncorrected test yields more benefit than \ours at $\delta=0.10$ within the budget, but breaks it at $0.05$.
+
+\para{Under a known shift.}
+Certifying on one tracer or vendor and deploying on the other (post hoc, $\delta=0.10$, \cref{sec:supp_level1}), the update chosen by \ours exceeds $\delta$ on the unseen group in at most 0.9\% of draws in all four directions; naive selection on the easier group does so in every draw.
+This is an observation, not a guarantee.
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Selection rules compared} (post hoc; the splits of \cref{fig:validity}, nnU-Net ensemble). \emph{viol.}: \% of 1,000 splits whose realised harm rate exceeds $\delta$; the promise allows $\alpha=5\%$. \emph{gain}: mean summed Dice benefit.}
+\label{tab:rules}
+\setlength{\tabcolsep}{2.6pt}
+\small
+\begin{tabular}{@{}llrcrc@{}}
+\toprule
+ & & \multicolumn{2}{c}{$\delta=0.05$} & \multicolumn{2}{c}{$\delta=0.10$} \\
+\cmidrule(lr){3-4}\cmidrule(l){5-6}
+rule & corrects for & viol. & gain & viol. & gain \\
+\midrule
+\tabinput{sec/gen_rules_main.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{fig/fig_validity.pdf}
@@ -195,14 +203,7 @@ The dial does not tell a site which tolerance to choose; it tells it, before dep
 \para{The price of a guarantee.}
 With 4 harmed of 126, the Level-2 switch is certifiable for any $\delta\ge0.080$ (\cref{fig:power}b).
 The same 4 harms would certify $\delta=0.05$ among 202 certification patients; a 1\% guarantee needs at least 368 patients even if none is harmed (\cref{fig:power}a, \cref{tab:supp_n}).
-A site can compute this cost before it labels a single case.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{fig/fig_power.pdf}
-  \caption{\textbf{The price of a guarantee.} (a) Smallest certifiable tolerance with zero observed harms, $1-(\alpha/m)^{1/n}$, against the number of certification patients, for $m$ chains ($\alpha=0.05$). (b) Level-2 $p$-value on $\B$ (4 of 126 patients harmed) against $\delta$; the switch is certified where $p\le\alpha/2$ (shaded).}
-  \label{fig:power}
-\end{figure}
+A site can compute this cost before labelling, and there is no shortcut: falling back to the deployed output wherever the new model is unsure removes none of the four harms, because the model is confident where it fails (post hoc, \cref{sec:supp_level2}).
 
 \begin{figure}[t]
   \centering

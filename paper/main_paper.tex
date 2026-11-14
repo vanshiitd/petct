@@ -33,6 +33,8 @@
 \newcommand{\cmark}{\ding{51}}
 \newcommand{\xmark}{\ding{55}}
 \newcommand{\CHECK}[1]{\textcolor{red}{[CHECK: #1]}}  % to be verified before submission
+% expandable input for generated table bodies (plain \input breaks \multicolumn and \bottomrule)
+\makeatletter\newcommand{\tabinput}[1]{\@@input #1 }\makeatother
 \newcommand{\para}[1]{\vspace{2pt}\noindent\textbf{#1}\hspace{0.4em}}
 
 % ---- references into the separate supplement ----------------------------
@@ -55,7 +57,9 @@
   \extlabel{sec:supp_repro}{section}{S8}%
   \extlabel{sec:supp_faq}{section}{S9}%
   \extlabel{tab:supp_n}{table}{S2}%
-  \extlabel{tab:supp_sub}{table}{S10}%
+  \extlabel{tab:supp_sub}{table}{S13}%
+  \extlabel{tab:supp_harmdef}{table}{S14}%
+  \extlabel{fig:power}{figure}{S1}%
 }
 
 %%%%%%%%% TITLE

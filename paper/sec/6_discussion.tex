@@ -3,21 +3,19 @@
 
 \para{What the certificate does, and does not, do.}
 The certificate does not make an update better; it makes its risk \emph{known and bounded} before deployment.
-In our data that distinction decided every outcome.
 Naive selection always looked best on average and always broke its promise; certified selection was sometimes less ambitious and kept it.
 Where benefit was large (Level 2), the certificate did not stand in the way of it; it priced it, in units a clinician can reason about: ``5\% is not supported by 126 patients; 10\% is.''
 
 \para{Where the gain comes from.}
 Self-improvement of the refinement agent was safe but worth $+0.009$ Dice; self-improvement of the segmenter on the same 126 patients was worth $+0.44$.
 An agent that edits a segmentation can remove what is wrong but cannot supply what is missing.
-We consider this a useful negative result for the growing literature on self-refining systems: under a large domain shift, refinement is no substitute for adapting the model, and a certificate is what makes adapting the model deployable.
+Under a large domain shift, refinement is no substitute for adapting the model, and a certificate is what makes adapting the model deployable.
 
 \para{Using the protocol at a new site.}
 (i) Fix the harm event with clinicians, per patient and relative to what is deployed, before labelling.
-(ii) Size the certification set from the tolerance to be promised (\cref{fig:power}), not the other way round.
-(iii) Spend adaptation labels on the model, not only on its post-processing (here, fifty times the gain).
-(iv) Report the dial, so the choice of $\delta$ is visible and auditable.
-(v) Re-certify on fresh patients when the population or the system changes.
+(ii) Size the certification set from the tolerance to be promised (\cref{fig:power}).
+(iii) Spend adaptation labels on the model, not only on its post-processing.
+(iv) Report the dial, and re-certify on fresh patients when the population or the system changes.
 
 \para{Limitations.}
 \textbf{(1) Primary endpoint at Level 2.} The pre-registered $\delta=0.05$ switch was not certified; the Level-2 gain is certified at $\delta=0.10$, a pre-registered dial setting, and we report it as such.
