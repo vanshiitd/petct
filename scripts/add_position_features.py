@@ -46,9 +46,10 @@ from pathlib import Path
 import numpy as np
 import SimpleITK as sitk
 
-RAW = Path(r"C:\nnunet_raw\Dataset505_AutoPET_MAEprep_v2")
+# PETCT_RAW505 / PETCT_TOTALSEG point to a separate copy (Phase XXIII); unset = unchanged
+RAW = Path(__import__("os").environ.get("PETCT_RAW505", r"C:\nnunet_raw\Dataset505_AutoPET_MAEprep_v2"))
 INV = RAW / "inverse"
-TOTALSEG = Path(r"D:\data\totalseg_ml_v2")
+TOTALSEG = Path(__import__("os").environ.get("PETCT_TOTALSEG", r"D:\data\totalseg_ml_v2"))
 LANDMARKS = {"liver": 5, "heart": 51, "bladder": 21, "brain": 90, "kidney": (2, 3)}
 NEW = [f"dz_{n}_mm" for n in LANDMARKS] + ["edge_body_mm", "edge_scan_mm"]
 

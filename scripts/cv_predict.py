@@ -38,7 +38,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
-RAW = Path(r"C:\nnunet_raw\Dataset505_AutoPET_MAEprep_v2")
+# PETCT_RAW505 / PETCT_TOTALSEG point to a separate copy (Phase XXIII); unset = unchanged
+RAW = Path(__import__("os").environ.get("PETCT_RAW505", r"C:\nnunet_raw\Dataset505_AutoPET_MAEprep_v2"))
 RESULTS = Path(r"D:\data\nnunet\results\Dataset505_AutoPET_MAEprep_v2")
 TRAINER = "nnUNetTrainer_500epochs__nnUNetPlans_MAE__3d_fullres"
 SPLITS = Path(r"C:\nnunet_preprocessed\Dataset505_AutoPET_MAEprep_v2\splits_final.json")

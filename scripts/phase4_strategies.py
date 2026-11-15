@@ -35,9 +35,10 @@ import numpy as np
 import SimpleITK as sitk
 from scipy import ndimage as ndi
 
-RAW = Path(r"C:\nnunet_raw\Dataset505_AutoPET_MAEprep_v2")
+# PETCT_RAW505 / PETCT_TOTALSEG point to a separate copy (Phase XXIII); unset = unchanged
+RAW = Path(__import__("os").environ.get("PETCT_RAW505", r"C:\nnunet_raw\Dataset505_AutoPET_MAEprep_v2"))
 INV = RAW / "inverse"
-TOTALSEG = Path(r"D:\data\totalseg_ml_v2")
+TOTALSEG = Path(__import__("os").environ.get("PETCT_TOTALSEG", r"D:\data\totalseg_ml_v2"))
 PHYSIO = [2, 3, 21, 51, 90]
 LIVER, SPLEEN = 5, 1
 MIN_VOX = 5
