@@ -161,6 +161,23 @@ ens & any of 4 & 0$^\ast$ & 0$^\ast$ & 0$^\ast$ & 1 & 1 & 1 & 1 & 3 & 3 & 3 & 3 
 \end{tabular}
 \end{table*}
 
+\begin{table}[h]
+\centering
+\caption{\textbf{Generality across segmenters} (Level 1, locked $\C$, $\delta=0.05$). Benefit is relative to the deployed agent on the same segmenter. $\dagger$: safety not confirmed after the pre-registered Holm correction over the two secondary backbones ($p=0.048>0.025$).}
+\label{tab:supp_backbones}
+\setlength{\tabcolsep}{3.4pt}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+segmenter & harmed (UB) & $\Delta$Dice {\scriptsize[95\% CI]} & $\Delta$FP mL \\
+\midrule
+nnU-Net, 5-fold & 0 (2.4\%) & \makecell{$+0.0068$\\[-2pt]{\scriptsize[$+0.0022$, $+0.0126$]}} & $-127$ \\
+Swin & 2 (5.0\%)$^\dagger$ & \makecell{$+0.0055$\\[-2pt]{\scriptsize[$+0.0011$, $+0.0123$]}} & $-163$ \\
+nnU-Net, single & 2 (5.0\%)$^\dagger$ & \makecell{$+0.0012$\\[-2pt]{\scriptsize[$+0.0003$, $+0.0026$]}} & $-68$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \para{Dial on $\C$ for all backbones.} \Cref{tab:supp_dial} lists, per tolerance, the update certified on $\B$ and its outcome on $\C$. On the primary segmenter the realised rate never exceeds $\delta$. On the secondary segmenters it does at some settings (Swin, $\delta=0.15$: 0.096; nnU-Net single, $\delta=0.15$: 0.112), within the binomial noise of 125 patients but not uniformly below $\delta$.
 
 \begin{table}[h]
@@ -398,6 +415,83 @@ lost ${>}10\%$ of lesions or $\Delta$Dice ${<}{-}0.01$ & 7 & 3 & 1 & 0 & 4 & 0.2
 \end{tabular}
 \end{table*}
 
+\para{Confirmation on never-read follow-up scans.}
+\label{sec:supp_followup}
+Every test result above comes from $\C$, which was read for Level 1 before Level 2 was planned.
+The PSMA cohort also holds 218 later studies of its 377 patients, of which only the earliest was used.
+No model, analysis or person in this project had read any of them.
+We ran both frozen certified systems on the follow-ups of the $\B$ and $\C$ patients (the follow-ups of $\A$ patients are excluded: the fine-tuned model saw those patients): \textbf{143 studies of 111 patients} (72 of 57 $\B$ patients, 71 of 54 $\C$ patients), none dated like the patient's earliest study.
+The plan (cohort, frozen systems, unit of analysis, tests and the pass rule for each outcome), the lock (hashes of every input and of both action tables) and the exclusion list (empty) were committed before any follow-up was predicted or scored.
+Nothing was trained, re-fitted or tuned: the Level-1 detectors and calibrators were re-created by the Level-1 code from the same data and seed, and reproduce the locked $\C$ action tables exactly (difference 0).
+All 143 studies passed every pipeline step.
+
+\emph{Unit and tests.}
+A patient is harmed if harmed on \emph{any} of their follow-up studies (conservative for patients with several).
+H1 asks whether the Level-2 certificate ($\delta=0.10$, fine-tuned segmenter against the Level-1 system) holds, H2 whether the Level-1 certificate ($\delta=0.05$, certified agent against the deployed agent) holds.
+Each is an exact one-sided binomial test of $R>\delta$ at $\alpha=0.05$; with 111 patients H1 passes with at most 5 harmed patients and H2 with at most 1.
+Both also pass Holm's correction over the pair.
+
+\emph{Result} (\cref{tab:supp_fu,tab:supp_fuarms}).
+H1 is met: 4 of 111 patients harmed ($p=0.011$; upper bound 8.1\%).
+H2 is met: none of 111 ($p=0.003$; upper bound 2.7\%).
+On tumour-positive studies the fine-tuned segmenter gains $+0.411$ Dice over the Level-1 system (95\% patient-cluster bootstrap interval $[+0.364,+0.457]$; 105 patients) and $+0.416$ over the zero-shot segmenter; false-positive volume falls from 623 to 16\,mL per study, detected lesions rise from 2,800 to 5,022 of 6,290, and 5 of 21 tumour-free studies are cleared of all false positives (none by the others).
+The certified agent gains $+0.0045$ Dice over the deployed agent $[+0.0007,+0.0109]$, the same small gain as on $\C$.
+
+\emph{What it does not show.}
+(i) The follow-ups are later studies of patients already used to certify and to test, not new patients, and often follow treatment.
+This is a confirmation under a change over time, and Theorem~1 does not cover it; the $p$-values test whether the certificates \emph{transferred}.
+(ii) Harm is patient-specific.
+Three of the four harmed patients are $\B$ patients that the fine-tuned model already harmed at certification (\cref{tab:supp_fuharm}), and one of them is harmed on all four of their follow-ups; counted by study, 7 of 143 (4.9\%) are harmed, with correlated events.
+The unit of the guarantee is the patient, which is why we analyse by patient.
+(iii) The 5\% promise for the fine-tuned segmenter is still unsupported (4 of 111, $p=0.34$), as on $\B$.
+(iv) Split by group the follow-ups of $\C$ patients meet H1 (1 of 54) and those of $\B$ patients do not (3 of 57, $p=0.17$): the subsets are small and the split was not powered.
+The follow-up result therefore agrees with $\C$ and with the certification decision, and adds no new level of evidence for patients that the certificate cannot see.
+
+\begin{table}[h]
+\centering
+\caption{Follow-up confirmation (143 studies, 111 patients; $\B$/$\C$ patients as indicated). Harmed: patients (studies); $p$: exact binomial, $H_0\!:\,R>\delta$; UB: 95\% upper bound; max.: largest number of harmed patients that would reject. First two rows are the pre-registered primary tests; the rest are secondary.}
+\label{tab:supp_fu}
+\footnotesize
+\setlength{\tabcolsep}{2.6pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+test & harmed & $p$ & UB & max. & verdict \\
+\midrule
+\tabinput{sec/gen_fu_tests.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{All arms on the follow-up studies. Dice over the 122 tumour-positive studies; FP mL per study; detected lesions of 6,290; tumour-free studies cleared of all false positives.}
+\label{tab:supp_fuarms}
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+arm & Dice & FP mL & lesions & cleared \\
+\midrule
+\tabinput{sec/gen_fu_arms.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{The four patients harmed on follow-up by the fine-tuned segmenter relative to the Level-1 system. Hits and Dice are for their harmed studies (hits summed, Dice averaged); last column: harmed at certification on $\B$.}
+\label{tab:supp_fuharm}
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+group & studies harmed & lesion hits & Dice & harmed on $\B$ \\
+\midrule
+\tabinput{sec/gen_fu_harmed.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
 %----------------------------------------------------------------------------
 \section{Zero-shot transfer and subgroups}
 \label{sec:supp_zeroshot}
@@ -449,7 +543,7 @@ The agent was developed over many pre-registered phases on FDG data. We report t
 \para{Deviations and corrections.}
 \begin{enumerate}[nosep,leftmargin=*]
 \item \textbf{Level-2 primary not met.} The switch was not certified at $\delta=0.05$ and the pre-registered rule rolled back; the reported gain is the pre-registered $\delta=0.10$ dial setting.
-\item \textbf{Test reuse.} $\C$ was read for the Level-1 arms before the Level-2 plan was written; no Level-2 decision used $\C$.
+\item \textbf{Test reuse.} $\C$ was read for the Level-1 arms before the Level-2 plan was written; no Level-2 decision used $\C$. A later, pre-registered confirmation on never-read follow-up scans (\cref{sec:supp_followup}) addresses it for both levels.
 \item \textbf{Per-segmenter locks.} The Level-1 plan described one lock; the secondary segmenters' predictions were not ready, so each segmenter was locked separately before its own test run.
 \item \textbf{Zero-shot run restarts.} Two runs aborted on a patient-identifier lookup before writing any output; input hashes were re-verified before the run that counts.
 \item \textbf{File collision.} Two evaluation scripts wrote the same file name; the overwritten, deterministic evaluation was re-run and gave identical numbers.
@@ -458,6 +552,7 @@ The agent was developed over many pre-registered phases on FDG data. We report t
 \item \textbf{Erratum.} A Level-1 lock note stated that 40 of 88 candidates were certified; the certification output (and this paper) has 22. The deployed configuration, computed by code, is unaffected.
 \item \textbf{$p$-values.} Bootstrap $p$ for Dice differences is two-sided (conservative for the one-sided endpoints) with a floor of $1/2000$.
 \item \textbf{Post-hoc analyses.} The per-patient and subgroup analyses (\cref{fig:patients}, \cref{sec:harmdef}, \cref{tab:supp_l1patients,tab:supp_naiveharm,tab:supp_sub,tab:supp_harmdef}, \cref{fig:l2B}) were added after all locks, while writing the paper. They re-read the locked per-patient result tables (whose aggregates the analysis script checks against the locked evaluation before computing anything), run no model and change no decision. Vendor and burden subgroups were not pre-specified for Level 2; radionuclide was the stratification variable of the split.
+\item \textbf{Follow-up confirmation (pre-registered).} Planned, locked and run after all other analyses, with the pass rule for each of the two primary tests written before any follow-up was preprocessed (\cref{sec:supp_followup}). Two further training-free attempts to certify the Level-2 switch at $\delta=0.05$ (a per-patient gate and lower probability thresholds) failed on the certification data and are not developed here; for the second, the fine-tuned model harms the same 4 of 126 patients at every threshold from 0.02 to 0.5, and $\C$ was not opened. Environment overrides for data paths were added to four scripts to keep the new data on a separate disk; unset, every script behaves as before.
 \item \textbf{Post-hoc method comparisons.} The comparison of selection rules, the shift stress test (\cref{tab:rules,tab:supp_rules,tab:supp_shift}) and the safeguarded switch (\cref{tab:supp_safeswitch}) were planned and run after every test set had been read. Their plan, with expectations and the criterion that would count against our method, was committed before any of their numbers was computed, and the results are reported against it, including the two that qualify our method and the negative result.
 \end{enumerate}
 

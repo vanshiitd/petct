@@ -5,6 +5,7 @@ We study an FDG PET/CT tumour-segmentation system transferred to an unseen trace
 Zero-shot, the system is safe but poor (Dice 0.11).
 Certified updates to the refinement agent help only modestly ($+0.009$ Dice, 0 of 125 test patients harmed).
 Certified fine-tuning of the segmenter on 126 patients raises Dice from 0.11 to 0.55 and cuts false-positive volume by 98\% on the locked test; certified at $\delta=10\%$, it harms 2.4\% of test patients (95\% upper bound 6.1\%), while at our pre-registered $\delta=5\%$ the certificate refused the switch.
+Both certificates are confirmed on 143 never-read follow-up scans (4 and 0 of 111 patients harmed).
 On the same patients, naive self-improvement harms 11 patients and loses 20 lesion detections, and pseudo-label self-training harms 4 without gain.
 Across 1,000 resampled splits and three backbones, naive selection breaks a 5\% harm promise in at least 98\% of splits and certified selection in at most 0.7\%.
 The tolerance $\delta$ thus becomes a dial that trades benefit for risk, with a guarantee at every setting.

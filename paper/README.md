@@ -37,7 +37,8 @@ aggregates; it also recounts harm under six alternative definitions
 No plotted value is retyped. The post-hoc analyses are labelled as such in the
 paper (Sec. 4 and deviations 10 and 11 in the supplement).
 
-`python paper/make_phase21.py` writes the table bodies `sec/gen_*.tex` from the
+`python paper/make_phase23.py` writes `sec/gen_fu_*.tex` (follow-up confirmation,
+`reports/phase23_*.md`) in the same way. `python paper/make_phase21.py` writes the table bodies `sec/gen_*.tex` from the
 Phase XXI result files (selection rules, shift test, safeguarded switch; plan
 and result in `reports/phase21_*.md`). The paper loads them with `\tabinput`,
 an expandable `\input`, so no number in those tables is retyped.
@@ -48,20 +49,20 @@ Target: 8 pages of content, then the LLM-usage statement and the references
 (pages 9–10). A `\clearpage` before `sec/7_llm` starts the statement on page 9.
 
 Measured with Tectonic (XeTeX) and TeX Gyre Termes/Heros, which have the
-metrics of Times/Helvetica, the content ends at about 93% of the last column of
-page 8 (roughly 4 lines spare), the references end on page 10, and nothing is
+metrics of Times/Helvetica, the content ends at about 95% of the last column of
+page 8 (roughly 3 lines spare), the references end on page 10, and nothing is
 overfull. pdfLaTeX on Overleaf should match to within a few lines. `fig:power`
 and the harm-definition table already moved to the supplement (Fig. S1,
-Table S14). If the content runs past page 8, trim in this order:
+Table S15); `tab:subgroups` and `tab:backbones` also moved (Tables S14, S5). If the content runs past page 8, trim in this order:
 1. Drop the "Under a known shift" paragraph (Sec. 5.5); Table S8 has it.
-2. Move `tab:subgroups` to the supplement (Table S13 has the full version).
+2. Move `tab:followup` to the supplement (Table S16 has the full version).
 3. Move `alg:csi` to the supplement.
 If the content ends before the last column of page 8, remove the `\clearpage`.
 
 Main-paper figure numbers are hard-coded in `supplementary.tex` (`\extlabel`):
 Fig. 2 qual, 3 l2B, 4 patients, 5 validity; Table 3 rules; Sec. 5.4 harmdef.
 Supplement numbers are hard-coded in `main_paper.tex`: Fig. S1 power,
-Tables S2, S13 and S14.
+Tables S2, S5, S14 and S15.
 
 ## Before submission
 
